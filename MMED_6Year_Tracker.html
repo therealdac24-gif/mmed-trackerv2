@@ -1,0 +1,1122 @@
+
+
+Here is the complete, enhanced HTML file designed for the **full 6-year program**.
+
+### What's new in this version:
+1.  **6-Year Roadmap & TOC:** A dedicated Table of Contents and a visual timeline of the program.
+2.  **Full Program Tracking:** Even though the detailed text for Modules 2–10 wasn't in your source file, I have added the **structure and trackers** for every single module (Anaesthesia, Child Health, O&G, etc.) so you can plan and track the entire 6 years.
+3.  **Major Milestones:** Dedicated trackers for the **Research Project**, **Management Intensive**, and **Solar/Radio Course**.
+4.  **Global Logbook:** A master checklist section for all the competencies (Anaesthesia, Paeds, etc.) defined in the regulations.
+
+### Instructions:
+1.  Copy the code below.
+2.  Save as `MMED_6Year_Tracker.html`.
+3.  Open in your browser.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMED (Rural Health) - 6 Year Training Tracker</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #2980b9;
+            --sidebar-bg: #1a252f;
+            --text-color: #333;
+            --light-bg: #f4f6f7;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --border-color: #bdc3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            background-color: #eef2f3;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            padding: 20px 0;
+            font-size: 0.9rem;
+            border-right: 4px solid var(--accent-color);
+            z-index: 1000;
+        }
+
+        #sidebar h2 {
+            text-align: center;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .nav-group { margin-bottom: 15px; padding-left: 10px; }
+        .nav-header { color: #95a5a6; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+        
+        #sidebar ul { list-style: none; padding: 0; }
+        #sidebar li { margin-bottom: 4px; }
+        
+        #sidebar a {
+            display: block;
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        #sidebar a:hover { background-color: var(--accent-color); color: white; }
+
+        /* Main Content */
+        #main-content {
+            margin-left: 300px;
+            padding: 40px;
+            max-width: 1100px;
+            width: 100%;
+            background-color: white;
+        }
+
+        /* Typography */
+        h1 { color: var(--primary-color); border-bottom: 4px solid var(--accent-color); padding-bottom: 10px; }
+        h2 { color: var(--primary-color); margin-top: 40px; border-left: 5px solid var(--accent-color); padding-left: 15px; }
+        h3 { color: #555; margin-top: 25px; }
+        p, li { line-height: 1.6; color: #444; }
+
+        /* Table of Contents */
+        .toc-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            column-count: 2;
+            column-gap: 40px;
+        }
+        .toc-container h2 { margin-top: 0; border: none; padding: 0; }
+        .toc-item { display: block; margin-bottom: 8px; break-inside: avoid; }
+        .toc-item a { color: var(--accent-color); font-weight: bold; text-decoration: none; }
+        .toc-item a:hover { text-decoration: underline; }
+
+        /* Trackers */
+        .tracker-box {
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-left: 5px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .tracker-box.completed {
+            border-left-color: var(--success-color);
+            background-color: #eafaf1;
+            opacity: 0.8;
+        }
+        
+        .tracker-box.completed .tracker-title {
+            text-decoration: line-through;
+            color: var(--success-color);
+        }
+
+        .tracker-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .tracker-title { font-weight: 600; font-size: 1.1rem; }
+        
+        .controls { display: flex; gap: 10px; align-items: center; }
+        select, input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+        }
+
+        /* Module Placeholders */
+        .module-placeholder {
+            background-color: #fff3cd;
+            border: 1px dashed #ffc107;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* 6 Year Roadmap */
+        .roadmap-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        .roadmap-card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .roadmap-year { font-weight: bold; color: var(--accent-color); margin-bottom: 10px; display: block; }
+
+        @media print {
+            #sidebar { display: none; }
+            #main-content { margin: 0; width: 100%; box-shadow: none; }
+            .controls { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar Navigation -->
+<nav id="sidebar">
+    <h2>6-Year MMED Tracker</h2>
+    
+    <div class="nav-group">
+        <div class="nav-header">Program Overview</div>
+        <ul>
+            <li><a href="#toc">Table of Contents</a></li>
+            <li><a href="#roadmap">6 Year Roadmap</a></li>
+            <li><a href="#regulations">Regulations & Entry</a></li>
+            <li><a href="#competencies">Core Competencies</a></li>
+        </ul>
+    </div>
+
+    <div class="nav-group">
+        <div class="nav-header">Major Milestones</div>
+        <ul>
+            <li><a href="#research">Research Project</a></li>
+            <li><a href="#management">Management Intensive</a></li>
+            <li><a href="#other-courses">Solar/Radio Course</a></li>
+        </ul>
+    </div>
+
+    <div class="nav-group">
+        <div class="nav-header">Training Modules</div>
+        <ul>
+            <li><a href="#mod1">Module 1: Surgery (Full)</a></li>
+            <li><a href="#mod2">Module 2: Anaesthesia</a></li>
+            <li><a href="#mod3">Module 3: Child Health</a></li>
+            <li><a href="#mod4">Module 4: O&G</a></li>
+            <li><a href="#mod5">Module 5: Internal Med</a></li>
+            <li><a href="#mod6">Module 6: Psychiatry</a></li>
+            <li><a href="#mod7">Module 7: Public Health</a></li>
+            <li><a href="#mod8">Module 8: Eye/ENT</a></li>
+            <li><a href="#mod9">Module 9: Laboratory</a></li>
+            <li><a href="#mod10">Module 10: Management</a></li>
+        </ul>
+    </div>
+
+    <div class="nav-group">
+        <div class="nav-header">Assessment</div>
+        <ul>
+            <li><a href="#exams">Part 1 & Part 2 Exams</a></li>
+            <li><a href="#logbooks">Master Logbook Checklist</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main id="main-content">
+
+    <!-- Table of Contents -->
+    <section id="toc">
+        <h1>Table of Contents</h1>
+        <div class="toc-container">
+            <div class="toc-item"><a href="#toc">Table of Contents</a></div>
+            <div class="toc-item"><a href="#roadmap">6 Year Roadmap Overview</a></div>
+            <div class="toc-item"><a href="#regulations">Regulations & Entry Requirements</a></div>
+            <div class="toc-item"><a href="#competencies">Essential General Competencies</a></div>
+            <div class="toc-item"><a href="#research">The Research Project (Part 2 Prereq)</a></div>
+            <div class="toc-item"><a href="#management">Management & Leadership Intensive</a></div>
+            <div class="toc-item"><a href="#mod1">Module 1: Surgery (Full Text)</a></div>
+            <div class="toc-item"><a href="#mod2">Module 2: Anaesthesiology</a></div>
+            <div class="toc-item"><a href="#mod3">Module 3: Child Health</a></div>
+            <div class="toc-item"><a href="#mod4">Module 4: Obstetrics and Gynaecology</a></div>
+            <div class="toc-item"><a href="#mod5">Module 5: Internal Medicine</a></div>
+            <div class="toc-item"><a href="#mod6">Module 6: Psychiatry</a></div>
+            <div class="toc-item"><a href="#mod7">Module 7: Public Health</a></div>
+            <div class="toc-item"><a href="#mod8">Module 8: Ophthalmology and Otolaryngology</a></div>
+            <div class="toc-item"><a href="#mod9">Module 9: Laboratory Medicine</a></div>
+            <div class="toc-item"><a href="#mod10">Module 10: Management and Leadership</a></div>
+            <div class="toc-item"><a href="#exams">Examinations (Part 1 & Part 2)</a></div>
+            <div class="toc-item"><a href="#logbooks">Logbooks & Procedures Checklist</a></div>
+            <div class="toc-item"><a href="#resources">Recommended Resources</a></div>
+        </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section id="roadmap">
+        <h2>6 Year Program Roadmap</h2>
+        <div class="roadmap-container">
+            <div class="roadmap-card">
+                <span class="roadmap-year">Years 1-2</span>
+                <p>Pre-entry: 2 years pre-registration + Full registration.</p>
+            </div>
+            <div class="roadmap-card">
+                <span class="roadmap-year">Years 1-3</span>
+                <p><strong>Part 1 Training:</strong> Surgery, O&G, Anaesthesia, Paeds, Medicine blocks.</p>
+                <p><strong>Solar Course:</strong> Completed in first 3 years.</p>
+            </div>
+            <div class="roadmap-card">
+                <span class="roadmap-year">End of Year 3</span>
+                <p><strong>Part 1 Exams:</strong> Common Core + Surgical or O&G Specialty Core.</p>
+            </div>
+            <div class="roadmap-card">
+                <span class="roadmap-year">Years 4-6</span>
+                <p>Advanced clinical training, Public Health assignments.</p>
+                <p><strong>Management Intensive:</strong> 4-week program.</p>
+                <p><strong>Research:</strong> Execute and present project.</p>
+            </div>
+            <div class="roadmap-card">
+                <span class="roadmap-year">Final Year</span>
+                <p><strong>Part 2 Exams:</strong> Written, Clinical, Viva Voce.</p>
+                <p><strong>Graduation:</strong> Award of MMed (Rural Health).</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Regulations Section -->
+    <section id="regulations">
+        <h2>Regulations</h2>
+        <h3>Preamble</h3>
+        <p>The Masters of Medicine (Rural Health) program is designed for Papua New Guinea. Its purposes are to provide a high level of curative and preventative health services for the majority of the PNG population who continue to live in the rural and remote areas of the country, and to provide a recognized career structure and professional status for medical officers wishing to serve in rural communities.</p>
+        
+        <h3>Core Structure</h3>
+        <ul>
+            <li><strong>Entry:</strong> 3rd year post-grad. Requires 2 years pre-registration + Full registration.</li>
+            <li><strong>Duration:</strong> Minimum 6 years (must complete within 8).</li>
+            <li><strong>Sponsorship:</strong> Must be employed by a District Hospital.</li>
+            <li><strong>Exemptions:</strong> Diplomas in Child Health (DCH), O&G (DGO), or Anaesthesia (DA) grant exemption in that field.</li>
+        </ul>
+    </section>
+
+    <!-- Competencies -->
+    <section id="competencies">
+        <h2>Essential General Competencies</h2>
+        <div class="tracker-box" data-id="comp_pro">
+            <div class="tracker-header"><span class="tracker-title">1. Professional Role</span></div>
+        </div>
+        <div class="tracker-box" data-id="comp_com">
+            <div class="tracker-header"><span class="tracker-title">2. Communicator Role</span></div>
+        </div>
+        <div class="tracker-box" data-id="comp_col">
+            <div class="tracker-header"><span class="tracker-title">3. Collaborator Role</span></div>
+        </div>
+        <div class="tracker-box" data-id="comp_exp">
+            <div class="tracker-header"><span class="tracker-title">4. Medical Expert Role</span></div>
+        </div>
+        <div class="tracker-box" data-id="comp_man">
+            <div class="tracker-header"><span class="tracker-title">5. Manager Role</span></div>
+        </div>
+        <div class="tracker-box" data-id="comp_adv">
+            <div class="tracker-header"><span class="tracker-title">6. Health Advocate Role</span></div>
+        </div>
+        <div class="tracker-box" data-id="comp_sch">
+            <div class="tracker-header"><span class="tracker-title">7. Scholar Role</span></div>
+        </div>
+    </section>
+
+    <!-- Major Milestones -->
+    <section id="research">
+        <h2>The Research Project</h2>
+        <p><strong>Requirement:</strong> Must be submitted and presented to the Postgraduate Committee to be eligible for Part 2 Exams.</p>
+        <p><strong>Format:</strong> Abstract, Aims/Objectives, Introduction, Methods, Results, Discussion, Conclusions.</p>
+        <div class="tracker-box" data-id="res_topic">
+            <div class="tracker-header">
+                <span class="tracker-title">Research Topic Approved</span>
+                <div class="controls">
+                    <select onchange="updateStatus('res_topic', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('res_topic', this.value)">
+                </div>
+            </div>
+        </div>
+        <div class="tracker-box" data-id="res_data">
+            <div class="tracker-header">
+                <span class="tracker-title">Data Collection Completed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('res_data', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('res_data', this.value)">
+                </div>
+            </div>
+        </div>
+        <div class="tracker-box" data-id="res_submit">
+            <div class="tracker-header">
+                <span class="tracker-title">Research Submitted to Committee</span>
+                <div class="controls">
+                    <select onchange="updateStatus('res_submit', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('res_submit', this.value)">
+                </div>
+            </div>
+        </div>
+        <div class="tracker-box" data-id="res_present">
+            <div class="tracker-header">
+                <span class="tracker-title">Research Presented (Symposium or Exam)</span>
+                <div class="controls">
+                    <select onchange="updateStatus('res_present', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('res_present', this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="management">
+        <h2>Management and Leadership</h2>
+        <p><strong>Requirement:</strong> 4-week intensive program (usually 2nd half of training) + 7,500 word assignment prior to Part 2.</p>
+        <div class="tracker-box" data-id="mgmt_course">
+            <div class="tracker-header">
+                <span class="tracker-title">4-Week Intensive Course Completed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mgmt_course', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mgmt_course', this.value)">
+                </div>
+            </div>
+        </div>
+        <div class="tracker-box" data-id="mgmt_assign">
+            <div class="tracker-header">
+                <span class="tracker-title">7,500 Word Assignment Submitted</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mgmt_assign', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mgmt_assign', this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="other-courses">
+        <h2>Solar & Radio Maintenance Course</h2>
+        <p><strong>Requirement:</strong> 2-week course (MAF Technologies Goroka) usually taken in first 3 years.</p>
+        <div class="tracker-box" data-id="solar_course">
+            <div class="tracker-header">
+                <span class="tracker-title">Solar/Radio Maintenance Course Completed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('solar_course', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('solar_course', this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Module 1: Surgery (Full Text) -->
+    <section id="mod1">
+        <h2>Module 1: Surgery</h2>
+        <h3>Overview</h3>
+        <p>Two streams: Part 1 Surgery (9 months total) or Part 1 O&G (3 months abbreviated).</p>
+        <p><strong>Full Program Objectives:</strong> Interpret imaging, perform bellwether procedures independently, manage trauma and acute abdomen in rural setting.</p>
+        
+        <h3>Weekly Schedule & Tutorials</h3>
+        
+        <div class="tracker-box" data-id="mod1_w1">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 1: Trauma Assessment, Shock Resuscitation</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w1', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w1', this.value)">
+                </div>
+            </div>
+        </div>
+        
+        <div class="tracker-box" data-id="mod1_w2">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 2: Antibiotics, Preparing Patient for Theatre</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w2', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w2', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w3_4">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 3-4: Instruments, Sterilization, Setting up Theatre</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w3_4', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w3_4', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Stab wound to abdomen (Pre-lap management).</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w5">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 5: Acute Pain Management, Sterilizing Practical</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w5', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w5', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w6">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 6: Chronic Pain, Palliative Care</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w6', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w6', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Renal colic (Pain relief & narcotics).</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w7">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 7: Wounds (WHO Video), Suturing, Knot Tying</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w7', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w7', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w8">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 8: Transfer Principles (Land, Sea, Air)</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w8', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w8', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Palliative care for Hepatocellular carcinoma.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w9">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 9: Sepsis (Furuncles, Carbuncles, Pyomyositis)</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w9', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w9', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w10">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 10: Chest Drain (Pneumo/Haemothorax), Empyema</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w10', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w10', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Osteomyelitis vs Septic Arthritis.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w11">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 11: Fractures (Upper & Lower Limb Closed Mgmt)</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w11', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w11', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w12">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 12: Neurovascular Assessment, Secondary Intention</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w12', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w12', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Supracondylar fracture vs Dislocated elbow.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w13">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 13: Dental Infections, Airway (Ludwig's Angina)</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w13', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w13', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Floor of mouth swelling.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w14_15">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 14-15: Perianal/Renal Abscess, Septic Arthritis, Appendicitis</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w14_15', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w14_15', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w16_17">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 16-17: Biliary, Laparotomy, Gut Repair</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w16_17', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w16_17', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Gunshot wound to abdomen.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w18_19">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 18-19: Stomas, Peptic Ulcers, Bowel Obstruction</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w18_19', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w18_19', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Small Bowel Obstruction.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w20_21">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 20-21: Casting, Splinting, Traction Techniques</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w20_21', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w20_21', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w22">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 22: Open Fractures, Tendon Repair</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w22', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w22', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Vascular injury / Tourniquet use.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w23">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 23: Dynamic Splint Practical, Lower Limb Dislocations</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w23', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w23', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w24">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 24: Upper Limb Trauma, Open Tibia Fx</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w24', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w24', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Protruding tibia fracture.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w25">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 25: Bleeding Control, Shoulder Dislocation</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w25', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w25', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Delayed presentation of shoulder dislocation.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w26_27">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 26-27: Eye Enucleation, Scars, Hernia Repair</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w26_27', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w26_27', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w28">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 28: Strangulated Hernia</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w28', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w28', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Strangulated Inguinal Hernia.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w29_30">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 29-30: Head & Spinal Injuries</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w29_30', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w29_30', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Unconscious MVA patient.</p>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w31">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 31: Burns (Classification, Fluids, Grafting)</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w31', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w31', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-box" data-id="mod1_w32">
+            <div class="tracker-header">
+                <span class="tracker-title">Week 32: Ethics (Primum non nocere)</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod1_w32', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod1_w32', this.value)">
+                </div>
+            </div>
+            <p><strong>Case:</strong> Pediatric burns.</p>
+        </div>
+
+        <h3>Surgery Part 1 Assignments</h3>
+        <p><strong>Requirement:</strong> 20 Assignments (1500-2500 words). <em>Text for full assignment list not in source, placeholders provided for tracking.</em></p>
+        
+        <!-- Generic Tracker for Assignments -->
+        <div class="tracker-box" data-id="mod1_assign_1"><div class="tracker-header"><span class="tracker-title">Assignment 1: Cancer</span><div class="controls"><select onchange="updateStatus('mod1_assign_1', this.value)"><option value="Not Started">Not Started</option><option value="Done">Done</option></select><input type="date" onchange="updateDate('mod1_assign_1', this.value)"></div></div></div>
+        <div class="tracker-box" data-id="mod1_assign_2"><div class="tracker-header"><span class="tracker-title">Assignment 2: Cancer Screening</span><div class="controls"><select onchange="updateStatus('mod1_assign_2', this.value)"><option value="Not Started">Not Started</option><option value="Done">Done</option></select><input type="date" onchange="updateDate('mod1_assign_2', this.value)"></div></div></div>
+        <div class="tracker-box" data-id="mod1_assign_3"><div class="tracker-header"><span class="tracker-title">Assignment 3: Blood/Haemopoiesis</span><div class="controls"><select onchange="updateStatus('mod1_assign_3', this.value)"><option value="Not Started">Not Started</option><option value="Done">Done</option></select><input type="date" onchange="updateDate('mod1_assign_3', this.value)"></div></div></div>
+        <div class="tracker-box" data-id="mod1_assign_4"><div class="tracker-header"><span class="tracker-title">Assignment 4</span><div class="controls"><select onchange="updateStatus('mod1_assign_4', this.value)"><option value="Not Started">Not Started</option><option value="Done">Done</option></select><input type="date" onchange="updateDate('mod1_assign_4', this.value)"></div></div></div>
+        <div class="tracker-box" data-id="mod1_assign_5"><div class="tracker-header"><span class="tracker-title">Assignment 5</span><div class="controls"><select onchange="updateStatus('mod1_assign_5', this.value)"><option value="Not Started">Not Started</option><option value="Done">Done</option></select><input type="date" onchange="updateDate('mod1_assign_5', this.value)"></div></div></div>
+        <!-- Add more up to 20 as needed -->
+    </section>
+
+    <!-- Modules 2-10 (Placeholders based on TOC) -->
+    <section id="mod2">
+        <h2>Module 2: Anaesthesiology</h2>
+        <div class="module-placeholder">
+            <p><strong>Minimum Supervision:</strong> 4 months by accredited doctor.</p>
+            <p><em>Detailed text for this module was not provided in the source file.</em></p>
+            <div class="tracker-box" data-id="mod2_complete">
+                <div class="tracker-header">
+                    <span class="tracker-title">Module 2 Requirements Completed</span>
+                    <div class="controls">
+                        <select onchange="updateStatus('mod2_complete', this.value)">
+                            <option value="Not Started">Not Started</option>
+                            <option value="Done">Done</option>
+                        </select>
+                        <input type="date" onchange="updateDate('mod2_complete', this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mod3">
+        <h2>Module 3: Child Health</h2>
+        <div class="module-placeholder">
+            <p><strong>Minimum Supervision:</strong> 1 month by specialist paediatrician or experienced doctor.</p>
+            <p><em>Detailed text for this module was not provided in the source file.</em></p>
+            <div class="tracker-box" data-id="mod3_complete">
+                <div class="tracker-header">
+                    <span class="tracker-title">Module 3 Requirements Completed</span>
+                    <div class="controls">
+                        <select onchange="updateStatus('mod3_complete', this.value)">
+                            <option value="Not Started">Not Started</option>
+                            <option value="Done">Done</option>
+                        </select>
+                        <input type="date" onchange="updateDate('mod3_complete', this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mod4">
+        <h2>Module 4: Obstetrics and Gynaecology</h2>
+        <div class="module-placeholder">
+            <p><strong>Minimum Supervision:</strong> 3 months by accredited obstetrician.</p>
+            <p><em>Detailed text for this module was not provided in the source file.</em></p>
+            <div class="tracker-box" data-id="mod4_complete">
+                <div class="tracker-header">
+                    <span class="tracker-title">Module 4 Requirements Completed</span>
+                    <div class="controls">
+                        <select onchange="updateStatus('mod4_complete', this.value)">
+                            <option value="Not Started">Not Started</option>
+                            <option value="Done">Done</option>
+                        </select>
+                        <input type="date" onchange="updateDate('mod4_complete', this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mod5">
+        <h2>Module 5: Internal Medicine</h2>
+        <div class="module-placeholder">
+            <p><strong>Minimum Supervision:</strong> 2 months by accredited doctor.</p>
+            <p><em>Detailed text for this module was not provided in the source file.</em></p>
+            <div class="tracker-box" data-id="mod5_complete">
+                <div class="tracker-header">
+                    <span class="tracker-title">Module 5 Requirements Completed</span>
+                    <div class="controls">
+                        <select onchange="updateStatus('mod5_complete', this.value)">
+                            <option value="Not Started">Not Started</option>
+                            <option value="Done">Done</option>
+                        </select>
+                        <input type="date" onchange="updateDate('mod5_complete', this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mod6">
+        <h2>Module 6: Psychiatry</h2>
+        <div class="tracker-box" data-id="mod6_complete">
+            <div class="tracker-header">
+                <span class="tracker-title">Module 6 Requirements Completed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod6_complete', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod6_complete', this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mod7">
+        <h2>Module 7: Public Health</h2>
+        <p>Completed largely through written assignments.</p>
+        <div class="tracker-box" data-id="mod7_assign">
+            <div class="tracker-header">
+                <span class="tracker-title">Public Health Assignments Completed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod7_assign', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod7_assign', this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mod8">
+        <h2>Module 8: Ophthalmology and Otolaryngology</h2>
+        <div class="tracker-box" data-id="mod8_complete">
+            <div class="tracker-header">
+                <span class="tracker-title">Module 8 Requirements Completed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod8_complete', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod8_complete', this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mod9">
+        <h2>Module 9: Laboratory Medicine</h2>
+        <div class="tracker-box" data-id="mod9_complete">
+            <div class="tracker-header">
+                <span class="tracker-title">Module 9 Requirements Completed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('mod9_complete', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateDate('mod9_complete', this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mod10">
+        <h2>Module 10: Management and Leadership</h2>
+        <p>See <a href="#management">Management & Leadership</a> section for details on the 4-week intensive and assignment.</p>
+    </section>
+
+    <!-- Exams -->
+    <section id="exams">
+        <h2>Examinations</h2>
+        <h3>Part 1 Exam</h3>
+        <p>Usually taken by the end of the third year. Consists of Common Core + Specialty Core (Surgery or O&G).</p>
+        <div class="tracker-box" data-id="exam_part1">
+            <div class="tracker-header">
+                <span class="tracker-title">Part 1 Exam Passed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('exam_part1', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Passed</option>
+                    </select>
+                    <input type="date" onchange="updateDate('exam_part1', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <h3>Part 2 Exam</h3>
+        <p>Exit exam consisting of Written (SAQ, VAQ, Public Health), Clinical (5 disciplines), and Viva Voce.</p>
+        <div class="tracker-box" data-id="exam_part2_written">
+            <div class="tracker-header">
+                <span class="tracker-title">Part 2 Written Component Passed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('exam_part2_written', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Passed</option>
+                    </select>
+                    <input type="date" onchange="updateDate('exam_part2_written', this.value)">
+                </div>
+            </div>
+        </div>
+        <div class="tracker-box" data-id="exam_part2_clinical">
+            <div class="tracker-header">
+                <span class="tracker-title">Part 2 Clinical Component Passed</span>
+                <div class="controls">
+                    <select onchange="updateStatus('exam_part2_clinical', this.value)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="Done">Passed</option>
+                    </select>
+                    <input type="date" onchange="updateDate('exam_part2_clinical', this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Master Logbook Checklist -->
+    <section id="logbooks">
+        <h2>Master Logbook Checklist</h2>
+        <p>Use this section to track the generic and discipline-specific procedural competencies required for graduation.</p>
+
+        <h3>Anaesthesiology</h3>
+        <div class="tracker-box" data-id="log_cpr"><div class="tracker-header"><span class="tracker-title">Cardiopulmonary resuscitation</span><div class="controls"><select onchange="updateStatus('log_cpr', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_airway"><div class="tracker-header"><span class="tracker-title">Airway Establishment & Protection</span><div class="controls"><select onchange="updateStatus('log_airway', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_ketamine"><div class="tracker-header"><span class="tracker-title">Ketamine Anaesthesia</span><div class="controls"><select onchange="updateStatus('log_ketamine', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_obst_anaes"><div class="tracker-header"><span class="tracker-title">Anaesthetic Management of Obstetric Emergencies</span><div class="controls"><select onchange="updateStatus('log_obst_anaes', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+
+        <h3>Child Health</h3>
+        <div class="tracker-box" data-id="log_neo_resus"><div class="tracker-header"><span class="tracker-title">Neonatal Resuscitation</span><div class="controls"><select onchange="updateStatus('log_neo_resus', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_lbw"><div class="tracker-header"><span class="tracker-title">Care of Low Birth Weight Babies</span><div class="controls"><select onchange="updateStatus('log_lbw', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+
+        <h3>Obstetrics & Gynaecology</h3>
+        <div class="tracker-box" data-id="log_aph"><div class="tracker-header"><span class="tracker-title">Antepartum Haemorrhage</span><div class="controls"><select onchange="updateStatus('log_aph', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_pph"><div class="tracker-header"><span class="tracker-title">Post-partum Haemorrhage</span><div class="controls"><select onchange="updateStatus('log_pph', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_csec"><div class="tracker-header"><span class="tracker-title">Caesarean Section</span><div class="controls"><select onchange="updateStatus('log_csec', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_breech"><div class="tracker-header"><span class="tracker-title">Breech Delivery</span><div class="controls"><select onchange="updateStatus('log_breech', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+
+        <h3>Internal Medicine</h3>
+        <div class="tracker-box" data-id="log_diabetes"><div class="tracker-header"><span class="tracker-title">Diabetes Management</span><div class="controls"><select onchange="updateStatus('log_diabetes', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_tb"><div class="tracker-header"><span class="tracker-title">Tuberculosis Management</span><div class="controls"><select onchange="updateStatus('log_tb', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_snake"><div class="tracker-header"><span class="tracker-title">Snake Bite Management</span><div class="controls"><select onchange="updateStatus('log_snake', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+
+        <h3>Laboratory Medicine</h3>
+        <div class="tracker-box" data-id="log_blood"><div class="tracker-header"><span class="tracker-title">Blood Typing & Crossmatch</span><div class="controls"><select onchange="updateStatus('log_blood', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_malaria"><div class="tracker-header"><span class="tracker-title">Malaria Smear Staining</span><div class="controls"><select onchange="updateStatus('log_malaria', this.value)"><option value="No">No</option><option value="Yes">Yes</option></select></div></div></div>
+    </section>
+
+    <!-- Resources -->
+    <section id="resources">
+        <h2>Recommended Resources</h2>
+        <ul>
+            <li><strong>Primary Surgery (HBI)</strong> - Essential text.</li>
+            <li><strong>WHO Manuals:</strong> Surgery at the District Hospital, Hospital Care for Children, Anaesthesia at the District Hospital.</li>
+            <li><strong>Oxford Handbook of Clinical Medicine.</strong></li>
+            <li><strong>PNG Standard Treatment Manuals.</strong></li>
+        </ul>
+    </section>
+
+</main>
+
+<script>
+    // --- Data Persistence Logic ---
+    function saveData() {
+        const items = document.querySelectorAll('.tracker-box');
+        const data = [];
+        
+        items.forEach(item => {
+            const id = item.getAttribute('data-id');
+            const select = item.querySelector('select');
+            const dateInput = item.querySelector('input[type="date"]');
+            
+            if (select && dateInput) {
+                const status = select.value;
+                const date = dateInput.value;
+                data.push({ id, status, date });
+            }
+        });
+
+        localStorage.setItem('mmed_6yr_progress', JSON.stringify(data));
+    }
+
+    function loadData() {
+        const storedData = localStorage.getItem('mmed_6yr_progress');
+        if (storedData) {
+            const data = JSON.parse(storedData);
+            
+            data.forEach(item => {
+                const element = document.querySelector(`.tracker-box[data-id="${item.id}"]`);
+                if (element) {
+                    const select = element.querySelector('select');
+                    const dateInput = element.querySelector('input[type="date"]');
+                    
+                    if (select) {
+                        select.value = item.status;
+                        // Check for "Done" or "Yes" to mark completed visually
+                        if(item.status === 'Done' || item.status === 'Yes' || item.status === 'Passed') {
+                            element.classList.add('completed');
+                        } else {
+                            element.classList.remove('completed');
+                        }
+                    }
+                    if (dateInput) dateInput.value = item.date;
+                }
+            });
+        }
+    }
+
+    function updateStatus(id, value) {
+        const element = document.querySelector(`.tracker-box[data-id="${id}"]`);
+        if (value === 'Done' || value === 'Yes' || value === 'Passed') {
+            element.classList.add('completed');
+        } else {
+            element.classList.remove('completed');
+        }
+        saveData();
+    }
+
+    function updateDate(id, value) {
+        saveData();
+    }
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', loadData);
+</script>
+
+</body>
+</html>
+```

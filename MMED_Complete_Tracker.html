@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMED (Rural Health) - Ultimate 6 Year Tracker</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #d35400;
+            --sidebar-bg: #1e272e;
+            --text-color: #333;
+            --light-bg: #f4f6f7;
+            --success-color: #27ae60;
+            --progress-color: #f39c12; /* Orange for In Progress */
+            --border-color: #bdc3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--light-bg);
+            scroll-behavior: smooth;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            color: #ecf0f1;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            padding: 20px 0;
+            font-size: 0.9rem;
+            border-right: 4px solid var(--accent-color);
+            z-index: 1000;
+        }
+
+        #sidebar h2 {
+            text-align: center;
+            color: var(--accent-color);
+            font-size: 1.4rem;
+            border-bottom: 1px solid #444;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .nav-group { margin-bottom: 25px; padding-left: 15px; }
+        .nav-header { color: #95a5a6; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
+        
+        #sidebar ul { list-style: none; padding: 0; }
+        #sidebar li { margin-bottom: 2px; }
+        
+        #sidebar a {
+            display: block;
+            color: #bdc3c7;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px 0 0 4px;
+            transition: 0.2s;
+            border-left: 3px solid transparent;
+        }
+        #sidebar a:hover { background-color: #34495e; color: white; border-left: 3px solid var(--accent-color); padding-left: 15px; }
+
+        /* Main Content */
+        #main-content {
+            margin-left: 280px;
+            padding: 40px 50px;
+            max-width: 1100px;
+            width: 100%;
+            background-color: white;
+            min-height: 100vh;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 { color: var(--primary-color); border-bottom: 4px solid var(--accent-color); padding-bottom: 15px; margin-top: 0; font-size: 2.2rem; }
+        h2 { color: var(--primary-color); margin-top: 60px; border-left: 6px solid var(--accent-color); padding-left: 15px; background: #fafafa; padding-top: 15px; padding-bottom: 15px; border-radius: 0 4px 4px 0; }
+        h3 { color: #555; margin-top: 40px; border-bottom: 1px solid #eee; padding-bottom: 8px; font-size: 1.3rem; }
+        p { line-height: 1.6; color: #555; }
+
+        /* Trackers (Weekly Schedule) */
+        .tracker-box {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-left: 5px solid #bdc3c7;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .tracker-box:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        /* Assignments (Mini Trackers) */
+        .assignment-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; margin-top: 15px; }
+        .assignment-box {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #bdc3c7;
+            padding: 12px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .assignment-box:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        /* Status Colors (Shared) */
+        .tracker-box.completed, .assignment-box.completed { border-left-color: var(--success-color); background-color: #f0f9f4; opacity: 0.9; }
+        .tracker-box.completed .tracker-title, .assignment-box.completed .assign-title { text-decoration: line-through; color: var(--success-color); }
+        
+        .tracker-box.in-progress, .assignment-box.in-progress { border-left-color: var(--progress-color); background-color: #fef9e7; }
+        .tracker-box.in-progress .tracker-title, .assignment-box.in-progress .assign-title { color: #d35400; }
+
+        .tracker-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .tracker-title { font-weight: 600; font-size: 1.05rem; color: #2c3e50; flex-grow: 1; }
+        .assign-title { font-weight: 600; font-size: 0.95rem; color: #34495e; }
+        
+        /* Controls */
+        .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .assign-controls { display: flex; gap: 5px; align-items: center; width: 100%; }
+        
+        select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; background: white; font-size: 0.9rem; cursor: pointer; min-width: 120px; }
+        input[type="date"] { padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; color: #555; cursor: pointer; }
+        
+        /* Smaller controls for assignments */
+        .assign-controls select { padding: 4px 8px; font-size: 0.85rem; flex-grow: 1; min-width: 0; }
+        .assign-controls input[type="date"] { padding: 3px 8px; font-size: 0.85rem; width: 110px; }
+
+        .tracker-notes { font-size: 0.9rem; color: #7f8c8d; font-style: italic; border-top: 1px dashed #eee; padding-top: 8px; }
+
+        /* Log Tables */
+        .log-table-container { overflow-x: auto; margin-bottom: 30px; border: 1px solid #e0e0e0; border-radius: 4px; }
+        table.log-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        table.log-table th { background-color: var(--primary-color); color: white; padding: 12px; text-align: left; }
+        table.log-table td { border-bottom: 1px solid #eee; padding: 10px; vertical-align: middle; }
+        table.log-table tr:nth-child(even) { background-color: #f9f9f9; }
+        table.log-table input[type="number"] { width: 60px; padding: 5px; border: 1px solid #ddd; border-radius: 3px; }
+
+        .assignment-group-title { grid-column: 1 / -1; margin-top: 15px; font-weight: bold; color: var(--accent-color); border-bottom: 2px solid #eee; padding-bottom: 5px; }
+
+        @media print {
+            #sidebar { display: none; }
+            #main-content { margin: 0; width: 100%; padding: 0; }
+            .controls, .assign-controls { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<nav id="sidebar">
+    <h2>MMED Tracker</h2>
+    <div class="nav-group">
+        <div class="nav-header">Core Modules (Years 1-3)</div>
+        <ul>
+            <li><a href="#mod1">1: Surgery</a></li>
+            <li><a href="#mod2">2: Anaesthesia</a></li>
+            <li><a href="#mod3">3: Child Health</a></li>
+            <li><a href="#mod4">4: O&G</a></li>
+            <li><a href="#mod5">5: Internal Med</a></li>
+        </ul>
+    </div>
+    <div class="nav-group">
+        <div class="nav-header">Advanced Modules</div>
+        <ul>
+            <li><a href="#mod6">6: Psychiatry</a></li>
+            <li><a href="#mod7">7: Public Health</a></li>
+            <li><a href="#mod8">8: Eye/ENT</a></li>
+            <li><a href="#mod9">9: Laboratory</a></li>
+            <li><a href="#mod10">10: Management</a></li>
+        </ul>
+    </div>
+    <div class="nav-group">
+        <div class="nav-header">Assessment</div>
+        <ul>
+            <li><a href="#research">Research Project</a></li>
+            <li><a href="#exams">Exams</a></li>
+            <li><a href="#logbooks">Logbook Tables</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main id="main-content">
+
+    <section id="header">
+        <h1>MMED (Rural Health) Ultimate Tracker v3</h1>
+        <p>A complete 6-year digital companion. Track status and dates for <strong>every</strong> item.</p>
+    </section>
+
+    <!-- Module 1: Surgery -->
+    <section id="mod1">
+        <h2>Module 1: Surgery</h2>
+        <p><strong>Duration:</strong> 9 months (Full). <strong>Focus:</strong> Trauma, acute abdomen, orthopaedics.</p>
+        
+        <h3>Weekly Schedule (32 Weeks)</h3>
+        <div id="surgery-schedule-container">
+            <div class="tracker-box" data-id="surg_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Trauma Assessment & Shock</span></div></div>
+            <div class="tracker-box" data-id="surg_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Antibiotics & Pre-op Prep</span></div></div>
+            <div class="tracker-box" data-id="surg_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Instruments & Sterilization</span></div></div>
+            <div class="tracker-box" data-id="surg_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: Theatre Setup</span></div><div class="tracker-notes">Case: Stab wound abdomen</div></div>
+            <div class="tracker-box" data-id="surg_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Acute Pain</span></div></div>
+            <div class="tracker-box" data-id="surg_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Chronic Pain</span></div></div>
+            <div class="tracker-box" data-id="surg_w7"><div class="tracker-header"><span class="tracker-title">Wk 7: Wounds & Suturing</span></div></div>
+            <div class="tracker-box" data-id="surg_w8"><div class="tracker-header"><span class="tracker-title">Wk 8: Transfer Principles</span></div></div>
+            <div class="tracker-box" data-id="surg_w9"><div class="tracker-header"><span class="tracker-title">Wk 9: Pyomyositis & Osteo</span></div></div>
+            <div class="tracker-box" data-id="surg_w10"><div class="tracker-header"><span class="tracker-title">Wk 10: Chest Drains</span></div></div>
+            <div class="tracker-box" data-id="surg_w11"><div class="tracker-header"><span class="tracker-title">Wk 11: Closed Fractures</span></div></div>
+            <div class="tracker-box" data-id="surg_w12"><div class="tracker-header"><span class="tracker-title">Wk 12: Neurovascular & Secondary Intention</span></div></div>
+            <div class="tracker-box" data-id="surg_w13"><div class="tracker-header"><span class="tracker-title">Wk 13: Dental/Airway Infections</span></div></div>
+            <div class="tracker-box" data-id="surg_w14"><div class="tracker-header"><span class="tracker-title">Wk 14: Abscesses</span></div></div>
+            <div class="tracker-box" data-id="surg_w15"><div class="tracker-header"><span class="tracker-title">Wk 15: Appendicitis</span></div></div>
+            <div class="tracker-box" data-id="surg_w16"><div class="tracker-header"><span class="tracker-title">Wk 16: Laparotomy Basics</span></div></div>
+            <div class="tracker-box" data-id="surg_w17"><div class="tracker-header"><span class="tracker-title">Wk 17: Gut Repair</span></div></div>
+            <div class="tracker-box" data-id="surg_w18"><div class="tracker-header"><span class="tracker-title">Wk 18: Stomas & Ulcers</span></div></div>
+            <div class="tracker-box" data-id="surg_w19"><div class="tracker-header"><span class="tracker-title">Wk 19: Bowel Obstruction</span></div></div>
+            <div class="tracker-box" data-id="surg_w20"><div class="tracker-header"><span class="tracker-title">Wk 20: Casting & Splinting</span></div></div>
+            <div class="tracker-box" data-id="surg_w21"><div class="tracker-header"><span class="tracker-title">Wk 21: Traction</span></div></div>
+            <div class="tracker-box" data-id="surg_w22"><div class="tracker-header"><span class="tracker-title">Wk 22: Open Fractures</span></div></div>
+            <div class="tracker-box" data-id="surg_w23"><div class="tracker-header"><span class="tracker-title">Wk 23: Dislocations</span></div></div>
+            <div class="tracker-box" data-id="surg_w24"><div class="tracker-header"><span class="tracker-title">Wk 24: Upper Limb Trauma</span></div></div>
+            <div class="tracker-box" data-id="surg_w25"><div class="tracker-header"><span class="tracker-title">Wk 25: Bleeding Control</span></div></div>
+            <div class="tracker-box" data-id="surg_w26"><div class="tracker-header"><span class="tracker-title">Wk 26: Enucleation</span></div></div>
+            <div class="tracker-box" data-id="surg_w27"><div class="tracker-header"><span class="tracker-title">Wk 27: Hernia Repair</span></div></div>
+            <div class="tracker-box" data-id="surg_w28"><div class="tracker-header"><span class="tracker-title">Wk 28: Strangulated Hernia</span></div></div>
+            <div class="tracker-box" data-id="surg_w29"><div class="tracker-header"><span class="tracker-title">Wk 29: Minor Procedures</span></div></div>
+            <div class="tracker-box" data-id="surg_w30"><div class="tracker-header"><span class="tracker-title">Wk 30: Head & Spinal Injury</span></div></div>
+            <div class="tracker-box" data-id="surg_w31"><div class="tracker-header"><span class="tracker-title">Wk 31: Burns</span></div></div>
+            <div class="tracker-box" data-id="surg_w32"><div class="tracker-header"><span class="tracker-title">Wk 32: Ethics</span></div></div>
+        </div>
+
+        <h3>Assignments (20 Required)</h3>
+        <div class="assignment-list">
+            <div class="assignment-box" data-id="sa1"><span class="assign-title">1. Cancer/Neoplasia</span></div>
+            <div class="assignment-box" data-id="sa2"><span class="assign-title">2. Cancer Screening</span></div>
+            <div class="assignment-box" data-id="sa3"><span class="assign-title">3. Blood/Haemopoiesis</span></div>
+            <div class="assignment-box" data-id="sa4"><span class="assign-title">4. Blood Transfusion</span></div>
+            <div class="assignment-box" data-id="sa5"><span class="assign-title">5. Cytokines</span></div>
+            <div class="assignment-box" data-id="sa6"><span class="assign-title">6. Wound Healing</span></div>
+            <div class="assignment-box" data-id="sa7"><span class="assign-title">7. Hb/Oxygen Transport</span></div>
+            <div class="assignment-box" data-id="sa8"><span class="assign-title">8. Genetics</span></div>
+            <div class="assignment-box" data-id="sa9"><span class="assign-title">9. Nerve Conduction</span></div>
+            <div class="assignment-box" data-id="sa10"><span class="assign-title">10. Pain Pathways</span></div>
+            <div class="assignment-box" data-id="sa11"><span class="assign-title">11. Urodynamics</span></div>
+            <div class="assignment-box" data-id="sa12"><span class="assign-title">12. CSF & ICP</span></div>
+            <div class="assignment-box" data-id="sa13"><span class="assign-title">13. Calcium Homeostasis</span></div>
+            <div class="assignment-box" data-id="sa14"><span class="assign-title">14. Liver Function</span></div>
+            <div class="assignment-box" data-id="sa15"><span class="assign-title">15. Biliary System</span></div>
+            <div class="assignment-box" data-id="sa16"><span class="assign-title">16. Oedema</span></div>
+            <div class="assignment-box" data-id="sa17"><span class="assign-title">17. Thrombosis</span></div>
+            <div class="assignment-box" data-id="sa18"><span class="assign-title">18. Gastric Secretion</span></div>
+            <div class="assignment-box" data-id="sa19"><span class="assign-title">19. Surgical Infections</span></div>
+            <div class="assignment-box" data-id="sa20"><span class="assign-title">20. Antibiotic Policy</span></div>
+        </div>
+    </section>
+
+    <!-- Module 2: Anaesthesia -->
+    <section id="mod2">
+        <h2>Module 2: Anaesthesia</h2>
+        <div class="tracker-box" data-id="anaes_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Machine Check & Equipment</span></div></div>
+        <div class="tracker-box" data-id="anaes_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Ketamine (Pharma & Use)</span></div></div>
+        <div class="tracker-box" data-id="anaes_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Propofol & Benzos</span></div></div>
+        <div class="tracker-box" data-id="anaes_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: Pre-op Assessment</span></div></div>
+        <div class="tracker-box" data-id="anaes_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Opiates & Deferring Surgery</span></div></div>
+        <div class="tracker-box" data-id="anaes_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Chronic Pain</span></div></div>
+        <div class="tracker-box" data-id="anaes_w7"><div class="tracker-header"><span class="tracker-title">Wk 7: Spinal & LUSCS</span></div></div>
+        <div class="tracker-box" data-id="anaes_w8"><div class="tracker-header"><span class="tracker-title">Wk 8: Brachial Plexus Blocks</span></div></div>
+        <div class="tracker-box" data-id="anaes_w9"><div class="tracker-header"><span class="tracker-title">Wk 9: Wrist/Ankle Blocks</span></div></div>
+        <div class="tracker-box" data-id="anaes_w10"><div class="tracker-header"><span class="tracker-title">Wk 10: Neonatal Resuscitation</span></div></div>
+        <div class="tracker-box" data-id="anaes_w11"><div class="tracker-header"><span class="tracker-title">Wk 11: Can't Intubate/Ventilate</span></div></div>
+        <div class="tracker-box" data-id="anaes_w12"><div class="tracker-header"><span class="tracker-title">Wk 12: IV Access</span></div></div>
+        <div class="tracker-box" data-id="anaes_w13"><div class="tracker-header"><span class="tracker-title">Wk 13: Cardiac Arrest</span></div></div>
+        <div class="tracker-box" data-id="anaes_w14"><div class="tracker-header"><span class="tracker-title">Wk 14: Handling Negative Outcomes</span></div></div>
+        
+        <div class="assignment-list">
+            <div class="assignment-group-title">Case Reports (7)</div>
+            <div class="assignment-box" data-id="cr_an1"><span class="assign-title">General Anaes</span></div>
+            <div class="assignment-box" data-id="cr_an2"><span class="assign-title">Regional</span></div>
+            <div class="assignment-box" data-id="cr_an3"><span class="assign-title">Sepsis/Instability</span></div>
+            <div class="assignment-box" data-id="cr_an4"><span class="assign-title">Obstetric</span></div>
+            <div class="assignment-box" data-id="cr_an5"><span class="assign-title">Head Injury</span></div>
+            <div class="assignment-box" data-id="cr_an6"><span class="assign-title">Diabetic</span></div>
+            <div class="assignment-box" data-id="cr_an7"><span class="assign-title">Pain Mgmt</span></div>
+        </div>
+    </section>
+
+    <!-- Module 3: Child Health -->
+    <section id="mod3">
+        <h2>Module 3: Child Health</h2>
+        <div class="tracker-box" data-id="ch_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Milestones & Malnutrition</span></div></div>
+        <div class="tracker-box" data-id="ch_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Pneumonia & Oxygen</span></div></div>
+        <div class="tracker-box" data-id="ch_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Cardiac & Kidney</span></div></div>
+        <div class="tracker-box" data-id="ch_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: Newborn Exam & Cancer</span></div></div>
+        <div class="tracker-box" data-id="ch_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Ponsetti & Diarrhoea</span></div></div>
+        <div class="tracker-box" data-id="ch_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Immunization</span></div></div>
+        
+        <div class="assignment-list">
+            <div class="assignment-group-title">Assignments (Choose 3)</div>
+            <div class="assignment-box" data-id="ch_a1"><span class="assign-title">Malnutrition</span></div>
+            <div class="assignment-box" data-id="ch_a2"><span class="assign-title">Meningitis</span></div>
+            <div class="assignment-box" data-id="ch_a3"><span class="assign-title">Asthma</span></div>
+            <div class="assignment-box" data-id="ch_a4"><span class="assign-title">HIV/PMTCT</span></div>
+            <div class="assignment-box" data-id="ch_a5"><span class="assign-title">Oxygen</span></div>
+            <div class="assignment-box" data-id="ch_a6"><span class="assign-title">Neonatal Deaths</span></div>
+        </div>
+    </section>
+
+    <!-- Module 4: O&G -->
+    <section id="mod4">
+        <h2>Module 4: Obstetrics & Gynaecology</h2>
+        <div class="tracker-box" data-id="og_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Menstrual Cycle</span></div></div>
+        <div class="tracker-box" data-id="og_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Contraception</span></div></div>
+        <div class="tracker-box" data-id="og_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Routine Antenatal</span></div></div>
+        <div class="tracker-box" data-id="og_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: Basic USS</span></div></div>
+        <div class="tracker-box" data-id="og_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Miscarriage/Ectopic</span></div></div>
+        <div class="tracker-box" data-id="og_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Normal Labour</span></div></div>
+        <div class="tracker-box" data-id="og_w7"><div class="tracker-header"><span class="tracker-title">Wk 7: Partograms</span></div></div>
+        <div class="tracker-box" data-id="og_w8"><div class="tracker-header"><span class="tracker-title">Wk 8: CS Technique</span></div></div>
+        <div class="tracker-box" data-id="og_w9"><div class="tracker-header"><span class="tracker-title">Wk 9: APH & Pre-eclampsia</span></div></div>
+        <div class="tracker-box" data-id="og_w10"><div class="tracker-header"><span class="tracker-title">Wk 10: Failure to Progress</span></div></div>
+        <div class="tracker-box" data-id="og_w11"><div class="tracker-header"><span class="tracker-title">Wk 11: PPH</span></div></div>
+        <div class="tracker-box" data-id="og_w12"><div class="tracker-header"><span class="tracker-title">Wk 12: Puerperal Sepsis</span></div></div>
+        <div class="tracker-box" data-id="og_w13"><div class="tracker-header"><span class="tracker-title">Wk 13: Infertility</span></div></div>
+        <div class="tracker-box" data-id="og_w15"><div class="tracker-header"><span class="tracker-title">Wk 15: Ovarian Tumours</span></div></div>
+        <div class="tracker-box" data-id="og_w17"><div class="tracker-header"><span class="tracker-title">Wk 17: Endometrial CA</span></div></div>
+        <div class="tracker-box" data-id="og_w19"><div class="tracker-header"><span class="tracker-title">Wk 19: Cervical CA</span></div></div>
+        <div class="tracker-box" data-id="og_w21"><div class="tracker-header"><span class="tracker-title">Wk 21: Pelvic Sepsis</span></div></div>
+        <div class="tracker-box" data-id="og_w23"><div class="tracker-header"><span class="tracker-title">Wk 23: Pre-eclampsia/Eclampsia</span></div></div>
+        <div class="tracker-box" data-id="og_w26"><div class="tracker-header"><span class="tracker-title">Wk 26: PPH Advanced</span></div></div>
+        <div class="tracker-box" data-id="og_w29"><div class="tracker-header"><span class="tracker-title">Wk 29: Destructive Delivery</span></div></div>
+    </section>
+
+    <!-- Module 5: Medicine -->
+    <section id="mod5">
+        <h2>Module 5: Internal Medicine</h2>
+        <div class="tracker-box" data-id="med_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Diabetes</span></div></div>
+        <div class="tracker-box" data-id="med_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Antibiotics & Sepsis</span></div></div>
+        <div class="tracker-box" data-id="med_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Tuberculosis</span></div></div>
+        <div class="tracker-box" data-id="med_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: Snake Bite & ECG</span></div></div>
+        <div class="tracker-box" data-id="med_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Hypertension & HIV</span></div></div>
+        <div class="tracker-box" data-id="med_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Asthma/COAD</span></div></div>
+    </section>
+
+    <!-- Advanced Modules 6-10 -->
+    <section id="mod6">
+        <h2>Module 6: Psychiatry</h2>
+        <div class="assignment-list">
+            <div class="assignment-box" data-id="psych_c1"><span class="assign-title">Case: Acute Psychosis</span></div>
+            <div class="assignment-box" data-id="psych_c2"><span class="assign-title">Case: Somatoform</span></div>
+        </div>
+    </section>
+
+    <section id="mod7">
+        <h2>Module 7: Public Health</h2>
+        <div class="assignment-list">
+            <div class="assignment-box" data-id="ph_district"><span class="assign-title">District Health Report</span></div>
+            <div class="assignment-box" data-id="ph_a1"><span class="assign-title">Assignment 1</span></div>
+            <div class="assignment-box" data-id="ph_a2"><span class="assign-title">Assignment 2</span></div>
+        </div>
+    </section>
+
+    <section id="mod8">
+        <h2>Module 8: Eye & ENT</h2>
+        <div class="assignment-list">
+            <div class="assignment-box" data-id="eye_c1"><span class="assign-title">Case: Perforating Eye</span></div>
+            <div class="assignment-box" data-id="eye_c2"><span class="assign-title">Case: Red Eye</span></div>
+            <div class="assignment-box" data-id="eye_c3"><span class="assign-title">Case: Epistaxis</span></div>
+        </div>
+    </section>
+
+    <section id="mod9">
+        <h2>Module 9: Laboratory</h2>
+        <div class="assignment-list">
+            <div class="assignment-box" data-id="lab_s1"><span class="assign-title">Skill: Cross-match</span></div>
+            <div class="assignment-box" data-id="lab_s2"><span class="assign-title">Skill: Malaria Stain</span></div>
+        </div>
+    </section>
+
+    <section id="mod10">
+        <h2>Module 10: Management</h2>
+        <div class="assignment-list">
+            <div class="assignment-box" data-id="mgmt_c1"><span class="assign-title">3-Week Intensive Course</span></div>
+            <div class="assignment-box" data-id="mgmt_a1"><span class="assign-title">Major Assignment (3500 words)</span></div>
+        </div>
+    </section>
+
+    <section id="research">
+        <h2>Research Project</h2>
+        <div class="tracker-box" data-id="res_proj"><div class="tracker-header"><span class="tracker-title">Project Submitted & Presented</span></div></div>
+    </section>
+
+    <section id="exams">
+        <h2>Examinations</h2>
+        <div class="tracker-box" data-id="exam_pt1"><div class="tracker-header"><span class="tracker-title">Part 1 Exam (Year 3)</span></div></div>
+        <div class="tracker-box" data-id="exam_pt2"><div class="tracker-header"><span class="tracker-title">Part 2 Exam (Exit)</span></div></div>
+    </section>
+
+    <!-- Global Logbook -->
+    <section id="logbooks">
+        <h2>Master Logbook Checklist</h2>
+        <p>Record your observed/performed numbers for key procedures.</p>
+
+        <h3>1. Anaesthesia</h3>
+        <div class="log-table-container">
+            <table class="log-table">
+                <thead><tr><th>Procedure</th><th>Required</th><th>Logged</th></tr></thead>
+                <tbody>
+                    <tr><td>Pre-op Assess</td><td>50</td><td><input type="number" class="log-input" id="la_pre"></td></tr>
+                    <tr><td>Intubation</td><td>10</td><td><input type="number" class="log-input" id="la_int"></td></tr>
+                    <tr><td>Spinal</td><td>20</td><td><input type="number" class="log-input" id="la_spin"></td></tr>
+                    <tr><td>Ketamine</td><td>10</td><td><input type="number" class="log-input" id="la_ket"></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>2. O&G</h3>
+        <div class="log-table-container">
+            <table class="log-table">
+                <thead><tr><th>Procedure</th><th>Required</th><th>Logged</th></tr></thead>
+                <tbody>
+                    <tr><td>Normal Delivery</td><td>20</td><td><input type="number" class="log-input" id="lo_norm"></td></tr>
+                    <tr><td>LUSCS</td><td>6</td><td><input type="number" class="log-input" id="lo_cs"></td></tr>
+                    <tr><td>Breech</td><td>5</td><td><input type="number" class="log-input" id="lo_breech"></td></tr>
+                    <tr><td>Vacuum</td><td>6</td><td><input type="number" class="log-input" id="lo_vac"></td></tr>
+                    <tr><td>PPH Mgmt</td><td>6</td><td><input type="number" class="log-input" id="lo_pph"></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>3. Child Health</h3>
+        <div class="log-table-container">
+            <table class="log-table">
+                <thead><tr><th>Procedure</th><th>Required</th><th>Logged</th></tr></thead>
+                <tbody>
+                    <tr><td>Neonatal Resus</td><td>4</td><td><input type="number" class="log-input" id="lc_neo"></td></tr>
+                    <tr><td>Ponsetti Cast</td><td>2</td><td><input type="number" class="log-input" id="lc_pon"></td></tr>
+                    <tr><td>IO Needle</td><td>1</td><td><input type="number" class="log-input" id="lc_io"></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>4. Surgery & Medicine</h3>
+        <div class="log-table-container">
+            <table class="log-table">
+                <thead><tr><th>Procedure</th><th>Required</th><th>Logged</th></tr></thead>
+                <tbody>
+                    <tr><td>Hernia Repair</td><td>8</td><td><input type="number" class="log-input" id="ls_hernia"></td></tr>
+                    <tr><td>Laparotomy</td><td>5</td><td><input type="number" class="log-input" id="ls_lap"></td></tr>
+                    <tr><td>Chest Drain</td><td>7</td><td><input type="number" class="log-input" id="ls_chest"></td></tr>
+                    <tr><td>Lumbar Puncture</td><td>10</td><td><input type="number" class="log-input" id="lm_lp"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+
+<script>
+    // --- Initialization & Injection ---
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // 1. Inject controls for Tracker Boxes (Weekly Schedule)
+        const trackerBoxes = document.querySelectorAll('.tracker-box');
+        trackerBoxes.forEach(box => {
+            const header = box.querySelector('.tracker-header');
+            if (header && !header.querySelector('.controls')) {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'controls';
+                
+                const isExam = box.parentElement.id === 'exams';
+                const doneText = isExam ? 'Passed' : 'Done';
+                const doneValue = isExam ? 'Passed' : 'Done';
+
+                controlsDiv.innerHTML = `
+                    <select onchange="updateStatus(this)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="${doneValue}">${doneText}</option>
+                    </select>
+                    <input type="date" onchange="updateDate(this)">
+                `;
+                header.appendChild(controlsDiv);
+            }
+        });
+
+        // 2. Inject controls for Assignments
+        const assignBoxes = document.querySelectorAll('.assignment-box');
+        assignBoxes.forEach(box => {
+            if (!box.querySelector('.assign-controls')) {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'assign-controls';
+                
+                controlsDiv.innerHTML = `
+                    <select onchange="updateAssignStatus(this)">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <input type="date" onchange="updateAssignDate(this)">
+                `;
+                box.appendChild(controlsDiv);
+            }
+        });
+
+        loadData();
+    });
+
+    // --- Saving & Loading Logic ---
+
+    function saveData() {
+        // Save Weekly Trackers
+        const trackers = [];
+        document.querySelectorAll('.tracker-box').forEach(item => {
+            const id = item.getAttribute('data-id');
+            const select = item.querySelector('select');
+            const dateInput = item.querySelector('input[type="date"]');
+            if (select) trackers.push({ id, status: select.value, date: dateInput ? dateInput.value : '' });
+        });
+        localStorage.setItem('mmed_ult_tracker_data_v3', JSON.stringify(trackers));
+
+        // Save Assignments (New Format)
+        const assignments = [];
+        document.querySelectorAll('.assignment-box').forEach(item => {
+            const id = item.getAttribute('data-id');
+            const select = item.querySelector('select');
+            const dateInput = item.querySelector('input[type="date"]');
+            if (select) assignments.push({ id, status: select.value, date: dateInput ? dateInput.value : '' });
+        });
+        localStorage.setItem('mmed_ult_assign_data_v3', JSON.stringify(assignments));
+
+        // Save Log Inputs
+        const logs = [];
+        document.querySelectorAll('.log-input').forEach(input => logs.push({ id: input.id, value: input.value }));
+        localStorage.setItem('mmed_ult_logs_v3', JSON.stringify(logs));
+    }
+
+    function loadData() {
+        // Load Weekly Trackers
+        const storedTrackers = localStorage.getItem('mmed_ult_tracker_data_v3');
+        if (storedTrackers) {
+            JSON.parse(storedTrackers).forEach(item => {
+                const el = document.querySelector(`.tracker-box[data-id="${item.id}"]`);
+                if (el) {
+                    const sel = el.querySelector('select');
+                    const dateInput = el.querySelector('input[type="date"]');
+                    if (sel) { sel.value = item.status; updateVisuals(el, item.status); }
+                    if (dateInput) dateInput.value = item.date;
+                }
+            });
+        }
+
+        // Load Assignments
+        const storedAssign = localStorage.getItem('mmed_ult_assign_data_v3');
+        if (storedAssign) {
+            JSON.parse(storedAssign).forEach(item => {
+                const el = document.querySelector(`.assignment-box[data-id="${item.id}"]`);
+                if (el) {
+                    const sel = el.querySelector('select');
+                    const dateInput = el.querySelector('input[type="date"]');
+                    if (sel) { sel.value = item.status; updateVisuals(el, item.status); }
+                    if (dateInput) dateInput.value = item.date;
+                }
+            });
+        }
+
+        // Load Logs
+        const storedLogs = localStorage.getItem('mmed_ult_logs_v3');
+        if (storedLogs) {
+            JSON.parse(storedLogs).forEach(item => {
+                const el = document.getElementById(item.id);
+                if (el) el.value = item.value;
+            });
+        }
+    }
+
+    // --- Update Functions ---
+
+    function updateStatus(select) {
+        const box = select.closest('.tracker-box');
+        updateVisuals(box, select.value);
+        saveData();
+    }
+    
+    function updateAssignStatus(select) {
+        const box = select.closest('.assignment-box');
+        updateVisuals(box, select.value);
+        saveData();
+    }
+
+    function updateDate(input) { saveData(); }
+    function updateAssignDate(input) { saveData(); }
+
+    function updateVisuals(el, status) {
+        el.classList.remove('completed', 'in-progress');
+        if (status === 'Done' || status === 'Passed') el.classList.add('completed');
+        else if (status === 'In Progress') el.classList.add('in-progress');
+    }
+
+    // Additional listeners
+    document.querySelectorAll('.log-input').forEach(i => i.addEventListener('input', saveData));
+</script>
+
+</body>
+</html>

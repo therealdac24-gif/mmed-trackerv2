@@ -1,0 +1,20 @@
+{
+  "name": "Master of Medicine (Rural) - Electronic Logbook",
+  "short_name": "MMED Rural",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#15803d",
+  "icons": [
+    {
+      "src": "mmed_rural_icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "mmed_rural_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

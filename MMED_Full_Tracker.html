@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMED (Rural Health) - Complete 6 Year Tracker</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #d35400; /* Changed to a rural earth tone */
+            --sidebar-bg: #222;
+            --text-color: #333;
+            --light-bg: #f9f9f9;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --border-color: #bdc3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            background-color: #eef2f3;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            color: #ecf0f1;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            padding: 20px 0;
+            font-size: 0.9rem;
+            border-right: 4px solid var(--accent-color);
+            z-index: 1000;
+        }
+
+        #sidebar h2 {
+            text-align: center;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            border-bottom: 1px solid #444;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .nav-group { margin-bottom: 20px; padding-left: 15px; }
+        .nav-header { color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
+        
+        #sidebar ul { list-style: none; padding: 0; }
+        #sidebar li { margin-bottom: 2px; }
+        
+        #sidebar a {
+            display: block;
+            color: #bdc3c7;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px 0 0 4px;
+            transition: 0.2s;
+        }
+        #sidebar a:hover { background-color: var(--accent-color); color: white; padding-left: 18px; }
+
+        /* Main Content */
+        #main-content {
+            margin-left: 300px;
+            padding: 40px;
+            max-width: 1000px;
+            width: 100%;
+            background-color: white;
+            min-height: 100vh;
+        }
+
+        /* Typography */
+        h1 { color: var(--primary-color); border-bottom: 4px solid var(--accent-color); padding-bottom: 10px; margin-top: 0; }
+        h2 { color: var(--primary-color); margin-top: 50px; border-left: 6px solid var(--accent-color); padding-left: 15px; background: #fdfdfd; padding-top: 10px; padding-bottom: 10px; }
+        h3 { color: #555; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        p, li { line-height: 1.6; color: #444; }
+
+        /* Roadmap Grid */
+        .roadmap-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .roadmap-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: 4px solid var(--accent-color);
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .roadmap-year { font-weight: 800; color: var(--primary-color); display: block; margin-bottom: 10px; font-size: 1.1em; }
+
+        /* Trackers */
+        .tracker-box {
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-left: 5px solid #ccc;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .tracker-box.completed {
+            border-left-color: var(--success-color);
+            background-color: #f0f9f4;
+            opacity: 0.9;
+        }
+        
+        .tracker-box.completed .tracker-title {
+            color: var(--success-color);
+            text-decoration: line-through;
+        }
+
+        .tracker-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .tracker-title { font-weight: 600; font-size: 1.05rem; color: #2c3e50; }
+        
+        .controls { display: flex; gap: 10px; align-items: center; }
+        select, input[type="date"] {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            font-size: 0.9rem;
+        }
+        
+        .tracker-notes {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+            border-top: 1px dashed #eee;
+            padding-top: 8px;
+        }
+
+        /* Print styles */
+        @media print {
+            #sidebar { display: none; }
+            #main-content { margin: 0; width: 100%; padding: 0; }
+            .controls { display: none; }
+            .tracker-box { border: 1px solid #ccc; page-break-inside: avoid; }
+            h2 { page-break-before: always; }
+            h2:first-of-type { page-break-before: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar Navigation -->
+<nav id="sidebar">
+    <h2>MMED (Rural) Tracker</h2>
+    
+    <div class="nav-group">
+        <div class="nav-header">Program</div>
+        <ul>
+            <li><a href="#roadmap">6 Year Roadmap</a></li>
+            <li><a href="#regulations">Regulations</a></li>
+        </ul>
+    </div>
+
+    <div class="nav-group">
+        <div class="nav-header">Clinical Modules</div>
+        <ul>
+            <li><a href="#mod1">1: Surgery</a></li>
+            <li><a href="#mod2">2: Anaesthesia</a></li>
+            <li><a href="#mod3">3: Child Health</a></li>
+            <li><a href="#mod4">4: O&G</a></li>
+            <li><a href="#mod5">5: Internal Medicine</a></li>
+            <li><a href="#mod6">6: Psychiatry</a></li>
+            <li><a href="#mod7">7: Public Health</a></li>
+            <li><a href="#mod8">8: Eye/ENT</a></li>
+            <li><a href="#mod9">9: Lab Medicine</a></li>
+            <li><a href="#mod10">10: Management</a></li>
+        </ul>
+    </div>
+
+    <div class="nav-group">
+        <div class="nav-header">Assessments</div>
+        <ul>
+            <li><a href="#research">Research Project</a></li>
+            <li><a href="#exams">Exams (Pt 1 & 2)</a></li>
+            <li><a href="#logbooks">Logbook Checklist</a></li>
+        </ul>
+    </div>
+    
+    <div style="padding: 20px; text-align: center; font-size: 0.8rem; color: #7f8c8d;">
+        Based on Training Handbook<br>Nov 2023 Edition
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main id="main-content">
+
+    <section id="header">
+        <h1>MMED (Rural Health) Training Tracker</h1>
+        <p>This digital tool tracks your progress through the 6-year MMED (Rural Health) program at UPNG. Data is saved automatically to your browser.</p>
+    </section>
+
+    <!-- Roadmap -->
+    <section id="roadmap">
+        <h2>Program Roadmap</h2>
+        <div class="roadmap-container">
+            <div class="roadmap-card">
+                <span class="roadmap-year">Years 1-3</span>
+                <p><strong>Part 1 Training</strong><br>Surgery, O&G, Anaesthesia, Paeds, Medicine blocks.</p>
+                <p><em>Exam: Part 1 (Common & Specialty Core)</em></p>
+            </div>
+            <div class="roadmap-card">
+                <span class="roadmap-year">Years 4-5</span>
+                <p><strong>Advanced Clinicals</strong><br>Public Health, Management, Research.</p>
+                <p><em>Solar/Radio Course & Mgmt Intensive</em></p>
+            </div>
+            <div class="roadmap-card">
+                <span class="roadmap-year">Year 6</span>
+                <p><strong>Consolidation</strong><br>Completion of Research Project.</p>
+                <p><em>Exam: Part 2 (Written, Clinical, Viva)</em></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Module 1: Surgery -->
+    <section id="mod1">
+        <h2>Module 1: Surgery</h2>
+        <p><strong>Duration:</strong> 9 months (Full) or 3 months (Abbreviated for O&G stream).</p>
+        
+        <h3>Weekly Schedule (Full Program)</h3>
+        <div id="surgery-tracker">
+            <!-- JavaScript will populate this if I wanted to save space, but hardcoding for clarity -->
+            <div class="tracker-box" data-id="surg_w1"><div class="tracker-header"><span class="tracker-title">Week 1: Trauma Assessment & Shock</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w2"><div class="tracker-header"><span class="tracker-title">Week 2: Antibiotics & Pre-op Prep</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w3"><div class="tracker-header"><span class="tracker-title">Week 3-4: Theatre Setup & Sterilization</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Stab wound to abdomen</div></div>
+            <div class="tracker-box" data-id="surg_w5"><div class="tracker-header"><span class="tracker-title">Week 5: Acute Pain Mgmt</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w6"><div class="tracker-header"><span class="tracker-title">Week 6: Chronic Pain & Palliative</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Renal Colic</div></div>
+            <div class="tracker-box" data-id="surg_w7"><div class="tracker-header"><span class="tracker-title">Week 7: Wounds & Suturing</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w8"><div class="tracker-header"><span class="tracker-title">Week 8: Transfer Principles</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Palliative Hepatocellular Ca</div></div>
+            <div class="tracker-box" data-id="surg_w9"><div class="tracker-header"><span class="tracker-title">Week 9: Sepsis (Pyomyositis/Osteo)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w10"><div class="tracker-header"><span class="tracker-title">Week 10: Chest Drains & Empyema</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Osteo vs Septic Arthritis</div></div>
+            <div class="tracker-box" data-id="surg_w11"><div class="tracker-header"><span class="tracker-title">Week 11: Closed Fractures</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w12"><div class="tracker-header"><span class="tracker-title">Week 12: Neurovascular & Secondary Intention</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Supracondylar Fx</div></div>
+            <div class="tracker-box" data-id="surg_w13"><div class="tracker-header"><span class="tracker-title">Week 13: Dental/Airway Infections</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Floor of mouth swelling</div></div>
+            <div class="tracker-box" data-id="surg_w14"><div class="tracker-header"><span class="tracker-title">Week 14-15: Abscesses & Appendicitis</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w16"><div class="tracker-header"><span class="tracker-title">Week 16-17: Biliary & Laparotomy</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Gunshot wound abdomen</div></div>
+            <div class="tracker-box" data-id="surg_w18"><div class="tracker-header"><span class="tracker-title">Week 18-19: Stomas & Obstruction</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Small Bowel Obstruction</div></div>
+            <div class="tracker-box" data-id="surg_w20"><div class="tracker-header"><span class="tracker-title">Week 20-21: Casting & Traction</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w22"><div class="tracker-header"><span class="tracker-title">Week 22: Open Fractures & Tendons</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Vascular injury</div></div>
+            <div class="tracker-box" data-id="surg_w23"><div class="tracker-header"><span class="tracker-title">Week 23: Dynamic Splints & Dislocations</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w24"><div class="tracker-header"><span class="tracker-title">Week 24-25: Upper Limb Trauma & Bleeding</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Protruding Tibia / Shoulder Dislocation</div></div>
+            <div class="tracker-box" data-id="surg_w26"><div class="tracker-header"><span class="tracker-title">Week 26-27: Eye Enucleation & Hernias</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w28"><div class="tracker-header"><span class="tracker-title">Week 28: Strangulated Hernia</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+            <div class="tracker-box" data-id="surg_w29"><div class="tracker-header"><span class="tracker-title">Week 29-30: Head & Spinal Injury</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Unconscious MVA</div></div>
+            <div class="tracker-box" data-id="surg_w31"><div class="tracker-header"><span class="tracker-title">Week 31-32: Burns & Ethics</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Paediatric Burns</div></div>
+        </div>
+
+        <h3>Assignments</h3>
+        <p><em>Complete 20 assignments (1500-2500 words).</em></p>
+        <div class="tracker-box" data-id="surg_assign_count"><div class="tracker-header"><span class="tracker-title">Assignments Completed</span><div class="controls"><select id="surg_assign_select" onchange="updateStatus(this)"><option value="0">0/20</option><option value="5">5/20</option><option value="10">10/20</option><option value="15">15/20</option><option value="Done">20/20 (Done)</option></select></div></div></div>
+    </section>
+
+    <!-- Module 2: Anaesthesia -->
+    <section id="mod2">
+        <h2>Module 2: Anaesthesia</h2>
+        <p><strong>Duration:</strong> 4 months. <strong>Supervision:</strong> Accredited doctor.</p>
+        
+        <h3>Weekly Schedule (Tutorials & Case-Based)</h3>
+        <div class="tracker-box" data-id="anaes_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Gas supplies & Machine check</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="anaes_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Ketamine (Pharma & Dosing)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Ketamine at rural hospital</div></div>
+        <div class="tracker-box" data-id="anaes_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Propofol, Thiopentone, Benzos</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="anaes_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: Neuro-blockers & Pre-op Assess</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Diabetes & Hypertension</div></div>
+        <div class="tracker-box" data-id="anaes_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Deferring Surgery & Opiates</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="anaes_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Chronic Pain Management</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Palliative Care</div></div>
+        <div class="tracker-box" data-id="anaes_w7"><div class="tracker-header"><span class="tracker-title">Wk 7: Spinal Anaesthesia & LUSCS</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="anaes_w8"><div class="tracker-header"><span class="tracker-title">Wk 8: Brachial Plexus Blocks</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Obstetric Anaesthetic</div></div>
+        <div class="tracker-box" data-id="anaes_w9"><div class="tracker-header"><span class="tracker-title">Wk 9: Wrist/Ankle Blocks & Paeds</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="anaes_w10"><div class="tracker-header"><span class="tracker-title">Wk 10: Neonatal Resus & Local Pharma</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="anaes_w11"><div class="tracker-header"><span class="tracker-title">Wk 11: Can't Intubate/Ventilate & Shock</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="anaes_w12"><div class="tracker-header"><span class="tracker-title">Wk 12: IV Access (Peripheral/Central)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Blood loss & Shock</div></div>
+        <div class="tracker-box" data-id="anaes_w13"><div class="tracker-header"><span class="tracker-title">Wk 13: Cardiac Arrest & Critical Incidents</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Arrest on ward</div></div>
+        <div class="tracker-box" data-id="anaes_w14"><div class="tracker-header"><span class="tracker-title">Wk 14: Handling Negative Outcomes</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Choosing type of anaesthesia</div></div>
+
+        <h3>Requirements</h3>
+        <div class="tracker-box" data-id="anaes_rep1"><div class="tracker-header"><span class="tracker-title">6 Case Reports</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">GA with paralysis, Regional, Sepsis, Obs, Head Injury, Diabetes</div></div>
+        <div class="tracker-box" data-id="anaes_rep2"><div class="tracker-header"><span class="tracker-title">Pain Case Report</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="anaes_assign"><div class="tracker-header"><span class="tracker-title">Written Assignment</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">"Surgeon as Anaesthetist: Problems & Solutions"</div></div>
+    </section>
+
+    <!-- Module 3: Child Health -->
+    <section id="mod3">
+        <h2>Module 3: Child Health</h2>
+        <p><strong>Duration:</strong> 1 month minimum.</p>
+        
+        <h3>Weekly Schedule</h3>
+        <div class="tracker-box" data-id="ch_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Milestones & Malnutrition</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Protocols for SAM/MAM</div></div>
+        <div class="tracker-box" data-id="ch_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Pneumonia & Oxygen</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: The child in pain (Burns)</div></div>
+        <div class="tracker-box" data-id="ch_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Cardiac & Kidney Diseases</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="ch_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: Newborn Exam</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: The child with cancer</div></div>
+        <div class="tracker-box" data-id="ch_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Talipes (Ponsetti) & Diarrhoea</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="ch_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Immunization</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Malaria & Transfusion</div></div>
+
+        <h3>Requirements</h3>
+        <div class="tracker-box" data-id="ch_cases"><div class="tracker-header"><span class="tracker-title">7 Case Reports</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">TB, Meningitis, SAM, Diarrhoea, LBW, HIV, Severe Anaemia</div></div>
+        <div class="tracker-box" data-id="ch_assign"><div class="tracker-header"><span class="tracker-title">3 Written Assignments</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Choose from: Malnutrition, Meningitis, Asthma, HIV/PMTCT, Oxygen, Neonatal Deaths, Immunization</div></div>
+    </section>
+
+    <!-- Module 4: O&G -->
+    <section id="mod4">
+        <h2>Module 4: Obstetrics & Gynaecology</h2>
+        <p><strong>Duration:</strong> 3 months.</p>
+
+        <h3>Weekly Schedule (Full Stream)</h3>
+        <div class="tracker-box" data-id="og_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Menstrual Cycle & Problems</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Contraception (Hormonal/IUD)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Routine Antenatal Care</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: Basic USS</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Family Planning</div></div>
+        <div class="tracker-box" data-id="og_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Miscarriage/Ectopic</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Normal Labour</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Vague abdo pain</div></div>
+        <div class="tracker-box" data-id="og_w7"><div class="tracker-header"><span class="tracker-title">Wk 7: Partograms & Episiotomy</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w8"><div class="tracker-header"><span class="tracker-title">Wk 8: Caesarean Section Technique</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Stage 2 management</div></div>
+        <div class="tracker-box" data-id="og_w9"><div class="tracker-header"><span class="tracker-title">Wk 9: APH & Pre-eclampsia</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w10"><div class="tracker-header"><span class="tracker-title">Wk 10: Failure to Progress</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: APH 32 weeks</div></div>
+        <div class="tracker-box" data-id="og_w11"><div class="tracker-header"><span class="tracker-title">Wk 11: Post-partum Haemorrhage</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w12"><div class="tracker-header"><span class="tracker-title">Wk 12: Puerperal Sepsis & CS Problems</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: PPH emergency</div></div>
+        <div class="tracker-box" data-id="og_w13"><div class="tracker-header"><span class="tracker-title">Wk 13-14: Infertility & Endometriosis</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w15"><div class="tracker-header"><span class="tracker-title">Wk 15-16: Ovarian Tumours & Assisted Delivery</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w17"><div class="tracker-header"><span class="tracker-title">Wk 17-18: Endometrial CA & Fibroids</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Abdominal mass</div></div>
+        <div class="tracker-box" data-id="og_w19"><div class="tracker-header"><span class="tracker-title">Wk 19-20: Cervical CA & Screening</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Irregular bleeding</div></div>
+        <div class="tracker-box" data-id="og_w21"><div class="tracker-header"><span class="tracker-title">Wk 21-22: Pelvic Sepsis & PID</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w23"><div class="tracker-header"><span class="tracker-title">Wk 23-25: Adv. Pre-eclampsia & Induction</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Eclampsia</div></div>
+        <div class="tracker-box" data-id="og_w26"><div class="tracker-header"><span class="tracker-title">Wk 26-27: PPH & Congenital Abn.</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w28"><div class="tracker-header"><span class="tracker-title">Wk 28-29: HIV & Destructive Delivery</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="og_w30"><div class="tracker-header"><span class="tracker-title">Wk 30: Breast Feeding</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Obstructed Labour</div></div>
+
+        <h3>Requirements</h3>
+        <div class="tracker-box" data-id="og_cases"><div class="tracker-header"><span class="tracker-title">6 Case Reports</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Failure to progress, Abnormal menses, Puerperal Sepsis, APH/Ectopic, PPH, Malignancy</div></div>
+        <div class="tracker-box" data-id="og_assign"><div class="tracker-header"><span class="tracker-title">1 Written Assignment (1500 words)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Topic options: Family Planning, Supervised Births, Cervical Cancer, Prevention, Ultrasound, or Infertility</div></div>
+    </section>
+
+    <!-- Module 5: Internal Medicine -->
+    <section id="mod5">
+        <h2>Module 5: Internal Medicine</h2>
+        <p><strong>Duration:</strong> 2 months.</p>
+        
+        <h3>Weekly Schedule</h3>
+        <div class="tracker-box" data-id="med_w1"><div class="tracker-header"><span class="tracker-title">Wk 1: Diabetes & Hyperosmolar Coma</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="med_w2"><div class="tracker-header"><span class="tracker-title">Wk 2: Antibiotics</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Septicaemic Shock</div></div>
+        <div class="tracker-box" data-id="med_w3"><div class="tracker-header"><span class="tracker-title">Wk 3: Tuberculosis</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="med_w4"><div class="tracker-header"><span class="tracker-title">Wk 4: ECG Interpretation</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Snake Bite</div></div>
+        <div class="tracker-box" data-id="med_w5"><div class="tracker-header"><span class="tracker-title">Wk 5: Hypertension & HIV/AIDS</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="med_w6"><div class="tracker-header"><span class="tracker-title">Wk 6: Asthma/COAD</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Case: Severe Malaria</div></div>
+
+        <h3>Requirements</h3>
+        <div class="tracker-box" data-id="med_assign_a"><div class="tracker-header"><span class="tracker-title">Assignment Part A</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">2 Essays (1000-1500 words). Topics: Chronic Resp, DOTS, Type 2 DM, Typhoid, HTN/Stroke, CAD, HIV, Liver Disease, Haemopoiesis</div></div>
+        <div class="tracker-box" data-id="med_assign_b"><div class="tracker-header"><span class="tracker-title">Assignment Part B (Cancer)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">1 Essay (1500-2500 words) on Cancer in PNG</div></div>
+        <div class="tracker-box" data-id="med_cases"><div class="tracker-header"><span class="tracker-title">Case Reports</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Malaria, Asthma/COAD, Epilepsy, Arthritis, MI, TB</div></div>
+    </section>
+
+    <!-- Module 6-10 Briefs -->
+    <section id="mod6">
+        <h2>Module 6: Psychiatry</h2>
+        <div class="tracker-box" data-id="psych_case1"><div class="tracker-header"><span class="tracker-title">Case: Acute Psychosis</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="psych_case2"><div class="tracker-header"><span class="tracker-title">Case: Somatoform Disorder</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+    </section>
+
+    <section id="mod7">
+        <h2>Module 7: Public Health</h2>
+        <div class="tracker-box" data-id="ph_report"><div class="tracker-header"><span class="tracker-title">District Health Report (3500 words)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="ph_assign"><div class="tracker-header"><span class="tracker-title">2 Assignments</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Options: Food poisoning, Domestic Violence, Immunization coverage, Repro Health, Occupational Health</div></div>
+    </section>
+
+    <section id="mod8">
+        <h2>Module 8: Eye/ENT</h2>
+        <div class="tracker-box" data-id="eye_cases"><div class="tracker-header"><span class="tracker-title">4 Case Reports</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Perforating eye injury, Red eye, Epistaxis, Chronic Otitis Media</div></div>
+    </section>
+
+    <section id="mod10">
+        <h2>Module 10: Management</h2>
+        <div class="tracker-box" data-id="mgmt_assign"><div class="tracker-header"><span class="tracker-title">Major Assignment (3500 words)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div><div class="tracker-notes">Comparison of Management systems at 3 District Hospitals</div></div>
+        <div class="tracker-box" data-id="mgmt_course"><div class="tracker-header"><span class="tracker-title">3-Week Intensive Course</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+    </section>
+
+    <!-- Exams -->
+    <section id="exams">
+        <h2>Examinations</h2>
+        <div class="tracker-box" data-id="exam_part1"><div class="tracker-header"><span class="tracker-title">Part 1 Exam (End Year 3)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Passed</option></select></div></div></div>
+        <div class="tracker-box" data-id="exam_part2"><div class="tracker-header"><span class="tracker-title">Part 2 Exam (Exit Exam)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Passed</option></select></div></div></div>
+    </section>
+
+    <!-- Global Logbook -->
+    <section id="logbooks">
+        <h2>Logbook Summary</h2>
+        <p>Ensure these core competencies are signed off in your physical logbook.</p>
+        
+        <h3>Anaesthesia</h3>
+        <div class="tracker-box" data-id="log_anaes_intub"><div class="tracker-header"><span class="tracker-title">Adult Intubation (10)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_anaes_spinal"><div class="tracker-header"><span class="tracker-title">Spinal Anaesthesia (20)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_anaes_ket"><div class="tracker-header"><span class="tracker-title">Ketamine (10)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+
+        <h3>O&G</h3>
+        <div class="tracker-box" data-id="log_og_cs"><div class="tracker-header"><span class="tracker-title">LUSCS (6)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_og_pph"><div class="tracker-header"><span class="tracker-title">PPH Management (6)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+        <div class="tracker-box" data-id="log_og_breech"><div class="tracker-header"><span class="tracker-title">Breech Delivery (5)</span><div class="controls"><select onchange="updateStatus(this)"><option>Pending</option><option>Done</option></select></div></div></div>
+    </section>
+
+</main>
+
+<script>
+    function saveData() {
+        const items = document.querySelectorAll('.tracker-box');
+        const data = [];
+        
+        items.forEach(item => {
+            const id = item.getAttribute('data-id');
+            const select = item.querySelector('select');
+            
+            if (select) {
+                const status = select.value;
+                data.push({ id, status });
+            }
+        });
+
+        localStorage.setItem('mmed_full_tracker', JSON.stringify(data));
+    }
+
+    function loadData() {
+        const storedData = localStorage.getItem('mmed_full_tracker');
+        if (storedData) {
+            const data = JSON.parse(storedData);
+            
+            data.forEach(item => {
+                const element = document.querySelector(`.tracker-box[data-id="${item.id}"]`);
+                if (element) {
+                    const select = element.querySelector('select');
+                    if (select) {
+                        select.value = item.status;
+                        updateVisuals(element, item.status);
+                    }
+                }
+            });
+        }
+    }
+
+    function updateStatus(selectElement) {
+        const box = selectElement.closest('.tracker-box');
+        updateVisuals(box, selectElement.value);
+        saveData();
+    }
+
+    function updateVisuals(element, status) {
+        if (status === 'Done' || status === 'Passed' || status === 'Yes') {
+            element.classList.add('completed');
+        } else {
+            element.classList.remove('completed');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadData);
+</script>
+
+</body>
+</html>
