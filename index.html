@@ -199,7 +199,11 @@
                     { id: 'w5', title: 'Miscarriage/Ectopic' }, { id: 'w6', title: 'Normal Labour' },
                     { id: 'w7', title: 'Partograms' }, { id: 'w8', title: 'CS Technique' },
                     { id: 'w9', title: 'APH & Pre-eclampsia' }, { id: 'w10', title: 'Failure to Progress' },
-                    { id: 'w11', title: 'PPH' }, { id: 'w12', title: 'Puerperal Sepsis' }
+                    { id: 'w11', title: 'PPH' }, { id: 'w12', title: 'Puerperal Sepsis' },
+                    { id: 'w13', title: 'Infertility' }, { id: 'w15', title: 'Ovarian Tumours' },
+                    { id: 'w17', title: 'Endometrial CA' }, { id: 'w19', title: 'Cervical CA' },
+                    { id: 'w21', title: 'Pelvic Sepsis' }, { id: 'w23', title: 'Pre-eclampsia/Eclampsia' },
+                    { id: 'w26', title: 'PPH Advanced' }, { id: 'w29', title: 'Destructive Delivery' }
                 ],
                 assignmentList: [
                     { title: 'Written Assignment 1', prompt: 'Topic: Antenatal Care or Family Planning' },
@@ -234,7 +238,8 @@
                 duration: 'Longitudinal',
                 assignmentList: [
                     'PH1: Community Diagnosis', 'PH2: Outbreak Investigation',
-                    'PH3: Program Evaluation', 'PH4: Health Management'
+                    'PH3: Program Evaluation', 'PH4: Health Management',
+                    'PH5: Environmental Health'
                 ]
             },
             {
@@ -273,8 +278,61 @@
                 { id: 'exam_part1', label: 'Part 1 Exam Passed' },
                 { id: 'exam_part2_written', label: 'Part 2 Written Passed' },
                 { id: 'exam_part2_clinical', label: 'Part 2 Clinical Passed' }
+            ],
+            management: [
+                { id: 'mgmt_course', label: '4-Week Intensive Course' },
+                { id: 'mgmt_assign', label: '7,500 Word Assignment' }
+            ],
+            other: [
+                { id: 'solar_course', label: 'Solar/Radio Maintenance Course' }
             ]
         };
+
+        const masterLogbookConfig = [
+            {
+                category: 'Anaesthesiology',
+                items: [
+                    { id: 'la_pre', label: 'Pre-op Assessment', target: 50 },
+                    { id: 'la_int', label: 'Intubation', target: 10 },
+                    { id: 'la_spin', label: 'Spinal Anaesthesia', target: 20 },
+                    { id: 'la_ket', label: 'Ketamine Anaesthesia', target: 10 }
+                ]
+            },
+            {
+                category: 'Obstetrics & Gynaecology',
+                items: [
+                    { id: 'lo_norm', label: 'Normal Delivery', target: 20 },
+                    { id: 'lo_cs', label: 'LUSCS (Caesarean)', target: 6 },
+                    { id: 'lo_breech', label: 'Breech Delivery', target: 5 },
+                    { id: 'lo_vac', label: 'Vacuum Extraction', target: 6 },
+                    { id: 'lo_pph', label: 'PPH Management', target: 6 }
+                ]
+            },
+            {
+                category: 'Child Health',
+                items: [
+                    { id: 'lc_neo', label: 'Neonatal Resuscitation', target: 4 },
+                    { id: 'lc_pon', label: 'Ponsetti Casting', target: 2 },
+                    { id: 'lc_io', label: 'Intraosseous Needle', target: 1 }
+                ]
+            },
+            {
+                category: 'Surgery & Medicine',
+                items: [
+                    { id: 'ls_hernia', label: 'Hernia Repair', target: 8 },
+                    { id: 'ls_lap', label: 'Laparotomy', target: 5 },
+                    { id: 'ls_chest', label: 'Chest Drain Insertion', target: 7 },
+                    { id: 'lm_lp', label: 'Lumbar Puncture', target: 10 }
+                ]
+            },
+            {
+                category: 'Laboratory Medicine',
+                items: [
+                    { id: 'log_blood', label: 'Blood Typing & Crossmatch', target: 10 },
+                    { id: 'log_malaria', label: 'Malaria Smear Staining', target: 10 }
+                ]
+            }
+        ];
 
         // --- State Management (With Sync & Offline) ---
         class AppState {
@@ -391,7 +449,11 @@
                 if (type === 'week') {
                     if (!this.modules[moduleId].weeks) this.modules[moduleId].weeks = {};
                     if (!this.modules[moduleId].weeks[id]) this.modules[moduleId].weeks[id] = {};
-                    this.modules[moduleId].weeks[id].status = value;
+                    if (typeof value === 'object') {
+                        this.modules[moduleId].weeks[id] = { ...this.modules[moduleId].weeks[id], ...value };
+                    } else {
+                        this.modules[moduleId].weeks[id].status = value;
+                    }
                 } else if (type === 'assignment') {
                     // Check if value is object (date) or string
                     if (!this.modules[moduleId].assignments) this.modules[moduleId].assignments = {};
@@ -404,10 +466,32 @@
                 this.saveData();
             }
 
+            logProcedure(moduleId) {
+                const lastSup = this.procedureLog.length > 0 ? this.procedureLog[this.procedureLog.length - 1].supervisor : '';
+                const date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+                if (!date) return;
+                const procedure = prompt("Procedure Name (e.g., Appendectomy):");
+                if (!procedure) return;
+                const supervisor = prompt("Supervisor Name (Auto-filled last used):", lastSup);
+                if (!supervisor) return;
+
+                this.procedureLog.push({
+                    moduleId, date, procedure, supervisor, timestamp: Date.now()
+                });
+                this.saveData();
+                render();
+            }
+
             updateMilestone(category, id, value, date) {
                 if (!this.milestones[category]) this.milestones[category] = {};
                 this.milestones[category][id] = { status: value, date: date };
                 this.saveData();
+            }
+
+            updateLogbook(id, value) {
+                this.logbook[id] = value;
+                this.saveData();
+                render(); // Re-render to show progress
             }
 
             notify() { this.listeners.forEach(l => l()); }
@@ -519,18 +603,37 @@
                         <h3 style="color:var(--clay); margin-bottom:15px;">Weekly Clinical Schedule</h3>
                         <div style="display:grid; gap:10px;">
                             ${config.weeks.map(w => {
-                const wStatus = data.weeks && data.weeks[w.id] ? data.weeks[w.id].status : 'Not Started';
+                const wData = (data.weeks && data.weeks[w.id]) || {};
+                const wStatus = wData.status || 'Not Started';
+                // Determine if we should auto-set Pending on start date change (only if Not Started)
                 return `
-                                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #f3f4f6;">
-                                    <div>
-                                        <span style="font-weight:bold; color:var(--forest-green); margin-right:10px;">${w.id.toUpperCase()}</span>
-                                        <span>${w.title}</span>
+                                <div style="padding:15px; border-bottom:1px solid #f3f4f6; background:${wStatus === 'Completed' ? '#dcfce7' : wStatus === 'Pending' ? '#fef9c3' : 'white'}; border-radius:8px; margin-bottom:10px; border:1px solid ${wStatus === 'Completed' ? '#bbf7d0' : '#e5e7eb'};">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                        <div>
+                                            <span style="font-weight:bold; color:var(--forest-green); margin-right:10px;">${w.id.toUpperCase()}</span>
+                                            <span style="font-weight:600; color:#374151;">${w.title}</span>
+                                        </div>
+                                        <select onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {status: this.value})" 
+                                                style="padding:6px 12px; border-radius:6px; border:1px solid #d1d5db; cursor:pointer; font-weight:500; ${wStatus === 'Completed' ? 'background:#15803d; color:white' : wStatus === 'Pending' ? 'background:#ca8a04; color:white' : 'color:#6b7280'}">
+                                            <option value="Not Started" ${wStatus === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                                            <option value="Pending" ${wStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                                            <option value="Completed" ${wStatus === 'Completed' ? 'selected' : ''}>Completed</option>
+                                        </select>
                                     </div>
-                                    <select onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', this.value)" 
-                                            style="width:auto; padding:5px; font-size:0.9em; border-radius:4px; ${wStatus === 'Done' ? 'background:#dcfce7; color:#166534' : ''}">
-                                        <option value="Not Started" ${wStatus === 'Not Started' ? 'selected' : ''}>Incomplete</option>
-                                        <option value="Done" ${wStatus === 'Done' ? 'selected' : ''}>Computed</option>
-                                    </select>
+                                    <div style="display:flex; gap:20px; font-size:0.9em; color:#6b7280; background:#f9fafb; padding:10px; border-radius:6px;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span style="font-weight:500;">Start:</span>
+                                            <input type="date" value="${wData.startDate || ''}" 
+                                                   onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {startDate: this.value, ...('${wStatus}'==='Not Started'?{status:'Pending'}:{})})"
+                                                   style="padding:5px; border:1px solid #d1d5db; border-radius:4px; color:#374151;">
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span style="font-weight:500;">End:</span>
+                                            <input type="date" value="${wData.completeDate || ''}" 
+                                                   onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {completeDate: this.value, status: 'Completed'})"
+                                                   style="padding:5px; border:1px solid #d1d5db; border-radius:4px; color:#374151;">
+                                        </div>
+                                    </div>
                                 </div>`;
             }).join('')}
                         </div>
@@ -580,14 +683,78 @@
             }).join('')}
                         </div>
                     ` : ''}
+
+                    <!-- Procedures Log -->
+                    <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <h3 style="color:var(--clay);">Procedure Log</h3>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="renderPrintView('${moduleId}')" style="background:#f3f4f6; color:#4b5563; border:1px solid #d1d5db; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.9em;">🖨️ Print Log</button>
+                                <button onclick="state.logProcedure('${moduleId}')" class="btn-rural" style="font-size:0.9em;">+ Log New</button>
+                            </div>
+                        </div>
+                        <p><strong>Goal:</strong> ${state.procedureLog.filter(p => p.moduleId === moduleId).length} / ${config.procedures || 0}</p>
+                        <div style="margin-top:15px; display:grid; gap:10px;">
+                            ${state.procedureLog.filter(p => p.moduleId === moduleId).map(p => `
+                                <div style="padding:10px; border:1px solid #e5e7eb; border-radius:6px; background:#f9fafb; font-size:0.9em;">
+                                    <strong>${p.date}</strong>: ${p.procedure} <span style="color:#6b7280;">(Supervisor: ${p.supervisor})</span>
+                                </div>
+                            `).join('')}
+                            ${state.procedureLog.filter(p => p.moduleId === moduleId).length === 0 ? '<p style="color:#9ca3af; font-style:italic;">No procedures logged yet.</p>' : ''}
+                        </div>
+                    </div>
+
+                </div>
+            `;
+        }
+
+        function renderPrintView(moduleId) {
+            const config = moduleConfigs.find(m => m.id === moduleId);
+            const logs = state.procedureLog.filter(p => p.moduleId === moduleId);
+            const app = document.getElementById('app');
+
+            app.innerHTML = `
+                <div style="padding:40px; max-width:800px; margin:auto; background:white; min-height:100vh;">
+                    <div style="text-align:center; margin-bottom:30px; border-bottom:2px solid #15803d; padding-bottom:20px;">
+                        <h1 style="color:#15803d; margin:0;">Master of Medicine (Rural)</h1>
+                        <h2 style="color:#4b5563; margin:5px 0 0 0;">${config.name} Logbook</h2>
+                        <p style="margin-top:10px;"><strong>Student:</strong> ${state.account.name} (ID: ${state.account.id})</p>
+                    </div>
+
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:30px;">
+                        <thead>
+                            <tr style="background:#f3f4f6; text-align:left;">
+                                <th style="border:1px solid #d1d5db; padding:10px;">Date</th>
+                                <th style="border:1px solid #d1d5db; padding:10px;">Procedure</th>
+                                <th style="border:1px solid #d1d5db; padding:10px;">Supervisor</th>
+                                <th style="border:1px solid #d1d5db; padding:10px; width:150px;">Signature</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${logs.map(p => `
+                                <tr>
+                                    <td style="border:1px solid #d1d5db; padding:10px;">${p.date}</td>
+                                    <td style="border:1px solid #d1d5db; padding:10px;">${p.procedure}</td>
+                                    <td style="border:1px solid #d1d5db; padding:10px;">${p.supervisor}</td>
+                                    <td style="border:1px solid #d1d5db; padding:10px;"></td> <!-- Signature Box -->
+                                </tr>
+                            `).join('')}
+                            ${logs.length === 0 ? '<tr><td colspan="4" style="text-align:center; padding:20px; color:#9ca3af;">No procedures logged yet.</td></tr>' : ''}
+                        </tbody>
+                    </table>
+
+                    <div class="no-print" style="text-align:center; position:fixed; bottom:20px; left:0; width:100%;">
+                        <button onclick="window.print()" style="background:#15803d; color:white; border:none; padding:12px 25px; border-radius:6px; font-weight:bold; cursor:pointer; margin-right:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">🖨️ Print Now</button>
+                        <button onclick="render()" style="background:#f3f4f6; color:#4b5563; border:1px solid #d1d5db; padding:12px 25px; border-radius:6px; cursor:pointer;">❌ Close</button>
+                    </div>
                 </div>
             `;
         }
 
         function renderMilestones() {
             return `
-                <div style="padding:30px; max-width:1000px; margin:auto;">
-                    <h1 style="color:var(--forest-green); margin-bottom:30px;">Milestones & Progress</h1>
+            < div style = "padding:30px; max-width:1000px; margin:auto;" >
+                <h1 style="color:var(--forest-green); margin-bottom:30px;">Milestones & Progress</h1>
                     ${Object.keys(milestoneConfigs).map(cat => `
                         <div style="background:white; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
                             <h3 style="text-transform:uppercase; color:var(--clay); letter-spacing:1px; margin-bottom:15px;">${cat}</h3>
@@ -610,8 +777,55 @@
             }).join('')}
                             </div>
                         </div>
-                    `).join('')}
+                    `).join('')
+                }
+                </div >
+            `;
+        }
+
+        function renderMasterLogbook() {
+            return `
+            <div style="padding:30px; max-width:1000px; margin:auto;">
+                <h1 style="color:var(--forest-green); margin-bottom:10px;">Master Logbook Checklist</h1>
+                <p style="color:#6b7280; margin-bottom:30px;">Track your progress against graduation requirements (Numbers indicate procedures performed).</p>
+                
+                ${masterLogbookConfig.map(cat => `
+                    <div style="background:white; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                        <h3 style="color:#15803d; border-bottom:2px solid #e5e7eb; padding-bottom:10px; margin-bottom:15px;">
+                            ${cat.category}
+                        </h3>
+                        <div style="display:grid; gap:12px;">
+                            ${cat.items.map(item => {
+                const val = state.logbook[item.id] || 0;
+                const isDone = val >= item.target;
+                const pct = Math.min(100, Math.round((val / item.target) * 100));
+                return `
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:${isDone ? '#f0fdf4' : '#f9fafb'}; border-radius:6px; border:1px solid ${isDone ? '#bbf7d0' : '#e5e7eb'};">
+                                    <div style="flex:1;">
+                                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                            <span style="font-weight:500; color:${isDone ? '#15803d' : '#374151'};">${item.label}</span>
+                                            <span style="font-size:0.9em; color:${isDone ? '#15803d' : '#6b7280'}; margin-right: 15px;">${val} / ${item.target}</span>
+                                        </div>
+                                        <div style="background:#e5e7eb; height:6px; border-radius:99px; width:100%; max-width:300px;">
+                                            <div style="background:${isDone ? '#22c55e' : '#3b82f6'}; height:6px; border-radius:99px; width:${pct}%;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="margin-left:20px;">
+                                        <input type="number" min="0" value="${val}" 
+                                               onchange="state.updateLogbook('${item.id}', parseInt(this.value) || 0)"
+                                               style="width:70px; padding:6px; border:1px solid #d1d5db; border-radius:4px; text-align:center;">
+                                    </div>
+                                </div>
+                            `;
+            }).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+
+                <div style="margin-top:40px; text-align:center;">
+                     <button onclick="window.print()" class="btn-rural">🖨️ Print Master Logbook</button>
                 </div>
+            </div>
             `;
         }
 
@@ -638,6 +852,7 @@
                     <div class="no-print" style="width:260px; background:var(--earth-black); color:white; padding:20px; display:flex; flex-direction:column;">
                         <h2 style="color:var(--forest-green); margin-bottom:30px; font-weight:bold;">MMED Rural</h2>
                         <button onclick="state.activeTab='dashboard'; render()" style="width:100%; text-align:left; background:none; border:none; color:white; padding:10px; cursor:pointer;">📊 Dashboard</button>
+                        <button onclick="state.activeTab='master_logbook'; render()" style="width:100%; text-align:left; background:none; border:none; color:white; padding:10px; cursor:pointer;">📋 Master Logbook</button>
                          <button onclick="state.activeTab='milestones'; render()" style="width:100%; text-align:left; background:none; border:none; color:white; padding:10px; cursor:pointer;">🏁 Milestones</button>
                         <hr style="margin:20px 0; border:0; border-top:1px solid #374151;">
                         <div style="flex:1; overflow-y:auto;">
@@ -652,20 +867,40 @@
                         </div>
                     </div>
 
-                    <!-- Content -->
-                    <div style="flex:1; overflow-y:auto; height: 100vh;">
-                        ${state.activeTab === 'dashboard' ? `
+                    <!--Content -->
+            <div style="flex:1; overflow-y:auto; height: 100vh;">
+                ${state.activeTab === 'dashboard' ? `
                             <div style="padding:40px;">
                                 <h1 style="color:var(--forest-green);">Welcome, Dr. ${state.account.name}</h1>
                                 <p style="color:#6b7280;">Masters in Medicine (Rural) | Year ${state.account.year}</p>
+                                
+                                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px; margin-top:30px;">
+                                    <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border-top:4px solid var(--forest-green);">
+                                        <h3 style="color:#6b7280; font-size:0.9em; text-transform:uppercase;">Assignments</h3>
+                                        <p style="font-size:2em; font-weight:bold; color:var(--earth-black);">
+                                            ${Object.values(state.modules).reduce((acc, m) => acc + (m.assignments ? Object.values(m.assignments).filter(a => a.dateSubmitted).length : 0), 0)}
+                                            <span style="font-size:0.5em; color:#9ca3af;">/ ${moduleConfigs.reduce((acc, m) => acc + (m.assignmentList ? m.assignmentList.length : 0), 0)}</span>
+                                        </p>
+                                    </div>
+                                    <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border-top:4px solid var(--forest-green);">
+                                        <h3 style="color:#6b7280; font-size:0.9em; text-transform:uppercase;">Procedures</h3>
+                                        <p style="font-size:2em; font-weight:bold; color:var(--earth-black);">
+                                            ${state.procedureLog.length}
+                                            <span style="font-size:0.5em; color:#9ca3af;">/ ${moduleConfigs.reduce((acc, m) => acc + (m.procedures || 0), 0)}</span>
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div style="margin-top:30px; background:white; padding:20px; border-radius:12px; border-left:5px solid var(--accent-orange);">
                                     <h3 style="color:var(--clay);">Academic Status</h3>
                                     <p style="font-size:0.9em;">Ensure all procedure logs are signed by supervisors before rotation end.</p>
                                 </div>
                             </div>
-                        ` : state.activeTab === 'milestones' ? renderMilestones() : renderModuleDetail(state.activeTab)}
-                    </div>
-                </div>
+                        ` : state.activeTab === 'milestones' ? renderMilestones()
+                    : state.activeTab === 'master_logbook' ? renderMasterLogbook()
+                        : renderModuleDetail(state.activeTab)}
+            </div>
+                </div >
             `;
         }
 
