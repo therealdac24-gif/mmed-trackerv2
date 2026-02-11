@@ -70,6 +70,24 @@
             background: var(--clay);
         }
 
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .status-done {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pending {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
         /* Modal Animation */
         @keyframes fadeIn {
             from {
@@ -90,21 +108,38 @@
 <body>
     <div id="app"></div>
     <script>
-        // --- Configuration ---
-        let moduleConfigs = [
+        // --- Detailed Configuration (The Content You Like) ---
+        const moduleConfigs = [
             {
                 id: 'surgery',
                 name: 'Surgery (Module 1)',
                 color: '#15803d',
                 duration: '9 months',
                 procedures: 45,
+                weeks: [
+                    { id: 'w1', title: 'Trauma Assessment & Shock' }, { id: 'w2', title: 'Antibiotics & Pre-op Prep' },
+                    { id: 'w3', title: 'Instruments & Sterilization' }, { id: 'w4', title: 'Theatre Setup (Case: Stab wound)' },
+                    { id: 'w5', title: 'Acute Pain' }, { id: 'w6', title: 'Chronic Pain' },
+                    { id: 'w7', title: 'Wounds & Suturing' }, { id: 'w8', title: 'Transfer Principles' },
+                    { id: 'w9', title: 'Pyomyositis & Osteo' }, { id: 'w10', title: 'Chest Drains' },
+                    { id: 'w11', title: 'Closed Fractures' }, { id: 'w12', title: 'Neurovascular & Secondary Intention' },
+                    { id: 'w13', title: 'Dental/Airway Infections' }, { id: 'w14', title: 'Abscesses' },
+                    { id: 'w15', title: 'Appendicitis' }, { id: 'w16', title: 'Laparotomy Basics' },
+                    { id: 'w17', title: 'Gut Repair' }, { id: 'w18', title: 'Stomas & Ulcers' },
+                    { id: 'w19', title: 'Bowel Obstruction' }, { id: 'w20', title: 'Casting & Splinting' },
+                    { id: 'w21', title: 'Traction' }, { id: 'w22', title: 'Open Fractures' },
+                    { id: 'w23', title: 'Dislocations' }, { id: 'w24', title: 'Upper Limb Trauma' },
+                    { id: 'w25', title: 'Bleeding Control' }, { id: 'w26', title: 'Enucleation' },
+                    { id: 'w27', title: 'Hernia Repair' }, { id: 'w28', title: 'Strangulated Hernia' },
+                    { id: 'w29', title: 'Minor Procedures' }, { id: 'w30', title: 'Head & Spinal Injury' },
+                    { id: 'w31', title: 'Burns' }, { id: 'w32', title: 'Ethics' }
+                ],
                 assignmentList: [
                     { title: '1. Cancer Pathophysiology', prompt: 'Staging and development in rural contexts.' },
-                    { title: '2. Blood Transfusion Protocols', prompt: 'Risks, safety, and rural alternatives.' }
-                ],
-                weeks: [
-                    { id: 'w1', title: 'Trauma Assessment & Shock' },
-                    { id: 'w2', title: 'Antibiotics & Pre-op Prep' }
+                    { title: '2. Cancer Screening in PNG', prompt: 'Pros/cons of screening programs.' },
+                    { title: '3. Blood Transfusion Protocols', prompt: 'Risks, safety, and rural alternatives.' },
+                    { title: '4. Wound Healing Physiology', prompt: 'Stages of healing in different tissues.' },
+                    { title: '5. Antibiotics Policy', prompt: 'Stewardship and resistance patterns.' }
                 ]
             },
             {
@@ -113,8 +148,16 @@
                 color: '#475569',
                 duration: '4 months',
                 procedures: 50,
-                assignmentList: [{ title: 'Ketamine Safety', prompt: 'Protocols for peripheral settings.' }],
-                weeks: [{ id: 'w1', title: 'Machine Check & Equipment' }]
+                weeks: [
+                    { id: 'w1', title: 'Machine Check & Equipment' }, { id: 'w2', title: 'Ketamine (Pharma & Use)' },
+                    { id: 'w3', title: 'Propofol & Benzos' }, { id: 'w4', title: 'Pre-op Assessment' },
+                    { id: 'w5', title: 'Opiates & Deferring Surgery' }, { id: 'w6', title: 'Chronic Pain' },
+                    { id: 'w7', title: 'Spinal & LUSCS' }, { id: 'w8', title: 'Brachial Plexus Blocks' },
+                    { id: 'w9', title: 'Wrist/Ankle Blocks' }, { id: 'w10', title: 'Neonatal Resuscitation' },
+                    { id: 'w11', title: 'Cannot Intubate/Ventilate' }, { id: 'w12', title: 'IV Access' },
+                    { id: 'w13', title: 'Cardiac Arrest' }, { id: 'w14', title: 'Handling Negative Outcomes' }
+                ],
+                caseReports: ['General Anaesthesia', 'Ketamine Anaesthesia', 'Spinal Anaesthesia', 'Paediatric Anaesthesia', 'Resuscitation']
             },
             {
                 id: 'childhealth',
@@ -122,15 +165,31 @@
                 color: '#f97316',
                 duration: '1 month',
                 procedures: 30,
-                weeks: [{ id: 'w1', title: 'Milestones & Malnutrition' }]
+                weeks: [
+                    { id: 'w1', title: 'Milestones & Malnutrition' }, { id: 'w2', title: 'Pneumonia & Oxygen' },
+                    { id: 'w3', title: 'Cardiac & Kidney' }, { id: 'w4', title: 'Newborn Exam ' },
+                    { id: 'w5', title: 'Ponsetti & Diarrhoea' }, { id: 'w6', title: 'Immunization' }
+                ],
+                caseReports: ['Pneumonia', 'Diarrhoea', 'Malnutrition', 'Meningitis', 'Neonatal Sepsis']
             },
             {
                 id: 'obs_gyn',
-                name: 'Obstetrics & Gynaecology (Module 4)',
+                name: 'Obs & Gynae (Module 4)',
                 color: '#ec4899',
                 duration: '3 months',
                 procedures: 40,
-                weeks: [{ id: 'w1', title: 'Menstrual Cycle' }]
+                weeks: [
+                    { id: 'w1', title: 'Menstrual Cycle' }, { id: 'w2', title: 'Contraception' },
+                    { id: 'w3', title: 'Routine Antenatal' }, { id: 'w4', title: 'Basic USS' },
+                    { id: 'w5', title: 'Miscarriage/Ectopic' }, { id: 'w6', title: 'Normal Labour' },
+                    { id: 'w7', title: 'Partograms' }, { id: 'w8', title: 'CS Technique' },
+                    { id: 'w9', title: 'APH & Pre-eclampsia' }, { id: 'w10', title: 'Failure to Progress' },
+                    { id: 'w11', title: 'PPH' }, { id: 'w12', title: 'Puerperal Sepsis' }
+                ],
+                assignmentList: [
+                    { title: 'Written Assignment 1', prompt: 'Topic: Antenatal Care or Family Planning' },
+                    { title: 'Written Assignment 2', prompt: 'Topic: Emergency Obstetric Care' }
+                ]
             },
             {
                 id: 'medicine',
@@ -138,46 +197,71 @@
                 color: '#3b82f6',
                 duration: '2 months',
                 procedures: 20,
-                weeks: [{ id: 'w1', title: 'Diabetes' }]
+                weeks: [
+                    { id: 'w1', title: 'Diabetes' }, { id: 'w2', title: 'Antibiotics & Sepsis' },
+                    { id: 'w3', title: 'Tuberculosis' }, { id: 'w4', title: 'Snake Bite & ECG' },
+                    { id: 'w5', title: 'Hypertension & HIV' }, { id: 'w6', title: 'Asthma/COAD' }
+                ],
+                caseReports: ['Severe Malaria', 'Meningitis', 'Pneumonia', 'Heart Failure', 'TB']
             },
             {
                 id: 'psychiatry',
                 name: 'Psychiatry (Module 6)',
                 color: '#a855f7',
                 duration: '1 month',
-                procedures: 10
+                procedures: 10,
+                caseReports: ['Acute Psychosis', 'Somatoform Disorder']
             },
             {
                 id: 'publichealth',
                 name: 'Public Health (Module 7)',
                 color: '#10b981',
                 duration: 'Longitudinal',
-                procedures: 0
+                assignmentList: [
+                    'PH1: Community Diagnosis', 'PH2: Outbreak Investigation',
+                    'PH3: Program Evaluation', 'PH4: Health Management'
+                ]
             },
             {
                 id: 'eye_ent',
                 name: 'Eye/ENT (Module 8)',
                 color: '#06b6d4',
                 duration: '1 month',
-                procedures: 15
+                procedures: 15,
+                caseReports: ['Perforating Eye Injury', 'Red Eye Differential', 'Epistaxis Mgmt']
             },
             {
                 id: 'lab',
                 name: 'Laboratory (Module 9)',
                 color: '#6366f1',
                 duration: '1 month',
-                procedures: 10
+                procedures: 10,
+                assignmentList: ['Skill: Cross-match', 'Skill: Malaria Stain']
             },
             {
                 id: 'management',
                 name: 'Management (Module 10)',
                 color: '#475569',
                 duration: '4 weeks',
-                procedures: 0
+                assignmentList: ['4-Week Intensive Course', 'Major Assignment (3500 words)']
             }
         ];
 
-        // --- State Management ---
+        const milestoneConfigs = {
+            research: [
+                { id: 'res_topic', label: 'Research Topic Approved' },
+                { id: 'res_data', label: 'Data Collection Completed' },
+                { id: 'res_submit', label: 'Research Submitted' },
+                { id: 'res_present', label: 'Research Presented' }
+            ],
+            exams: [
+                { id: 'exam_part1', label: 'Part 1 Exam Passed' },
+                { id: 'exam_part2_written', label: 'Part 2 Written Passed' },
+                { id: 'exam_part2_clinical', label: 'Part 2 Clinical Passed' }
+            ]
+        };
+
+        // --- State Management (With Sync & Offline) ---
         class AppState {
             constructor() {
                 this.account = null;
@@ -193,7 +277,7 @@
 
             loadData() {
                 try {
-                    const stored = localStorage.getItem('mmed_tracker_data'); // Keeping unified storage key
+                    const stored = localStorage.getItem('mmed_tracker_data');
                     if (stored) {
                         const data = JSON.parse(stored);
                         this.account = data.account || null;
@@ -202,6 +286,10 @@
                         this.milestones = data.milestones || {};
                         this.logbook = data.logbook || {};
                     }
+                    // Initialize modules if missing
+                    moduleConfigs.forEach(m => {
+                        if (!this.modules[m.id]) this.modules[m.id] = { assignments: {}, weeks: {}, caseReports: {} };
+                    });
                 } catch (e) { console.error("Data load failed", e); }
             }
 
@@ -240,9 +328,7 @@
                 reader.onload = (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        if (!data.account || !data.modules) throw new Error('Invalid backup file');
-
-                        if (confirm(`Replace current data with backup from ${data.account.name}? This cannot be undone.`)) {
+                        if (confirm(`Replace current data with backup from ${data.account ? data.account.name : 'Success'}? This cannot be undone.`)) {
                             localStorage.setItem('mmed_tracker_data', JSON.stringify(data));
                             location.reload();
                         }
@@ -251,22 +337,13 @@
                     }
                 };
                 reader.readAsText(file);
-                input.value = ''; // Reset input
+                input.value = '';
             }
 
-            // --- Professional Auth Logic ---
+            // --- Auth Logic ---
             register(name, id, year, question, answer) {
-                // Generate a professional random password
                 const randomPass = "MMED-" + Math.floor(1000 + Math.random() * 9000);
-                this.account = {
-                    name,
-                    id,
-                    year,
-                    password: randomPass,
-                    securityQuestion: question,
-                    securityAnswer: answer.toLowerCase(),
-                    needsPasswordChange: true
-                };
+                this.account = { name, id, year, password: randomPass, securityQuestion: question, securityAnswer: answer.toLowerCase(), needsPasswordChange: true };
                 this.saveData();
                 return randomPass;
             }
@@ -294,13 +371,27 @@
                 this.notify();
             }
 
-            updateAssignment(moduleId, index, field, value) {
-                const id = `assign_${index}`;
-                if (!this.modules[moduleId]) this.modules[moduleId] = { assignments: {} };
-                if (!this.modules[moduleId].assignments) this.modules[moduleId].assignments = {};
-                if (!this.modules[moduleId].assignments[id]) this.modules[moduleId].assignments[id] = {};
+            updateModuleData(moduleId, type, id, value) {
+                if (!this.modules[moduleId]) this.modules[moduleId] = { assignments: {}, weeks: {}, caseReports: {} };
+                if (type === 'week') {
+                    if (!this.modules[moduleId].weeks) this.modules[moduleId].weeks = {};
+                    if (!this.modules[moduleId].weeks[id]) this.modules[moduleId].weeks[id] = {};
+                    this.modules[moduleId].weeks[id].status = value;
+                } else if (type === 'assignment') {
+                    // Check if value is object (date) or string
+                    if (!this.modules[moduleId].assignments) this.modules[moduleId].assignments = {};
+                    if (!this.modules[moduleId].assignments[id]) this.modules[moduleId].assignments[id] = {};
+                    this.modules[moduleId].assignments[id] = { ...this.modules[moduleId].assignments[id], ...value };
+                } else if (type === 'caseReport') {
+                    if (!this.modules[moduleId].caseReports) this.modules[moduleId].caseReports = {};
+                    this.modules[moduleId].caseReports[id] = value; // 'Done' or null
+                }
+                this.saveData();
+            }
 
-                this.modules[moduleId].assignments[id][field] = value;
+            updateMilestone(category, id, value, date) {
+                if (!this.milestones[category]) this.milestones[category] = {};
+                this.milestones[category][id] = { status: value, date: date };
                 this.saveData();
             }
 
@@ -310,7 +401,7 @@
 
         const state = new AppState();
 
-        // --- UI Components ---
+        // --- UI Rendering ---
 
         function renderLogin() {
             const app = document.getElementById('app');
@@ -348,10 +439,7 @@
                                     <button class="btn-rural">Activate My Portfolio</button>
                                 </div>
                             </form>
-                            
-                            <!-- Import Data Button (Inserted for Sync) -->
-                            <div style="margin-top:20px; text-align:center; border-top:1px solid #e5e7eb; padding-top:15px;">
-                                <p style="font-size:0.8em; color:#6b7280; margin-bottom:10px">Already have data on PC?</p>
+                             <div style="margin-top:20px; text-align:center; border-top:1px solid #e5e7eb; padding-top:15px;">
                                 <button onclick="document.getElementById('importInput').click()" style="background:none; border:1px solid #d1d5db; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.9em; color:#4b5563;">
                                     📥 Import Backup File
                                 </button>
@@ -373,7 +461,13 @@
                                     <a href="#" onclick="showReset()" style="text-align:center; color:var(--clay); font-size:0.8em; text-decoration:none;">Forgot Password?</a>
                                 </div>
                             </form>
-                            <div style="margin-top:15px; text-align:center;">
+                             <div style="margin-top:20px; text-align:center; border-top:1px solid #e5e7eb; padding-top:15px;">
+                                <button onclick="document.getElementById('importInput').click()" style="background:none; border:1px solid #d1d5db; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.9em; color:#4b5563;">
+                                    📥 Import Backup File
+                                </button>
+                                <input type="file" id="importInput" style="display:none" onchange="state.importData(this)" accept=".json">
+                            </div>
+                            <div style="margin-top:10px; text-align:center;">
                                 <button onclick="if(confirm('Reset all data? Type DELETE')) { localStorage.removeItem('mmed_tracker_data'); location.reload(); }" style="color:#ef4444; background:none; border:none; font-size:0.8em; cursor:pointer;">Reset App Data</button>
                             </div>
                         `}
@@ -394,47 +488,117 @@
 
         function renderModuleDetail(moduleId) {
             const config = moduleConfigs.find(m => m.id === moduleId);
-            const data = state.modules[moduleId] || { assignments: {} };
-            const assignList = config.assignmentList || [];
+            const data = state.modules[moduleId] || { assignments: {}, weeks: {}, caseReports: {} };
 
             return `
-                <div style="padding:40px; max-width:1000px; margin:auto;">
-                    <div style="background:var(--forest-green); color:white; padding:30px; border-radius:12px; margin-bottom:30px;">
+                <div style="padding:20px; max-width:1000px; margin:auto;">
+                    <div style="background:${config.color}; color:white; padding:30px; border-radius:12px; margin-bottom:30px;">
                         <h1>${config.name}</h1>
                         <p>Rotation Duration: ${config.duration}</p>
                     </div>
 
-                    ${assignList.length > 0 ? `
+                    <!-- Weekly Schedule (If exists) -->
+                    ${config.weeks ? `
+                    <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:20px;">
+                        <h3 style="color:var(--clay); margin-bottom:15px;">Weekly Clinical Schedule</h3>
+                        <div style="display:grid; gap:10px;">
+                            ${config.weeks.map(w => {
+                const wStatus = data.weeks && data.weeks[w.id] ? data.weeks[w.id].status : 'Not Started';
+                return `
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #f3f4f6;">
+                                    <div>
+                                        <span style="font-weight:bold; color:var(--forest-green); margin-right:10px;">${w.id.toUpperCase()}</span>
+                                        <span>${w.title}</span>
+                                    </div>
+                                    <select onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', this.value)" 
+                                            style="width:auto; padding:5px; font-size:0.9em; border-radius:4px; ${wStatus === 'Done' ? 'background:#dcfce7; color:#166534' : ''}">
+                                        <option value="Not Started" ${wStatus === 'Not Started' ? 'selected' : ''}>Incomplete</option>
+                                        <option value="Done" ${wStatus === 'Done' ? 'selected' : ''}>Computed</option>
+                                    </select>
+                                </div>`;
+            }).join('')}
+                        </div>
+                    </div>` : ''}
+
+                    <!-- Case Reports (If exists) -->
+                    ${config.caseReports ? `
+                    <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:20px;">
+                        <h3 style="color:var(--clay); margin-bottom:15px;">Required Case Reports</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
+                            ${config.caseReports.map((cr, i) => {
+                const crId = 'cr_' + i;
+                const isDone = data.caseReports && data.caseReports[crId] === 'Done';
+                return `
+                                <div onclick="state.updateModuleData('${moduleId}', 'caseReport', '${crId}', '${isDone ? '' : 'Done'}')"
+                                     style="padding:15px; border:1px solid ${isDone ? '#22c55e' : '#e5e7eb'}; background:${isDone ? '#f0fdf4' : 'white'}; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px;">
+                                    <div style="width:20px; height:20px; border-radius:50%; border:2px solid #22c55e; background:${isDone ? '#22c55e' : 'white'}; display:flex; justify-content:center; align-items:center; font-size:12px; color:white;">${isDone ? '✓' : ''}</div>
+                                    <span style="${isDone ? 'font-weight:bold; color:#15803d' : ''}">${cr}</span>
+                                </div>`;
+            }).join('')}
+                        </div>
+                    </div>` : ''}
+
+                    <!-- Assignments -->
+                     ${config.assignmentList && config.assignmentList.length > 0 ? `
                         <h3 style="color:var(--clay); border-bottom:2px solid var(--clay); display:inline-block; margin-bottom:20px;">Assignments Tracking</h3>
-                        
                         <div style="display:grid; gap:20px;">
-                            ${assignList.map((a, i) => {
-                const aData = (data.assignments && data.assignments[`assign_${i}`]) || {};
+                            ${config.assignmentList.map((a, i) => {
+                const aId = 'assign_' + i;
+                const aData = (data.assignments && data.assignments[aId]) || {};
+                const title = typeof a === 'string' ? a : a.title;
+                const prompt = typeof a === 'string' ? '' : a.prompt;
                 return `
                                     <div style="background:white; padding:20px; border-radius:8px; border:1px solid #e5e7eb; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-                                        <h4 style="font-weight:bold; margin-bottom:5px;">${a.title}</h4>
-                                        <p style="font-size:0.9em; color:#6b7280; margin-bottom:15px;">${a.prompt}</p>
-                                        
+                                        <h4 style="font-weight:bold; margin-bottom:5px;">${title}</h4>
+                                        ${prompt ? `<p style="font-size:0.9em; color:#6b7280; margin-bottom:15px;">${prompt}</p>` : ''}
                                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                                            <div>
-                                                <label style="font-size:0.7em; font-weight:bold; color:var(--clay); text-transform:uppercase;">Date Started</label>
-                                                <input type="date" value="${aData.dateStarted || ''}" 
-                                                       onchange="state.updateAssignment('${moduleId}', ${i}, 'dateStarted', this.value)">
+                                            <div><label style="font-size:0.7em; font-weight:bold; color:var(--clay);">STARTED</label>
+                                                <input type="date" value="${aData.dateStarted || ''}" onchange="state.updateModuleData('${moduleId}', 'assignment', '${aId}', {dateStarted: this.value})">
                                             </div>
-                                            <div>
-                                                <label style="font-size:0.7em; font-weight:bold; color:var(--clay); text-transform:uppercase;">Date Submitted</label>
-                                                <input type="date" value="${aData.dateSubmitted || ''}" 
-                                                       onchange="state.updateAssignment('${moduleId}', ${i}, 'dateSubmitted', this.value)">
+                                            <div><label style="font-size:0.7em; font-weight:bold; color:var(--clay);">SUBMITTED</label>
+                                                <input type="date" value="${aData.dateSubmitted || ''}" onchange="state.updateModuleData('${moduleId}', 'assignment', '${aId}', {dateSubmitted: this.value})">
                                             </div>
                                         </div>
                                     </div>
                                 `;
             }).join('')}
                         </div>
-                    ` : '<p style="color:#6b7280;">No fixed assignments for this module.</p>'}
+                    ` : ''}
                 </div>
             `;
         }
+
+        function renderMilestones() {
+            return `
+                <div style="padding:30px; max-width:1000px; margin:auto;">
+                    <h1 style="color:var(--forest-green); margin-bottom:30px;">Milestones & Progress</h1>
+                    ${Object.keys(milestoneConfigs).map(cat => `
+                        <div style="background:white; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                            <h3 style="text-transform:uppercase; color:var(--clay); letter-spacing:1px; margin-bottom:15px;">${cat}</h3>
+                            <div style="display:grid; gap:10px;">
+                                ${milestoneConfigs[cat].map(m => {
+                const mData = state.milestones[cat] && state.milestones[cat][m.id] ? state.milestones[cat][m.id] : {};
+                return `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f9fafb; border-radius:8px;">
+                                        <span style="font-weight:600;">${m.label}</span>
+                                        <div style="display:flex; gap:10px;">
+                                            <select onchange="state.updateMilestone('${cat}', '${m.id}', this.value, document.getElementById('d_${m.id}').value)"
+                                                    style="width:auto; padding:5px; border-radius:4px; ${mData.status === 'Done' || mData.status === 'Passed' ? 'background:#dcfce7; color:#166534' : ''}">
+                                                <option value="Not Started" ${mData.status !== 'Done' && mData.status !== 'Passed' ? 'selected' : ''}>Pending</option>
+                                                <option value="${cat === 'exams' ? 'Passed' : 'Done'}" ${mData.status === 'Done' || mData.status === 'Passed' ? 'selected' : ''}>${cat === 'exams' ? 'Passed' : 'Done'}</option>
+                                            </select>
+                                            <input type="date" id="d_${m.id}" value="${mData.date || ''}" style="width:auto;"
+                                                   onchange="state.updateMilestone('${cat}', '${m.id}', document.querySelector('select[onchange*=\\'${m.id}\\']').value, this.value)">
+                                        </div>
+                                    </div>`;
+            }).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
 
         function render() {
             if (!state.session || !state.session.isLoggedIn) {
@@ -442,7 +606,6 @@
                 return;
             }
 
-            // Forced Password Change
             if (state.account.needsPasswordChange) {
                 const newP = prompt("SECURITY: You are using a default password. Enter a new private password:");
                 if (newP) {
@@ -459,12 +622,14 @@
                     <div class="no-print" style="width:260px; background:var(--earth-black); color:white; padding:20px; display:flex; flex-direction:column;">
                         <h2 style="color:var(--forest-green); margin-bottom:30px; font-weight:bold;">MMED Rural</h2>
                         <button onclick="state.activeTab='dashboard'; render()" style="width:100%; text-align:left; background:none; border:none; color:white; padding:10px; cursor:pointer;">📊 Dashboard</button>
+                         <button onclick="state.activeTab='milestones'; render()" style="width:100%; text-align:left; background:none; border:none; color:white; padding:10px; cursor:pointer;">🏁 Milestones</button>
                         <hr style="margin:20px 0; border:0; border-top:1px solid #374151;">
-                        <p style="font-size:0.7em; color:#9ca3af; margin-bottom:10px; letter-spacing:1px;">MODULES</p>
-                        ${moduleConfigs.map(m => `
-                            <button onclick="state.activeTab='${m.id}'; render()" style="width:100%; text-align:left; background:none; border:none; color:#d1d5db; padding:8px; cursor:pointer; font-size:0.9em;">• ${m.name}</button>
-                        `).join('')}
-                        
+                        <div style="flex:1; overflow-y:auto;">
+                            <p style="font-size:0.7em; color:#9ca3af; margin-bottom:10px; letter-spacing:1px;">MODULES</p>
+                            ${moduleConfigs.map(m => `
+                                <button onclick="state.activeTab='${m.id}'; render()" style="width:100%; text-align:left; background:none; border:none; color:#d1d5db; padding:8px; cursor:pointer; font-size:0.9em;">• ${m.name}</button>
+                            `).join('')}
+                        </div>
                         <div style="margin-top:auto;">
                             <button onclick="state.exportData()" style="width:100%; text-align:left; background:none; border:none; color:#fbbf24; padding:8px; cursor:pointer; font-size:0.9em; margin-bottom:10px;">📥 Backup Data</button>
                             <button onclick="state.logout(); render()" style=" color:#f87171; background:none; border:none; cursor:pointer;">🚪 Sign Out</button>
@@ -472,7 +637,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div style="flex:1; overflow-y:auto;">
+                    <div style="flex:1; overflow-y:auto; height: 100vh;">
                         ${state.activeTab === 'dashboard' ? `
                             <div style="padding:40px;">
                                 <h1 style="color:var(--forest-green);">Welcome, Dr. ${state.account.name}</h1>
@@ -482,7 +647,7 @@
                                     <p style="font-size:0.9em;">Ensure all procedure logs are signed by supervisors before rotation end.</p>
                                 </div>
                             </div>
-                        ` : renderModuleDetail(state.activeTab)}
+                        ` : state.activeTab === 'milestones' ? renderMilestones() : renderModuleDetail(state.activeTab)}
                     </div>
                 </div>
             `;
