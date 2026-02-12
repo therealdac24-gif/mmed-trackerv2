@@ -157,6 +157,11 @@
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
                     Continue with Google
                 </button>
+                <!-- NEW: Explicit Offline Button -->
+                <button onclick="state.startOfflineSession()"
+                    class="w-full text-slate-500 hover:text-slate-700 font-medium py-2 text-sm transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-wifi-slash"></i> Continue Offline
+                </button>
             </div>
             <div class="bg-slate-50 p-4 text-center text-xs text-slate-500 border-t border-slate-100">
                 Authorized Access Only &bull; Papua New Guinea Medical Board
@@ -213,7 +218,7 @@
                 <i class="fas fa-download"></i> Backup Data
             </button>
             <div class="text-center mt-2">
-                <span class="text-xs text-slate-500">Cloud Sync Active</span>
+                <span class="text-xs text-slate-500" id="connection-status">Cloud Sync Active</span>
             </div>
         </div>
     </aside>
@@ -243,21 +248,16 @@
     </button>
 
     <script>
-        // --- 1. BYPASS OLD SERVICE WORKERS (Prevents blank screens on launch) ---
+        // --- 1. BYPASS OLD SERVICE WORKERS ---
         try {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function (registrations) {
                     for (let registration of registrations) {
                         registration.unregister();
-                        console.log('Old ServiceWorker unregistered to ensure fresh load.');
                     }
-                }).catch(function (error) {
-                    console.log('Service Worker unregistration skipped due to environment state:', error);
-                });
+                }).catch(err => console.log('SW unregister skipped', err));
             }
-        } catch (e) {
-            console.log('Service Worker API unavailable in this context:', e);
-        }
+        } catch (e) { console.log('Service Worker API unavailable'); }
 
         // --- 2. EXHAUSTIVE DATA CONFIGURATIONS ---
         const moduleConfigs = [
@@ -560,32 +560,78 @@
                     messagingSenderId: "826477177641",
                     appId: "1:826477177641:web:fe9de6e733b442fdffe538"
                 };
+                
+                // Helper to fallback to offline mode
+                const enableOffline = () => {
+                    console.warn("Firebase Auth unavailable. Starting in Offline Mode.");
+                    const stored = localStorage.getItem('mmed_tracker_v2_cloud');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        this.account = parsed.account;
+                        // Ensure account exists so UI bypasses login
+                        if (!this.account) this.account = { name: "Offline User", id: "offline", year: 1, location: "Local" };
+                    } else {
+                        this.account = { name: "Offline User", id: "offline", year: 1, location: "Local" };
+                    }
+                    this.notify();
+                    // Force UI update to remove login screen
+                    setTimeout(() => window.renderApp(), 100); 
+                };
 
                 try {
                     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                    window.auth = firebase.auth();
-                    window.db = firebase.firestore();
+                    
+                    // Specific check for environments where Auth throws immediately
+                    if (location.protocol === 'file:') throw new Error("File protocol not supported");
 
-                    // Guarded Redirect Check
+                    window.db = firebase.firestore();
+                    window.auth = firebase.auth();
+
+                    // Persistence
+                    window.db.enablePersistence().catch(err => console.log("Persistence:", err.code));
+
+                    // Redirect Check
                     if (!window.auth.currentUser) {
-                        window.auth.getRedirectResult().then(result => {
-                            if (result.user) this.handleCloudLogin(result.user);
-                        }).catch(e => console.error("Redirect Error:", e));
+                         // We wrap this because in some sandboxes accessing window.auth throws
+                         window.auth.getRedirectResult()
+                            .then(result => { if (result.user) this.handleCloudLogin(result.user); })
+                            .catch(e => {
+                                console.log("Redirect check failed, likely offline/restricted env.");
+                                // Don't force offline here immediately, wait for onAuthStateChanged or user interaction
+                                // UNLESS the error is the specific environment one
+                                if (e.code === 'auth/operation-not-supported-in-this-environment') {
+                                    enableOffline();
+                                }
+                            });
                     }
 
                     window.auth.onAuthStateChanged(user => {
                         if (user) this.handleCloudLogin(user);
                         else {
+                            if (this.account?.id === 'offline') return; // Don't logout offline user
                             this.account = null;
                             this.notify();
                         }
                     });
+
                 } catch (e) {
                     console.error("Firebase Init Failed", e);
-                    // Fallback to local only for demo if offline
-                    const stored = localStorage.getItem('mmed_tracker_v2_cloud');
-                    if (stored) this.account = JSON.parse(stored).account;
+                    enableOffline();
                 }
+            }
+            
+            startOfflineSession() {
+                 console.warn("User requested Offline Mode.");
+                 const stored = localStorage.getItem('mmed_tracker_v2_cloud');
+                 if (stored) {
+                     const parsed = JSON.parse(stored);
+                     this.account = parsed.account;
+                     if (!this.account) this.account = { name: "Offline User", id: "offline", year: 1, location: "Local" };
+                 } else {
+                     this.account = { name: "Offline User", id: "offline", year: 1, location: "Local" };
+                 }
+                 this.notify();
+                 setTimeout(() => window.renderApp(), 100); 
             }
 
             async handleCloudLogin(user) {
@@ -646,7 +692,7 @@
                 const data = { account: this.account, modules: this.modules, procedureLog: this.procedureLog, milestones: this.milestones };
                 localStorage.setItem('mmed_tracker_v2_cloud', JSON.stringify(data));
 
-                if (!skipCloud && this.account && window.db && this.account.id) {
+                if (!skipCloud && this.account && window.db && this.account.id && this.account.id !== 'offline') {
                     window.db.collection('users').doc(this.account.id).set(data, { merge: true }).catch(e => console.error("Cloud Save Failing:", e));
                 }
                 this.notify();
@@ -697,7 +743,7 @@
 
             setTab(tab) {
                 this.activeTab = tab;
-                if (window.innerWidth <= 768) toggleSidebar();
+                if (window.innerWidth <= 768) window.toggleSidebar();
                 this.notify();
             }
 
@@ -731,13 +777,14 @@
         }
 
         const state = new AppState();
+        window.state = state; // Make globally accessible
 
         // --- 4. UI RENDERING FUNCTIONS ---
 
         function renderSidebarLinks() {
             const container = document.getElementById('module-nav-links');
             container.innerHTML = moduleConfigs.map(m => `
-                <button onclick="state.setTab('${m.id}')" id="tab-${m.id}" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors text-sm text-left truncate">
+                <button onclick="window.state.setTab('${m.id}')" id="tab-${m.id}" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors text-sm text-left truncate">
                     <div class="w-3 h-3 rounded-full ${m.color}"></div>
                     <span class="truncate">${m.name.split(' (')[0]}</span>
                 </button>
@@ -774,17 +821,17 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Name</label>
-                            <input type="text" value="${state.account.name || ''}" onchange="state.account.name=this.value; state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                            <input type="text" value="${state.account.name || ''}" onchange="window.state.account.name=this.value; window.state.saveData(); window.renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Current Year</label>
-                            <select onchange="state.account.year=parseInt(this.value); state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                            <select onchange="window.state.account.year=parseInt(this.value); window.state.saveData(); window.renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
                                 ${[1, 2, 3, 4, 5, 6].map(y => `<option value="${y}" ${state.account.year === y ? 'selected' : ''}>Year ${y}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Current Hospital</label>
-                            <input type="text" placeholder="e.g. Kundiawa, Sir Joseph Nombri" value="${state.account.location || ''}" onchange="state.account.location=this.value; state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                            <input type="text" placeholder="e.g. Kundiawa, Sir Joseph Nombri" value="${state.account.location || ''}" onchange="window.state.account.location=this.value; window.state.saveData(); window.renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
                         </div>
                     </div>
                 </div>
@@ -819,7 +866,7 @@
                                 </div>
                                 <div class="text-sm font-medium text-slate-500 flex items-center gap-3">
                                     <span><i class="far fa-calendar-alt"></i> ${p.date}</span>
-                                    <button onclick="deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 transition p-1 no-print" title="Delete Procedure">
+                                    <button onclick="window.deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 transition p-1 no-print" title="Delete Procedure">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -851,11 +898,11 @@
                                         <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 transition-colors ${isDone ? 'bg-green-50' : 'hover:bg-slate-50'}">
                                             <span class="font-semibold ${isDone ? 'text-green-800' : 'text-slate-700'}">${m.label}</span>
                                             <div class="flex items-center gap-3">
-                                                <select onchange="state.updateMilestone('${cat}','${m.id}',this.value, this.nextElementSibling.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500 ${isDone ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600'}">
+                                                <select onchange="window.state.updateMilestone('${cat}','${m.id}',this.value, this.nextElementSibling.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500 ${isDone ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600'}">
                                                     <option value="Not Started" ${!isDone ? 'selected' : ''}>Pending</option>
                                                     <option value="${cat === 'exams' ? 'Passed' : 'Done'}" ${isDone ? 'selected' : ''}>${cat === 'exams' ? 'Passed' : 'Done'}</option>
                                                 </select>
-                                                <input type="date" value="${mData.date || ''}" onchange="state.updateMilestone('${cat}','${m.id}',this.previousElementSibling.value,this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                                                <input type="date" value="${mData.date || ''}" onchange="window.state.updateMilestone('${cat}','${m.id}',this.previousElementSibling.value,this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-500 bg-white">
                                             </div>
                                         </div>
                                     `;
@@ -942,15 +989,15 @@
                                     <div class="${statusColor} border rounded-lg p-4 transition-colors">
                                         <div class="flex justify-between items-start gap-2 mb-3">
                                             <div class="font-semibold text-slate-800 text-sm leading-tight"><span class="${config.text} mr-1">${w.id.toUpperCase()}</span> ${w.title}</div>
-                                            <select onchange="state.updateModuleData('${moduleId}','week','${w.id}',{status:this.value})" class="text-xs font-bold rounded px-2 py-1 outline-none border border-slate-300 ${wStatus === 'Completed' ? 'bg-green-600 text-white' : wStatus === 'Pending' ? 'bg-amber-500 text-white' : 'bg-white text-slate-600'}">
+                                            <select onchange="window.state.updateModuleData('${moduleId}','week','${w.id}',{status:this.value})" class="text-xs font-bold rounded px-2 py-1 outline-none border border-slate-300 ${wStatus === 'Completed' ? 'bg-green-600 text-white' : wStatus === 'Pending' ? 'bg-amber-500 text-white' : 'bg-white text-slate-600'}">
                                                 <option value="Not Started" ${wStatus === 'Not Started' ? 'selected' : ''}>Not Started</option>
                                                 <option value="Pending" ${wStatus === 'Pending' ? 'selected' : ''}>Pending</option>
                                                 <option value="Completed" ${wStatus === 'Completed' ? 'selected' : ''}>Completed</option>
                                             </select>
                                         </div>
                                         <div class="flex items-center gap-3 text-xs">
-                                            <div class="flex items-center gap-1"><span class="text-slate-500">Start:</span><input type="date" value="${wData.startDate || ''}" onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {startDate: this.value ${wStatus === 'Not Started' ? `, status: 'Pending'` : ''}})" class="border border-slate-300 rounded px-1.5 py-1 bg-white/50 w-full max-w-[110px]"></div>
-                                            <div class="flex items-center gap-1"><span class="text-slate-500">End:</span><input type="date" value="${wData.completeDate || ''}" onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {completeDate: this.value, status: 'Completed'})" class="border border-slate-300 rounded px-1.5 py-1 bg-white/50 w-full max-w-[110px]"></div>
+                                            <div class="flex items-center gap-1"><span class="text-slate-500">Start:</span><input type="date" value="${wData.startDate || ''}" onchange="window.state.updateModuleData('${moduleId}', 'week', '${w.id}', {startDate: this.value ${wStatus === 'Not Started' ? `, status: 'Pending'` : ''}})" class="border border-slate-300 rounded px-1.5 py-1 bg-white/50 w-full max-w-[110px]"></div>
+                                            <div class="flex items-center gap-1"><span class="text-slate-500">End:</span><input type="date" value="${wData.completeDate || ''}" onchange="window.state.updateModuleData('${moduleId}', 'week', '${w.id}', {completeDate: this.value, status: 'Completed'})" class="border border-slate-300 rounded px-1.5 py-1 bg-white/50 w-full max-w-[110px]"></div>
                                         </div>
                                     </div>
                                 `;
@@ -967,7 +1014,7 @@
                                 ${config.caseReports.map((cr, i) => {
                 const isDone = data.caseReports && data.caseReports['cr_' + i] === 'Done';
                 return `
-                                        <button onclick="state.updateModuleData('${moduleId}','caseReport','cr_${i}','${isDone ? '' : 'Done'}')" class="w-full flex items-center justify-between p-3 rounded-lg border transition-all ${isDone ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-600'}">
+                                        <button onclick="window.state.updateModuleData('${moduleId}','caseReport','cr_${i}','${isDone ? '' : 'Done'}')" class="w-full flex items-center justify-between p-3 rounded-lg border transition-all ${isDone ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-600'}">
                                             <span class="font-medium text-sm text-left">${cr}</span>
                                             <div class="w-5 h-5 rounded border flex items-center justify-center shrink-0 ml-2 ${isDone ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}">
                                                 ${isDone ? '<i class="fas fa-check text-xs"></i>' : ''}
@@ -994,11 +1041,11 @@
                                             <div class="grid grid-cols-2 gap-3 mt-3">
                                                 <div>
                                                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Started</label>
-                                                    <input type="date" value="${aData.dateStarted || ''}" onchange="state.updateModuleData('${moduleId}','assignment','a_${i}',{dateStarted:this.value})" class="w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-teal-500">
+                                                    <input type="date" value="${aData.dateStarted || ''}" onchange="window.state.updateModuleData('${moduleId}','assignment','a_${i}',{dateStarted:this.value})" class="w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-teal-500">
                                                 </div>
                                                 <div>
                                                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Submitted</label>
-                                                    <input type="date" value="${aData.dateSubmitted || ''}" onchange="state.updateModuleData('${moduleId}','assignment','a_${i}',{dateSubmitted:this.value})" class="w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-teal-500">
+                                                    <input type="date" value="${aData.dateSubmitted || ''}" onchange="window.state.updateModuleData('${moduleId}','assignment','a_${i}',{dateSubmitted:this.value})" class="w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-teal-500">
                                                 </div>
                                             </div>
                                         </div>
@@ -1080,7 +1127,7 @@
                                         <!-- Physical signature line visible only on print -->
                                         <div class="hidden print:block border-b-2 border-slate-400 w-full mb-6"></div>
                                         <!-- Delete button visible only on screen -->
-                                        <button onclick="deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 no-print flex justify-end w-full"><i class="fas fa-trash"></i></button>
+                                        <button onclick="window.deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 no-print flex justify-end w-full"><i class="fas fa-trash"></i></button>
                                     </td>
                                 </tr>
                             `).join('') || `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No procedures logged for this module.</td></tr>`}
@@ -1092,20 +1139,20 @@
 
         // --- 5. CORE INTERACTION FUNCTIONS ---
 
-        function toggleSidebar() {
+        window.toggleSidebar = () => {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('mobile-overlay').classList.toggle('hidden');
-        }
+        };
 
-        function deleteProcedure(timestamp) {
+        window.deleteProcedure = (timestamp) => {
             if (confirm("Delete this log entry?")) {
                 state.procedureLog = state.procedureLog.filter(p => p.timestamp !== timestamp);
                 state.saveData();
-                renderApp();
+                window.renderApp();
             }
-        }
+        };
 
-        function updateProcList(moduleId) {
+        window.updateProcList = (moduleId) => {
             const module = moduleConfigs.find(m => m.id === moduleId);
             const datalist = document.getElementById('proc-datalist');
             if (datalist && module && module.requiredProcedures) {
@@ -1113,9 +1160,9 @@
             } else if (datalist) {
                 datalist.innerHTML = '';
             }
-        }
+        };
 
-        function showQuickLogModal() {
+        window.showQuickLogModal = () => {
             const modal = document.createElement('div');
             modal.id = 'quickLogModal';
             modal.className = 'fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center p-4 fade-in backdrop-blur-sm';
@@ -1128,11 +1175,11 @@
                         <h2 class="text-xl font-bold text-teal-800"><i class="fas fa-bolt text-amber-500 mr-2"></i> Quick Log Procedure</h2>
                         <button onclick="document.getElementById('quickLogModal').remove()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
                     </div>
-                    <form onsubmit="event.preventDefault();submitQuickLog(this);" class="p-6 space-y-4">
+                    <form onsubmit="event.preventDefault();window.submitQuickLog(this);" class="p-6 space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">Module</label>
-                                <select name="module" required onchange="updateProcList(this.value)" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
+                                <select name="module" required onchange="window.updateProcList(this.value)" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
                                     <option value="" disabled selected>Select Module</option>
                                     ${moduleConfigs.map(m => `<option value="${m.id}" ${state.activeTab === m.id ? 'selected' : ''}>${m.name.split(' (')[0]}</option>`).join('')}
                                 </select>
@@ -1167,12 +1214,12 @@
 
             // Auto populate list if a tab is already selected
             if (state.activeTab && moduleConfigs.find(m => m.id === state.activeTab)) {
-                updateProcList(state.activeTab);
+                window.updateProcList(state.activeTab);
             }
             setTimeout(() => document.getElementById('quickProcName').focus(), 100);
-        }
+        };
 
-        function submitQuickLog(form) {
+        window.submitQuickLog = form => {
             state.addProcedure({
                 moduleId: form.module.value,
                 date: form.date.value,
@@ -1188,11 +1235,11 @@
             toast.className = 'fixed bottom-24 right-6 z-50 fade-in';
             document.body.appendChild(toast);
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 2500);
-            renderApp();
-        }
+            window.renderApp();
+        };
 
         // --- 6. SAFE RENDERER (With Auth Gate) ---
-        function renderApp() {
+        window.renderApp = () => {
             try {
                 const loginContainer = document.getElementById('login-container');
                 const mainLayout = document.getElementById('main-layout');
@@ -1229,11 +1276,11 @@
                     </div>
                 `;
             }
-        }
+        };
 
         // Init
-        state.subscribe(renderApp);
-        document.addEventListener('DOMContentLoaded', () => { renderApp(); });
+        state.subscribe(window.renderApp);
+        document.addEventListener('DOMContentLoaded', () => { window.renderApp(); });
 
     </script>
 </body>
