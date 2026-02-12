@@ -152,6 +152,10 @@
             }
         }
     </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 
 <body>
@@ -394,7 +398,72 @@
                 this.sidebarOpen = window.innerWidth > 768;
                 this.activeTab = 'dashboard';
                 this.listeners = [];
-                this.loadData();
+
+                // Firebase Init
+                this.initFirebase();
+                this.loadData(); // Load local first
+            }
+
+            initFirebase() {
+                // TODO: USER MUST REPLACE THESE VALUES
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBhEln9kmgq22NnNHI83eUH7_d6S4F1O5s",
+                    authDomain: "rural-mmed-logbook-3e095.firebaseapp.com",
+                    projectId: "rural-mmed-logbook-3e095",
+                    storageBucket: "rural-mmed-logbook-3e095.firebasestorage.app",
+                    messagingSenderId: "826477177641",
+                    appId: "1:826477177641:web:fe9de6e733b442fdffe538"
+                };
+
+                try {
+                    firebase.initializeApp(firebaseConfig);
+                    this.auth = firebase.auth();
+                    this.db = firebase.firestore();
+
+                    // Auth Listener
+                    this.auth.onAuthStateChanged(user => {
+                        if (user) {
+                            this.handleCloudLogin(user);
+                        } else {
+                            // If logged out from cloud, we might still have local data
+                            // Optional: Clear local data on explicit logout?
+                        }
+                    });
+                } catch (e) {
+                    console.log("Firebase not configured yet: " + e.message);
+                }
+            }
+
+            async handleCloudLogin(user) {
+                console.log("Cloud User:", user.email);
+                this.account = {
+                    name: user.displayName,
+                    email: user.email,
+                    photo: user.photoURL,
+                    id: user.uid, // Use Firebase UID
+                    lastBackup: Date.now()
+                };
+
+                // Pull data from Firestore
+                try {
+                    const doc = await this.db.collection('users').doc(user.uid).get();
+                    if (doc.exists) {
+                        const cloudData = doc.data();
+                        console.log("Methods: Cloud data found, merging...");
+                        // Simple merge: Cloud wins if we just logged in
+                        this.modules = cloudData.modules || {};
+                        this.procedureLog = cloudData.procedureLog || [];
+                        this.milestones = cloudData.milestones || {};
+                        this.logbook = cloudData.logbook || {};
+                        this.saveData(true); // Save to local without pushing back immediately
+                    } else {
+                        console.log("New cloud user, pushing local data...");
+                        this.saveData(); // Push local data to cloud
+                    }
+                    render();
+                } catch (e) {
+                    console.error("Sync Error:", e);
+                }
             }
 
             loadData() {
@@ -415,14 +484,23 @@
                 } catch (e) { console.error("Data load failed", e); }
             }
 
-            saveData() {
-                localStorage.setItem('mmed_tracker_data', JSON.stringify({
+            saveData(skipCloud = false) {
+                const data = {
                     account: this.account,
                     modules: this.modules,
                     procedureLog: this.procedureLog,
                     milestones: this.milestones,
                     logbook: this.logbook
-                }));
+                };
+                localStorage.setItem('mmed_tracker_data', JSON.stringify(data));
+
+                // Cloud Sync
+                if (!skipCloud && this.account && this.db && this.account.id) {
+                    // Debounce could be added here
+                    this.db.collection('users').doc(this.account.id).set(data, { merge: true })
+                        .catch(e => console.error("Cloud Save Failed:", e));
+                }
+
                 this.notify();
             }
 
@@ -430,6 +508,12 @@
             exportData() {
                 const dataStr = localStorage.getItem('mmed_tracker_data');
                 if (!dataStr) return alert('No data to export!');
+
+                // Update last backup timestamp
+                if (this.account) {
+                    this.account.lastBackup = Date.now();
+                    this.saveData();
+                }
 
                 const blob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -440,114 +524,101 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                render(); // Re-render to clear warning if present
             }
+        }
 
-            importData(input) {
-                const file = input.files[0];
-                if (!file) return;
+        importData(input) {
+            const file = input.files[0];
+            if (!file) return;
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        if (confirm(`Replace current data with backup from ${data.account ? data.account.name : 'Success'}? This cannot be undone.`)) {
-                            localStorage.setItem('mmed_tracker_data', JSON.stringify(data));
-                            location.reload();
-                        }
-                    } catch (err) {
-                        alert('Error importing data: ' + err.message);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (confirm(`Replace current data with backup from ${data.account ? data.account.name : 'Success'}? This cannot be undone.`)) {
+                        localStorage.setItem('mmed_tracker_data', JSON.stringify(data));
+                        location.reload();
                     }
-                };
-                reader.readAsText(file);
-                input.value = '';
-            }
-
-            // --- Auth Logic ---
-            register(name, id, year, question, answer) {
-                const randomPass = "MMED-" + Math.floor(1000 + Math.random() * 9000);
-                this.account = { name, id, year, password: randomPass, securityQuestion: question, securityAnswer: answer.toLowerCase(), needsPasswordChange: true };
-                this.saveData();
-                return randomPass;
-            }
-
-            login(id, password) {
-                if (this.account && this.account.id === id && this.account.password === password) {
-                    this.session = { isLoggedIn: true };
-                    return true;
+                } catch (err) {
+                    alert('Error importing data: ' + err.message);
                 }
-                return false;
-            }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
 
-            resetPassword(id, answer, newPassword) {
-                if (this.account && this.account.id === id && this.account.securityAnswer === answer.toLowerCase()) {
-                    this.account.password = newPassword;
-                    this.account.needsPasswordChange = false;
-                    this.saveData();
-                    return true;
+        // --- Auth Logic ---
+        signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            this.auth.signInWithPopup(provider).catch(error => {
+                alert("Login Failed: " + error.message);
+            });
+        }
+
+        logout() {
+            if (this.auth) this.auth.signOut();
+            this.account = null;
+            this.session = null;
+            this.notify();
+            location.reload();
+        }
+
+        updateModuleData(moduleId, type, id, value) {
+            if (!this.modules[moduleId]) this.modules[moduleId] = { assignments: {}, weeks: {}, caseReports: {} };
+            if (type === 'week') {
+                if (!this.modules[moduleId].weeks) this.modules[moduleId].weeks = {};
+                if (!this.modules[moduleId].weeks[id]) this.modules[moduleId].weeks[id] = {};
+                if (typeof value === 'object') {
+                    this.modules[moduleId].weeks[id] = { ...this.modules[moduleId].weeks[id], ...value };
+                } else {
+                    this.modules[moduleId].weeks[id].status = value;
                 }
-                return false;
+            } else if (type === 'assignment') {
+                // Check if value is object (date) or string
+                if (!this.modules[moduleId].assignments) this.modules[moduleId].assignments = {};
+                if (!this.modules[moduleId].assignments[id]) this.modules[moduleId].assignments[id] = {};
+                this.modules[moduleId].assignments[id] = { ...this.modules[moduleId].assignments[id], ...value };
+            } else if (type === 'caseReport') {
+                if (!this.modules[moduleId].caseReports) this.modules[moduleId].caseReports = {};
+                this.modules[moduleId].caseReports[id] = value; // 'Done' or null
             }
+            this.saveData();
+        }
 
-            logout() {
-                this.session = null;
-                this.notify();
-            }
+        addProcedure(data) {
+            this.procedureLog.push({ ...data, timestamp: Date.now() });
+            this.saveData();
+            render();
+        }
 
-            updateModuleData(moduleId, type, id, value) {
-                if (!this.modules[moduleId]) this.modules[moduleId] = { assignments: {}, weeks: {}, caseReports: {} };
-                if (type === 'week') {
-                    if (!this.modules[moduleId].weeks) this.modules[moduleId].weeks = {};
-                    if (!this.modules[moduleId].weeks[id]) this.modules[moduleId].weeks[id] = {};
-                    if (typeof value === 'object') {
-                        this.modules[moduleId].weeks[id] = { ...this.modules[moduleId].weeks[id], ...value };
-                    } else {
-                        this.modules[moduleId].weeks[id].status = value;
-                    }
-                } else if (type === 'assignment') {
-                    // Check if value is object (date) or string
-                    if (!this.modules[moduleId].assignments) this.modules[moduleId].assignments = {};
-                    if (!this.modules[moduleId].assignments[id]) this.modules[moduleId].assignments[id] = {};
-                    this.modules[moduleId].assignments[id] = { ...this.modules[moduleId].assignments[id], ...value };
-                } else if (type === 'caseReport') {
-                    if (!this.modules[moduleId].caseReports) this.modules[moduleId].caseReports = {};
-                    this.modules[moduleId].caseReports[id] = value; // 'Done' or null
-                }
-                this.saveData();
-            }
+        logProcedure(moduleId) {
+            // Legacy prompt method (keeping for fallback)
+            const lastSup = this.procedureLog.length > 0 ? this.procedureLog[this.procedureLog.length - 1].supervisor : '';
+            const date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+            if (!date) return;
+            const procedure = prompt("Procedure Name (e.g., Appendectomy):");
+            if (!procedure) return;
+            const supervisor = prompt("Supervisor Name (Auto-filled last used):", lastSup);
+            if (!supervisor) return;
 
-            addProcedure(data) {
-                this.procedureLog.push({ ...data, timestamp: Date.now() });
-                this.saveData();
-                render();
-            }
+            this.addProcedure({ moduleId, date, procedure, supervisor });
+        }
 
-            logProcedure(moduleId) {
-                // Legacy prompt method (keeping for fallback)
-                const lastSup = this.procedureLog.length > 0 ? this.procedureLog[this.procedureLog.length - 1].supervisor : '';
-                const date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
-                if (!date) return;
-                const procedure = prompt("Procedure Name (e.g., Appendectomy):");
-                if (!procedure) return;
-                const supervisor = prompt("Supervisor Name (Auto-filled last used):", lastSup);
-                if (!supervisor) return;
+        updateMilestone(category, id, value, date) {
+            if (!this.milestones[category]) this.milestones[category] = {};
+            this.milestones[category][id] = { status: value, date: date };
+            this.saveData();
+        }
 
-                this.addProcedure({ moduleId, date, procedure, supervisor });
-            }
+        updateLogbook(id, value) {
+            this.logbook[id] = value;
+            this.saveData();
+            render(); // Re-render to show progress
+        }
 
-            updateMilestone(category, id, value, date) {
-                if (!this.milestones[category]) this.milestones[category] = {};
-                this.milestones[category][id] = { status: value, date: date };
-                this.saveData();
-            }
-
-            updateLogbook(id, value) {
-                this.logbook[id] = value;
-                this.saveData();
-                render(); // Re-render to show progress
-            }
-
-            notify() { this.listeners.forEach(l => l()); }
-            subscribe(l) { this.listeners.push(l); }
+        notify() { this.listeners.forEach(l => l()); }
+        subscribe(l) { this.listeners.push(l); }
         }
 
         const state = new AppState();
@@ -560,69 +631,31 @@
 
             app.innerHTML = `
                 <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
-                    <div style="background:white; padding:40px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); width:100%; max-width:400px; border-top: 6px solid var(--forest-green);">
-                        <div style="text-align:center; margin-bottom:30px;">
+                    <div style="background:white; padding:40px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); width:100%; max-width:400px; border-top: 6px solid var(--forest-green); text-align:center;">
+                        <div style="margin-bottom:30px;">
                             <h1 style="color:var(--forest-green); font-size:1.6em; font-weight:bold;">Master of Medicine (Rural)</h1>
-                            <p style="color:#6b7280; font-size:0.9em;">Postgraduate Electronic Logbook</p>
+                            <p style="color:#6b7280; font-size:0.9em;">Cloud-Synced Portfolio</p>
                         </div>
 
-                        ${!isRegistered ? `
-                            <form onsubmit="event.preventDefault(); 
-                                const pass = state.register(this.rName.value, this.rId.value, this.rYear.value, this.rQ.value, this.rA.value);
-                                alert('REGISTRATION SUCCESSFUL\\n\\nDefault Password: ' + pass + '\\n\\nPlease record this to log in.');
-                                render();">
-                                <h3 style="margin-bottom:15px; font-size:1.1em; color:var(--clay);">Student Activation</h3>
-                                <div style="display:grid; gap:12px;">
-                                    <input name="rName" placeholder="Full Name" required>
-                                    <input name="rId" placeholder="Student ID Number" required>
-                                    <select name="rYear">
-                                        <option value="1">Year 1</option><option value="2">Year 2</option>
-                                        <option value="3">Year 3</option><option value="4">Year 4</option>
-                                        <option value="5">Year 5</option><option value="6">Year 6</option>
-                                    </select>
-                                    <div style="background:#fefce8; padding:10px; border-radius:6px; font-size:0.8em; border:1px solid #fef08a;">
-                                        <strong>Recovery Question:</strong>
-                                        <select name="rQ" style="margin-top:5px;">
-                                            <option>What is your home village?</option>
-                                            <option>What was your first school?</option>
-                                        </select>
-                                        <input name="rA" placeholder="Answer" required style="margin-top:5px;">
-                                    </div>
-                                    <button class="btn-rural">Activate My Portfolio</button>
-                                </div>
-                            </form>
-                             <div style="margin-top:20px; text-align:center; border-top:1px solid #e5e7eb; padding-top:15px;">
-                                <button onclick="document.getElementById('importInput').click()" style="background:none; border:1px solid #d1d5db; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.9em; color:#4b5563;">
-                                    📥 Import Backup File
-                                </button>
-                                <input type="file" id="importInput" style="display:none" onchange="state.importData(this)" accept=".json">
-                            </div>
+                        <div style="margin-bottom:30px;">
+                             <button onclick="state.signInWithGoogle()" 
+                                    style="background:white; color:#374151; border:1px solid #d1d5db; padding:12px 20px; border-radius:6px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+                                Sign in with Google
+                            </button>
+                        </div>
 
-                        ` : `
-                            <form onsubmit="event.preventDefault(); 
-                                if(state.login(this.lId.value, this.lPass.value)) render(); 
-                                else alert('Invalid Credentials');">
-                                <div style="display:grid; gap:15px;">
-                                    <input name="lId" placeholder="Student ID" required>
-                                    <div style="position:relative;">
-                                        <input name="lPass" id="lPass" type="password" placeholder="Password" required>
-                                        <button type="button" onclick="const p=document.getElementById('lPass'); p.type=p.type==='password'?'text':'password';" 
-                                                style="position:absolute; right:10px; top:10px; background:none; border:none; cursor:pointer;">👁️</button>
-                                    </div>
-                                    <button class="btn-rural">Sign In</button>
-                                    <a href="#" onclick="showReset()" style="text-align:center; color:var(--clay); font-size:0.8em; text-decoration:none;">Forgot Password?</a>
-                                </div>
-                            </form>
-                             <div style="margin-top:20px; text-align:center; border-top:1px solid #e5e7eb; padding-top:15px;">
-                                <button onclick="document.getElementById('importInput').click()" style="background:none; border:1px solid #d1d5db; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.9em; color:#4b5563;">
-                                    📥 Import Backup File
-                                </button>
-                                <input type="file" id="importInput" style="display:none" onchange="state.importData(this)" accept=".json">
-                            </div>
-                            <div style="margin-top:10px; text-align:center;">
-                                <button onclick="if(confirm('Reset all data? Type DELETE')) { localStorage.removeItem('mmed_tracker_data'); location.reload(); }" style="color:#ef4444; background:none; border:none; font-size:0.8em; cursor:pointer;">Reset App Data</button>
-                            </div>
-                        `}
+                        <div style="border-top:1px solid #e5e7eb; padding-top:20px;">
+                            <p style="font-size:0.8em; color:#6b7280; margin-bottom:10px;">Or use offline backup</p>
+                            <button onclick="document.getElementById('importInput').click()" style="background:none; border:none; cursor:pointer; font-size:0.9em; color:var(--forest-green); text-decoration:underline;">
+                                📥 Import JSON File
+                            </button>
+                            <input type="file" id="importInput" style="display:none" onchange="state.importData(this)" accept=".json">
+                        </div>
+                        
+                        <div style="margin-top:20px; background:#fff7ed; padding:10px; border-radius:6px; font-size:0.8em; color:#c2410c; border:1px solid #ffedd5;">
+                            Note: First time validation requires internet.
+                        </div>
                     </div>
                 </div>
             `;
@@ -974,8 +1007,33 @@
                     onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                 +
             </button>
-                </div >
+                </div>
             `;
+
+            // Backup Reminder Check
+            if (state.account && state.account.lastBackup) {
+                const daysSince = (Date.now() - state.account.lastBackup) / (1000 * 60 * 60 * 24);
+                if (daysSince > 7) {
+                    const notice = document.createElement('div');
+                    notice.id = 'backup-notice';
+                    notice.innerHTML = `
+                        <div style="position:fixed; bottom:20px; left:20px; right:20px; background:#fff7ed; border:1px solid #ffedd5; padding:15px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; z-index:2000;">
+                            <div>
+                                <strong style="color:#9a3412;">⚠️ Backup Reminder</strong>
+                                <p style="font-size:0.9em; color:#c2410c; margin:0;">It's been over 7 days since your last backup.</p>
+                            </div>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="state.exportData(); document.getElementById('backup-notice').remove()" style="background:#ea580c; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">Backup Now</button>
+                                <button onclick="document.getElementById('backup-notice').remove()" style="background:none; border:none; color:#9a3412; font-size:1.2em; cursor:pointer;">×</button>
+                            </div>
+                        </div>
+                    `;
+                    // Only append if not already present
+                    if (!document.getElementById('backup-notice')) {
+                        document.body.appendChild(notice);
+                    }
+                }
+            }
         }
 
         function showQuickLogModal() {
