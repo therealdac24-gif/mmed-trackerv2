@@ -420,15 +420,20 @@
                     this.auth = firebase.auth();
                     this.db = firebase.firestore();
 
+                    this.db = firebase.firestore();
+
                     // --- ADDED: Handle Redirect Result (Crucial for Mobile/GitHub Pages) ---
-                    this.auth.getRedirectResult().then(result => {
-                        if (result.user) {
-                            console.log("Redirect Login Success:", result.user.email);
-                            this.handleCloudLogin(result.user);
-                        }
-                    }).catch(error => {
-                        console.error("Redirect Error:", error);
-                    });
+                    // Only process redirect if we don't already have a user
+                    if (!this.auth.currentUser) {
+                        this.auth.getRedirectResult().then(result => {
+                            if (result.user) {
+                                console.log("Redirect Login Success:", result.user.email);
+                                this.handleCloudLogin(result.user);
+                            }
+                        }).catch(error => {
+                            console.error("Redirect Error:", error);
+                        });
+                    }
 
                     // Auth Listener
                     this.auth.onAuthStateChanged(user => {
@@ -578,13 +583,17 @@
             // --- Auth Logic ---
             signInWithGoogle() {
                 const provider = new firebase.auth.GoogleAuthProvider();
-                // 1. Try Redirect (Best for Mobile)
-                this.auth.signInWithRedirect(provider);
-
-                // 2. Fallback: If you prefer Popup (Uncomment this and comment out line above)
-                // this.auth.signInWithPopup(provider).then(result => {
-                //     this.handleCloudLogin(result.user);
-                // }).catch(error => alert("Popup Failed: " + error.message));
+                this.auth.signInWithPopup(provider).then(result => {
+                    this.handleCloudLogin(result.user);
+                }).catch(error => {
+                    console.warn("Popup failed, trying redirect:", error.message);
+                    if (error.code === 'auth/popup-blocked' ||
+                        error.code === 'auth/popup-closed-by-user') {
+                        this.auth.signInWithRedirect(provider);
+                    } else {
+                        alert("Sign-in failed: " + error.message);
+                    }
+                });
             }
 
             // --- Email/Password Auth ---
