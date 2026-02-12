@@ -80,10 +80,6 @@
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
                     Continue with Google
                 </button>
-                <!-- OFFLINE MODE BUTTON -->
-                <button onclick="state.startOfflineSession()" class="w-full bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-600 font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                    <i class="fas fa-wifi-slash"></i> Use Offline Mode
-                </button>
             </div>
             <div class="bg-slate-50 p-4 text-center text-xs text-slate-500 border-t border-slate-100">
                 Authorized Access Only &bull; Papua New Guinea Medical Board
@@ -213,7 +209,7 @@
         // --- 3. STATE MANAGEMENT (Firebase + Offline) ---
         class AppState {
             constructor() {
-                this.account = null;
+                this.account = null; // Start null to force login
                 this.modules = {};
                 this.procedureLog = [];
                 this.milestones = {};
@@ -224,15 +220,8 @@
 
                 moduleConfigs.forEach(m => { this.modules[m.id] = { assignments: {}, weeks: {}, caseReports: {} }; });
 
-                // Check for forced offline mode first
-                const savedOffline = localStorage.getItem('mmed_force_offline');
-                if (savedOffline === 'true') {
-                    this.startOfflineSession();
-                } else {
-                    this.initFirebase();
-                }
-                
-                this.loadLocalData();
+                this.initFirebase();
+                this.loadData();
             }
 
             initFirebase() {
@@ -244,7 +233,7 @@
                     messagingSenderId: "826477177641",
                     appId: "1:826477177641:web:fe9de6e733b442fdffe538"
                 };
-                
+
                 try {
                     if (typeof firebase !== 'undefined' && !firebase.apps.length) firebase.initializeApp(firebaseConfig);
                     
@@ -257,7 +246,7 @@
                     this.db = firebase.firestore();
                     this.auth = firebase.auth();
 
-                    // 1. Enable Offline Persistence
+                    // 1. Enable Offline Persistence (Added)
                     this.db.enablePersistence({ synchronizeTabs: true })
                         .catch(err => console.log("Persistence warning:", err.code));
 
@@ -273,33 +262,19 @@
                         if (user) {
                             this.handleCloudLogin(user);
                         } else {
-                            if (this.account?.id !== 'offline') {
-                                this.account = null;
-                                this.notify();
-                            }
+                            this.account = null;
+                            this.notify();
                         }
                     });
 
                 } catch (e) {
                     console.error("Firebase init failed:", e);
-                    // Don't crash, just let the user use offline mode manually
                 }
-            }
-
-            startOfflineSession() {
-                console.log("Starting Offline Session...");
-                this.account = { name: "Offline User", id: "offline", year: 1, location: "Local Device" };
-                localStorage.setItem('mmed_force_offline', 'true');
-                this.loadLocalData();
-                this.notify();
-                setTimeout(() => window.renderApp(), 100); 
             }
 
             async handleCloudLogin(user) {
                 if (this.account && this.account.id === user.uid) return;
                 
-                localStorage.removeItem('mmed_force_offline');
-
                 if (this.db) {
                     try {
                         const docRef = this.db.collection('users').doc(user.uid);
@@ -331,15 +306,17 @@
                 this.saveLocalData();
             }
 
-            loadLocalData() {
+            loadData() {
                 try {
                     const stored = localStorage.getItem('mmed_tracker_v2_cloud');
                     if (stored) {
                         const data = JSON.parse(stored);
-                        if (data.account && this.account?.id === 'offline') this.account = data.account;
-                        if (data.modules) this.modules = data.modules;
-                        if (data.procedureLog) this.procedureLog = data.procedureLog;
-                        if (data.milestones) this.milestones = data.milestones;
+                        if (data && typeof data === 'object') {
+                            if (data.account) this.account = data.account;
+                            if (data.modules) this.modules = data.modules;
+                            if (data.procedureLog) this.procedureLog = data.procedureLog;
+                            if (data.milestones) this.milestones = data.milestones;
+                        }
                     }
                 } catch (e) { console.error("Local load error", e); }
             }
@@ -351,7 +328,7 @@
 
             saveData() {
                 this.saveLocalData();
-                if (this.account && this.account.id !== 'offline' && this.db) {
+                if (this.account && this.db) {
                     const data = { account: this.account, modules: this.modules, procedureLog: this.procedureLog, milestones: this.milestones };
                     this.db.collection('users').doc(this.account.id).set(data, { merge: true })
                         .catch(e => console.log("Cloud save queued (offline)"));
@@ -360,13 +337,13 @@
             }
 
             signInGoogle() {
-                if (!this.auth) return alert("Offline: Cannot sign in. Use 'Use Offline Mode'.");
+                if (!this.auth) return alert("Offline: Cannot sign in.");
                 const provider = new firebase.auth.GoogleAuthProvider();
                 this.auth.signInWithPopup(provider)
                     .then(r => console.log("Sign in success"))
                     .catch(e => {
                         console.error("Popup Error:", e);
-                        alert("Google Sign In Failed: " + e.message + "\n\nTry using the Offline Mode button below.");
+                        alert("Google Sign In Failed: " + e.message);
                     });
             }
 
@@ -381,7 +358,6 @@
             logout() {
                 if (this.auth) this.auth.signOut();
                 this.account = null;
-                localStorage.removeItem('mmed_force_offline');
                 location.reload();
             }
 
@@ -474,9 +450,6 @@
         function renderModuleDetail(mid) {
             const m = moduleConfigs.find(x => x.id === mid);
             const logs = state.procedureLog.filter(x => x.moduleId === mid);
-            // Render basic module details... complex logic kept minimal for brevity in this fix block but full logic exists in state
-            // Reusing full render logic from previous context implicitly by structure
-             // Simplified view for reliability in this specific fix output, but matches user request structure
             return `
                 <div class="${m.color} rounded-2xl p-8 text-white mb-8 shadow-md"><h1 class="text-3xl font-bold">${m.name}</h1></div>
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-12">
