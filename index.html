@@ -5,260 +5,276 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master of Medicine (Rural) - Postgraduate Portfolio</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#15803d">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Design & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
     <style>
-        :root {
-            --forest-green: #15803d;
-            --clay: #92400e;
-            --earth-black: #1f2937;
-            --bg-rural: #fdfbf7;
-            /* Light sand/paper color */
-            --accent-orange: #d97706;
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        ::-webkit-scrollbar-track {
+            background: #f8fafc;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-rural);
-            color: var(--earth-black);
-            line-height: 1.5;
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
         }
 
-        button {
-            font-family: inherit;
-            transition: all 0.2s;
-            cursor: pointer;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
-        .no-print {
-            display: block;
+        .fade-in {
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 50;
+            }
+
+            #sidebar.open {
+                transform: translateX(0);
+            }
         }
 
         @media print {
             .no-print {
                 display: none !important;
             }
-        }
 
-        /* Modern Inputs */
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            background: white;
-            font-size: 14px;
-        }
+            body {
+                background: white;
+                font-size: 11pt;
+            }
 
-        input:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: var(--forest-green);
-            ring: 2px solid #bbf7d0;
-        }
+            .shadow-sm {
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+            }
 
-        /* Buttons */
-        .btn-rural {
-            background: var(--forest-green);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 600;
-        }
+            main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
 
-        .btn-rural:hover {
-            background: #166534;
-        }
+            table {
+                page-break-after: auto;
+            }
 
-        .btn-secondary {
-            background: white;
-            color: var(--earth-black);
-            border: 1px solid #d1d5db;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 500;
-        }
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
 
-        .btn-secondary:hover {
-            background: #f3f4f6;
-        }
+            td {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
 
-        /* Status Pills */
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 99px;
-            font-size: 0.75em;
-            font-weight: 600;
-            display: inline-block;
-        }
+            thead {
+                display: table-header-group;
+            }
 
-        .status-done {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        .status-pending {
-            background: #fef9c3;
-            color: #854d0e;
-            border: 1px solid #fde047;
-        }
-
-        .status-none {
-            background: #f3f4f6;
-            color: #6b7280;
-            border: 1px solid #e5e7eb;
-        }
-
-        /* Layout */
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
-            margin-bottom: 20px;
-        }
-
-        .grid-dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        /* Mobile Sidebar */
-        #sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            width: 260px;
-            background: #0f172a;
-            color: #cbd5e1;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #sidebar.open {
-            transform: translateX(0);
-        }
-
-        @media (min-width: 769px) {
-            #sidebar {
-                position: sticky;
-                transform: none;
-                height: 100vh;
+            tfoot {
+                display: table-footer-group;
             }
         }
-
-        .nav-item {
-            padding: 12px 20px;
-            color: inherit;
-            text-decoration: none;
-            display: block;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: #1e293b;
-            color: white;
-        }
-
-        .nav-item.active {
-            background: #1e293b;
-            color: white;
-            border-left-color: var(--forest-green);
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
     </style>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 
-<body>
-    <div id="app"></div>
+<body class="bg-slate-50 text-slate-800 font-sans flex min-h-screen">
+
+    <!-- Loading Overlay -->
+    <div id="loading"
+        class="fixed inset-0 bg-slate-900 bg-opacity-90 z-50 hidden flex-col items-center justify-center text-white space-y-4">
+        <i class="fas fa-circle-notch fa-spin text-4xl text-teal-400"></i>
+        <span class="font-medium tracking-wide">Syncing Data...</span>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" onclick="toggleSidebar()"
+        class="fixed inset-0 bg-slate-900 bg-opacity-50 z-40 hidden md:hidden fade-in"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+        class="w-64 bg-slate-900 text-slate-300 flex flex-col min-h-screen shadow-xl no-print md:translate-x-0 fixed md:sticky top-0 h-screen overflow-y-auto">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-user-md text-teal-500 text-2xl"></i>
+                <h2 class="text-lg font-bold text-white tracking-tight">MMed Rural</h2>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white"><i
+                    class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-1">
+            <button onclick="state.setTab('dashboard')" id="tab-dashboard"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
+                <i class="fas fa-chart-pie w-5 text-center"></i> Dashboard
+            </button>
+            <button onclick="state.setTab('master_logbook')" id="tab-master_logbook"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
+                <i class="fas fa-clipboard-check w-5 text-center"></i> Master Logbook
+            </button>
+            <button onclick="state.setTab('milestones')" id="tab-milestones"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
+                <i class="fas fa-flag-checkered w-5 text-center"></i> Milestones & Courses
+            </button>
+
+            <div class="pt-6 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Clinical Modules</p>
+            </div>
+
+            <div id="module-nav-links" class="space-y-1">
+                <!-- Modules injected by JS -->
+            </div>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800 space-y-2">
+            <button onclick="state.logout()"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors text-sm font-medium">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div id="main-layout" class="flex-1 flex flex-col min-h-screen w-full hidden">
+        <!-- Mobile Header -->
+        <header
+            class="bg-teal-700 text-white shadow-md sticky top-0 z-30 md:hidden flex justify-between items-center p-4 no-print">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="text-white focus:outline-none"><i
+                        class="fas fa-bars text-xl"></i></button>
+                <span class="font-bold">Portfolio</span>
+            </div>
+            <button onclick="window.print()"><i class="fas fa-print"></i></button>
+        </header>
+
+        <main id="app-container" class="flex-1 p-4 md:p-8 lg:px-12 w-full max-w-6xl mx-auto fade-in">
+            <!-- Rendered by JS -->
+        </main>
+    </div>
+
+    <!-- Login Container -->
+    <div id="login-container" class="flex-1 min-h-screen bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden fade-in">
+            <div class="bg-slate-800 p-8 text-center border-b border-slate-700">
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-700 mb-4 ring-4 ring-slate-600">
+                    <i class="fas fa-user-md text-3xl text-teal-400"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">MMed Rural Portfolio</h1>
+                <p class="text-slate-400 text-sm mt-1">Please sign in to continue</p>
+            </div>
+            <div class="p-8 space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+                    <input type="email" id="login-email"
+                        class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                    <input type="password" id="login-password"
+                        class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
+                </div>
+                <button onclick="state.signInEmail()"
+                    class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                    Sign In with Email
+                </button>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-semibold uppercase">OR</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <button onclick="state.signInGoogle()"
+                    class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg flex items-center justify-center gap-3 transition-colors">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+                    Continue with Google
+                </button>
+            </div>
+            <div class="bg-slate-50 p-4 text-center text-xs text-slate-500 border-t border-slate-100">
+                Authorized Access Only &bull; Papua New Guinea Medical Board
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Log FAB -->
+    <button id="fab-btn" onclick="showQuickLogModal()"
+        class="hidden fixed bottom-6 right-6 w-14 h-14 bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all items-center justify-center text-2xl z-40 no-print hover:scale-105">
+        <i class="fas fa-plus"></i>
+    </button>
 
     <script>
-        // --- CONFIGURATION ---
+        // --- DATA CONFIGURATIONS (From User Input) ---
         const moduleConfigs = [
-            { id: 'surgery', name: 'Surgery (Module 1)', color: '#15803d', duration: '9 months', procedures: 45, weeks: [{ id: 'w1', title: 'Trauma Assessment' }, { id: 'w2', title: 'Antibiotics' }, { id: 'w3', title: 'Sterilization' }, { id: 'w4', title: 'Theatre Setup' }, { id: 'w5', title: 'Acute Pain' }, { id: 'w6', title: 'Chronic Pain' }, { id: 'w7', title: 'Wounds' }, { id: 'w8', title: 'Transfer' }, { id: 'w9', title: 'Pyomyositis' }, { id: 'w10', title: 'Chest Drains' }, { id: 'w11', title: 'Closed Fractures' }, { id: 'w12', title: 'Neurovascular' }, { id: 'w13', title: 'Dental' }, { id: 'w14', title: 'Abscesses' }, { id: 'w15', title: 'Appendicitis' }, { id: 'w16', title: 'Laparotomy' }, { id: 'w17', title: 'Gut Repair' }, { id: 'w18', title: 'Stomas' }, { id: 'w19', title: 'Obstruction' }, { id: 'w20', title: 'Casting' }, { id: 'w21', title: 'Traction' }, { id: 'w22', title: 'Open Fractures' }, { id: 'w23', title: 'Dislocations' }, { id: 'w24', title: 'Upper Limb' }, { id: 'w25', title: 'Bleeding' }, { id: 'w26', title: 'Enucleation' }, { id: 'w27', title: 'Hernia' }, { id: 'w28', title: 'Strangulated Hernia' }, { id: 'w29', title: 'Minor Ops' }, { id: 'w30', title: 'Head/Spine' }, { id: 'w31', title: 'Burns' }, { id: 'w32', title: 'Ethics' }], assignmentList: ['1. Cancer Pathophysiology', '2. Cancer Screening', '3. Blood Transfusion', '4. Blood/Haemopoiesis', '5. Cytokines', '6. Wound Healing', '7. Hb/Oxygen', '8. Genetics', '9. Nerve Conduction', '10. Pain Pathways', '11. Urodynamics', '12. CSF/ICP', '13. Calcium', '14. Liver Function', '15. Bile/Gallstones', '16. Oedema', '17. Thrombosis', '18. Gastric Secretion', '19. Surgical Infections', '20. Antibiotics Policy'] },
-            { id: 'anaesthesia', name: 'Anaesthesiology (Module 2)', color: '#475569', duration: '4 months', procedures: 50, weeks: [{ id: 'w1', title: 'Equipment' }, { id: 'w2', title: 'Ketamine' }, { id: 'w3', title: 'Propofol' }, { id: 'w4', title: 'Pre-op' }, { id: 'w5', title: 'Opiates' }, { id: 'w6', title: 'Chronic Pain' }, { id: 'w7', title: 'Spinal' }, { id: 'w8', title: 'Brachial' }, { id: 'w9', title: 'Wrist/Ankle' }, { id: 'w10', title: 'Neonatal Resus' }, { id: 'w11', title: 'Can\'t Intubate' }, { id: 'w12', title: 'IV Access' }, { id: 'w13', title: 'Cardiac Arrest' }, { id: 'w14', title: 'Outcomes' }], caseReports: ['General Anaesthesia', 'Ketamine', 'Spinal', 'Paediatric', 'Resuscitation'] },
-            { id: 'childhealth', name: 'Child Health (Module 3)', color: '#f97316', duration: '1 month', procedures: 30, weeks: [{ id: 'w1', title: 'Milestones' }, { id: 'w2', title: 'Pneumonia' }, { id: 'w3', title: 'Cardiac' }, { id: 'w4', title: 'Newborn' }, { id: 'w5', title: 'Ponsetti' }, { id: 'w6', title: 'Immunization' }], caseReports: ['Pneumonia', 'Diarrhoea', 'Malnutrition', 'Meningitis', 'Neonatal Sepsis'] },
-            { id: 'obs_gyn', name: 'Obs & Gynae (Module 4)', color: '#ec4899', duration: '3 months', procedures: 40, weeks: [{ id: 'w1', title: 'Menstral' }, { id: 'w2', title: 'Contraception' }, { id: 'w3', title: 'Antenatal' }, { id: 'w4', title: 'USS' }, { id: 'w5', title: 'Miscarriage' }, { id: 'w6', title: 'Labour' }, { id: 'w7', title: 'Partograms' }, { id: 'w8', title: 'CS' }, { id: 'w9', title: 'APH' }, { id: 'w10', title: 'Failure Progress' }, { id: 'w11', title: 'PPH' }, { id: 'w12', title: 'Sepsis' }, { id: 'w13', title: 'Infertility' }, { id: 'w15', title: 'Ovarian' }, { id: 'w17', title: 'Endometrial' }, { id: 'w19', title: 'Cervical' }, { id: 'w21', title: 'Pelvic Sepsis' }, { id: 'w23', title: 'Pre-eclampsia' }, { id: 'w26', title: 'PPH Adv' }, { id: 'w29', title: 'Destructive' }], assignmentList: ['Antenatal/Family Planning', 'Emergency Obstetric Care'] },
-            { id: 'medicine', name: 'Internal Medicine (Module 5)', color: '#3b82f6', duration: '2 months', procedures: 20, weeks: [{ id: 'w1', title: 'Diabetes' }, { id: 'w2', title: 'Sepsis' }, { id: 'w3', title: 'TB' }, { id: 'w4', title: 'Snake/ECG' }, { id: 'w5', title: 'HTN/HIV' }, { id: 'w6', title: 'Asthma' }], caseReports: ['Severe Malaria', 'Meningitis', 'Pneumonia', 'Heart Failure', 'TB'] },
-            { id: 'psychiatry', name: 'Psychiatry (Module 6)', color: '#a855f7', duration: '1 month', procedures: 10, caseReports: ['Acute Psychosis', 'Somatoform'] },
-            { id: 'publichealth', name: 'Public Health (Module 7)', color: '#10b981', duration: 'Longitudinal', assignmentList: ['PH1: Community', 'PH2: Outbreak', 'PH3: Evaluation', 'PH4: Management', 'PH5: Environment'] },
-            { id: 'eye_ent', name: 'Eye/ENT (Module 8)', color: '#06b6d4', duration: '1 month', procedures: 15, caseReports: ['Eye Injury', 'Red Eye', 'Epistaxis'] },
-            { id: 'lab', name: 'Laboratory (Module 9)', color: '#6366f1', duration: '1 month', procedures: 10, assignmentList: ['Cross-match', 'Malaria Stain'] },
-            { id: 'management', name: 'Management (Module 10)', color: '#475569', duration: '4 weeks', assignmentList: ['4-Week Course', 'Major Assignment'] }
+            { id: 'surgery', name: 'Surgery (Module 1)', color: 'bg-green-700', text: 'text-green-700', border: 'border-green-700', duration: '9 months', weeks: [{ id: 'w1', title: 'Trauma Assessment & Shock' }, { id: 'w2', title: 'Antibiotics & Pre-op Prep' }, { id: 'w3', title: 'Instruments & Sterilization' }, { id: 'w4', title: 'Theatre Setup' }, { id: 'w5', title: 'Acute Pain' }, { id: 'w6', title: 'Chronic Pain' }, { id: 'w7', title: 'Wounds & Suturing' }, { id: 'w8', title: 'Transfer Principles' }, { id: 'w9', title: 'Pyomyositis & Osteo' }, { id: 'w10', title: 'Chest Drains' }, { id: 'w11', title: 'Closed Fractures' }, { id: 'w12', title: 'Neurovascular' }, { id: 'w13', title: 'Dental/Airway Infections' }, { id: 'w14', title: 'Abscesses' }, { id: 'w15', title: 'Appendicitis' }, { id: 'w16', title: 'Laparotomy Basics' }, { id: 'w17', title: 'Gut Repair' }, { id: 'w18', title: 'Stomas & Ulcers' }, { id: 'w19', title: 'Bowel Obstruction' }, { id: 'w20', title: 'Casting & Splinting' }, { id: 'w21', title: 'Traction' }, { id: 'w22', title: 'Open Fractures' }, { id: 'w23', title: 'Dislocations' }, { id: 'w24', title: 'Upper Limb Trauma' }, { id: 'w25', title: 'Bleeding Control' }, { id: 'w26', title: 'Enucleation' }, { id: 'w27', title: 'Hernia Repair' }, { id: 'w28', title: 'Strangulated Hernia' }, { id: 'w29', title: 'Minor Procedures' }, { id: 'w30', title: 'Head & Spinal Injury' }, { id: 'w31', title: 'Burns' }, { id: 'w32', title: 'Ethics' }], assignmentList: ['1. Cancer Pathophysiology', '2. Cancer Screening in PNG', '3. Blood Transfusion Protocols', '4. Blood / Haemopoiesis', '5. Cytokines', '6. Wound Healing Physiology', '7. Hb & Oxygen Transport', '8. Genetics', '9. Nerve Conduction', '10. Pain Pathways', '11. Urodynamics', '12. CSF & ICP', '13. Calcium Homeostasis', '14. Liver Function', '15. Bile & Gallstones', '16. Oedema', '17. Thrombosis', '18. Gastric Secretion', '19. Surgical Infections', '20. Antibiotics Policy'], requiredProcedures: [{ name: 'Pleural tap (thoracoscentesis)', target: 3 }, { name: 'Abdominal tap (parascentesis)', target: 2 }, { name: 'Insertion of a chest drain', target: 5 }, { name: 'Debriding a wound', target: 3 }, { name: 'Doing an appendicectomy', target: 3 }, { name: 'Repair of inguinal hernia', target: 2 }, { name: 'Cesarean Section', target: 6 }, { name: 'Laparotomy', target: 5 }] },
+            { id: 'anaesthesia', name: 'Anaesthesiology (Module 2)', color: 'bg-slate-700', text: 'text-slate-700', border: 'border-slate-700', duration: '4 months', weeks: [{ id: 'w1', title: 'Machine Check & Equipment' }, { id: 'w2', title: 'Ketamine (Pharma & Use)' }, { id: 'w3', title: 'Propofol & Benzos' }, { id: 'w4', title: 'Pre-op Assessment' }, { id: 'w5', title: 'Opiates & Deferring Surgery' }, { id: 'w6', title: 'Chronic Pain' }, { id: 'w7', title: 'Spinal & LUSCS' }, { id: 'w8', title: 'Brachial Plexus Blocks' }, { id: 'w9', title: 'Wrist/Ankle Blocks' }, { id: 'w10', title: 'Neonatal Resuscitation' }, { id: 'w11', title: 'Cannot Intubate/Ventilate' }, { id: 'w12', title: 'IV Access' }, { id: 'w13', title: 'Cardiac Arrest' }, { id: 'w14', title: 'Handling Negative Outcomes' }], caseReports: ['General Anaesthesia', 'Ketamine', 'Spinal', 'Paediatric', 'Resuscitation'], requiredProcedures: [{ name: 'Adult intubation', target: 10 }, { name: 'Spinal (pregnant)', target: 10 }, { name: 'Spinal (non-pregnant)', target: 10 }, { name: 'Ketamine', target: 10 }] },
+            { id: 'childhealth', name: 'Child Health (Module 3)', color: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500', duration: '1 month', weeks: [{ id: 'w1', title: 'Milestones & Malnutrition' }, { id: 'w2', title: 'Pneumonia & Oxygen' }, { id: 'w3', title: 'Cardiac & Kidney' }, { id: 'w4', title: 'Newborn Exam' }, { id: 'w5', title: 'Ponsetti & Diarrhoea' }, { id: 'w6', title: 'Immunization' }], caseReports: ['Pneumonia', 'Diarrhoea', 'Malnutrition', 'Meningitis', 'Neonatal Sepsis'], requiredProcedures: [{ name: 'Neonatal resuscitation', target: 4 }, { name: 'Management of LBW neonate', target: 4 }, { name: 'Intraosseous needle placement', target: 1 }] },
+            { id: 'obs_gyn', name: 'Obs & Gynae (Module 4)', color: 'bg-pink-500', text: 'text-pink-500', border: 'border-pink-500', duration: '3 months', weeks: [{ id: 'w1', title: 'Menstrual Cycle' }, { id: 'w2', title: 'Contraception' }, { id: 'w3', title: 'Routine Antenatal' }, { id: 'w4', title: 'Basic USS' }, { id: 'w5', title: 'Miscarriage/Ectopic' }, { id: 'w6', title: 'Normal Labour' }, { id: 'w7', title: 'Partograms' }, { id: 'w8', title: 'CS Technique' }, { id: 'w9', title: 'APH & Pre-eclampsia' }, { id: 'w10', title: 'Failure to Progress' }, { id: 'w11', title: 'PPH' }, { id: 'w12', title: 'Puerperal Sepsis' }, { id: 'w13', title: 'Infertility' }, { id: 'w15', title: 'Ovarian Tumours' }, { id: 'w17', title: 'Endometrial CA' }, { id: 'w19', title: 'Cervical CA' }, { id: 'w21', title: 'Pelvic Sepsis' }, { id: 'w23', title: 'Pre-eclampsia/Eclampsia' }, { id: 'w26', title: 'PPH Advanced' }, { id: 'w29', title: 'Destructive Delivery' }], assignmentList: ['1. Family Planning', '2. Supervised Birthing Rates', '3. Cervical Cancer'], requiredProcedures: [{ name: 'Management of PPH', target: 6 }, { name: 'Breech delivery', target: 5 }, { name: 'Vacuum extraction', target: 6 }, { name: 'ERPC', target: 6 }] },
+            { id: 'medicine', name: 'Internal Medicine (Module 5)', color: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-600', duration: '2 months', weeks: [{ id: 'w1', title: 'Diabetes' }, { id: 'w2', title: 'Antibiotics & Sepsis' }, { id: 'w3', title: 'Tuberculosis' }, { id: 'w4', title: 'Snake Bite & ECG' }, { id: 'w5', title: 'Hypertension & HIV' }, { id: 'w6', title: 'Asthma/COAD' }], caseReports: ['Severe malaria', 'Severe Asthma', 'Epilepsy', 'Tuberculosis'], requiredProcedures: [{ name: 'Severe malaria management', target: 4 }, { name: 'Tuberculosis management', target: 6 }, { name: 'HIV/AIDS management', target: 4 }, { name: 'Perform an ECG', target: 4 }, { name: 'Lumbar puncture', target: 2 }] },
+            { id: 'psychiatry', name: 'Psychiatry (Module 6)', color: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500', duration: '1 month', caseReports: ['Acute Psychosis', 'Somatoform Disorder'], requiredProcedures: [] },
+            { id: 'publichealth', name: 'Public Health (Module 7)', color: 'bg-teal-500', text: 'text-teal-500', border: 'border-teal-500', duration: 'Longitudinal', assignmentList: ['Part A: District Health Report', 'Part B: Outbreak of Food Poisoning', 'Part B: Disease Surveillance'], requiredProcedures: [] },
+            { id: 'eye_ent', name: 'Eye/ENT (Module 8)', color: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-500', duration: '1 month', caseReports: ['Eye Injury', 'Red Eye', 'Epistaxis'], requiredProcedures: [{ name: 'Remove foreign body', target: 2 }] },
+            { id: 'lab', name: 'Laboratory (Module 9)', color: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-indigo-500', duration: '1 month', assignmentList: ['Cross-match', 'Malaria Stain'], requiredProcedures: [{ name: 'Blood grouping', target: 4 }, { name: 'HIV Rapid test', target: 2 }, { name: 'Giemsa stain', target: 2 }] },
+            { id: 'management', name: 'Management (Module 10)', color: 'bg-slate-600', text: 'text-slate-600', border: 'border-slate-600', duration: '4 weeks', assignmentList: ['Management Systems Essay'], requiredProcedures: [] }
         ];
 
         const milestoneConfigs = {
-            research: [{ id: 'res_topic', label: 'Topic Approved' }, { id: 'res_data', label: 'Data Collection' }, { id: 'res_submit', label: 'Submitted' }, { id: 'res_present', label: 'Presented' }],
-            exams: [{ id: 'exam_part1', label: 'Part 1 Passed' }, { id: 'exam_part2_written', label: 'Part 2 Written' }, { id: 'exam_part2_clinical', label: 'Part 2 Clinical' }],
-            management: [{ id: 'mgmt_course', label: 'Course' }, { id: 'mgmt_assign', label: 'Assignment' }],
-            other: [{ id: 'solar_course', label: 'Solar/Radio Course' }]
+            research: [{ id: 'res_topic', label: 'Research Topic Approved' }, { id: 'res_data', label: 'Data Collection Completed' }, { id: 'res_submit', label: 'Research Submitted' }, { id: 'res_present', label: 'Research Presented' }],
+            exams: [{ id: 'exam_part1', label: 'Part 1 Exam Passed' }, { id: 'exam_part2_written', label: 'Part 2 Written Passed' }, { id: 'exam_part2_clinical', label: 'Part 2 Clinical Passed' }],
+            management: [{ id: 'mgmt_course', label: '4-Week Intensive Course Completed' }, { id: 'mgmt_assign', label: 'Assignment Completed' }],
+            other: [{ id: 'sc_emst', label: 'EMST Course' }, { id: 'sc_emsb', label: 'EMSB Course' }, { id: 'sc_us', label: 'Basic Ultrasonography' }, { id: 'sc_als', label: 'Advanced Life Support' }]
         };
 
-        const masterLogbookConfig = [
-            { category: 'Anaesthesiology', items: [{ id: 'la_pre', label: 'Pre-op', target: 50 }, { id: 'la_int', label: 'Intubation', target: 10 }, { id: 'la_spin', label: 'Spinal', target: 20 }, { id: 'la_ket', label: 'Ketamine', target: 10 }] },
-            { category: 'Obs & Gynae', items: [{ id: 'lo_norm', label: 'Normal Delivery', target: 20 }, { id: 'lo_cs', label: 'LUSCS', target: 6 }, { id: 'lo_breech', label: 'Breech', target: 5 }, { id: 'lo_vac', label: 'Vacuum', target: 6 }, { id: 'lo_pph', label: 'PPH', target: 6 }] },
-            { category: 'Child Health', items: [{ id: 'lc_neo', label: 'Neonatal Resus', target: 4 }, { id: 'lc_pon', label: 'Ponsetti', target: 2 }, { id: 'lc_io', label: 'Intraosseous', target: 1 }] },
-            { category: 'Surgery & Med', items: [{ id: 'ls_hernia', label: 'Hernia', target: 8 }, { id: 'ls_lap', label: 'Laparotomy', target: 5 }, { id: 'ls_chest', label: 'Chest Drain', target: 7 }, { id: 'lm_lp', label: 'Lumbar Puncture', target: 10 }] },
-            { category: 'Laboratory', items: [{ id: 'log_blood', label: 'Blood X-Match', target: 10 }, { id: 'log_malaria', label: 'Malaria Stain', target: 10 }] }
-        ];
 
-        // --- APP STATE ---
+        // --- APP STATE (Merged with Firebase) ---
         class AppState {
             constructor() {
-                this.account = null;
+                this.account = null; // Start null to force login
                 this.modules = {};
                 this.procedureLog = [];
                 this.milestones = {};
-                this.logbook = {};
                 this.activeTab = 'dashboard';
-                this.sidebarOpen = false;
+                this.listeners = [];
                 this._loginHandled = false;
 
+                // Init modules structure
+                moduleConfigs.forEach(m => { this.modules[m.id] = { assignments: {}, weeks: {}, caseReports: {} }; });
+
                 this.initFirebase();
-                this.loadData();
+                this.loadData(); // Load local storage check
             }
 
             initFirebase() {
@@ -276,389 +292,401 @@
                     this.auth = firebase.auth();
                     this.db = firebase.firestore();
 
-                    // CRITICAL: Handle Redirect Result (but only if not logged in)
+                    // Guarded Redirect Check
                     if (!this.auth.currentUser) {
                         this.auth.getRedirectResult().then(result => {
-                            if (result.user) {
-                                console.log("Redirect Success:", result.user.email);
-                                this.handleCloudLogin(result.user);
-                            }
-                        }).catch(e => console.error("Redirect Error (Benign):", e.code));
+                            if (result.user) this.handleCloudLogin(result.user);
+                        }).catch(e => console.error("Redirect Error:", e));
                     }
 
                     this.auth.onAuthStateChanged(user => {
                         if (user) this.handleCloudLogin(user);
+                        else {
+                            this.account = null;
+                            this.notify(); // Triggers renderLogin
+                        }
                     });
-                } catch (e) {
-                    console.error("Firebase Init Failed:", e);
-                }
+                } catch (e) { console.error("Firebase Init Failed", e); }
             }
 
             async handleCloudLogin(user) {
                 if (this._loginHandled && this.account && this.account.id === user.uid) return;
                 this._loginHandled = true;
 
-                const defaultYear = 1;
-                const cloudRef = this.db.collection('users').doc(user.uid);
+                document.getElementById('loading').style.display = 'flex';
 
                 try {
-                    const doc = await cloudRef.get();
-                    let cloudData = doc.exists ? doc.data() : {};
+                    const doc = await this.db.collection('users').doc(user.uid).get();
+                    const cloudData = doc.exists ? doc.data() : {};
 
                     this.account = {
-                        name: cloudData.account?.name || user.displayName || "Dr. " + user.email.split('@')[0],
+                        name: cloudData.account?.name || user.displayName || "Dr. Trainee",
                         email: user.email,
                         id: user.uid,
-                        year: cloudData.account?.year || defaultYear,
-                        lastBackup: Date.now()
+                        year: cloudData.account?.year || 1,
+                        location: cloudData.account?.location || "General Hospital"
                     };
 
-                    this.modules = cloudData.modules || this.modules;
-                    this.procedureLog = cloudData.procedureLog || this.procedureLog;
-                    this.milestones = cloudData.milestones || this.milestones;
-                    this.logbook = cloudData.logbook || this.logbook;
+                    // Merge Module Data
+                    if (cloudData.modules) this.modules = cloudData.modules;
+                    if (cloudData.procedureLog) this.procedureLog = cloudData.procedureLog;
+                    if (cloudData.milestones) this.milestones = cloudData.milestones;
 
-                    this.saveData(true);
+                    this.saveData(true); // Save local copy
                 } catch (e) {
-                    console.error("Sync Error:", e);
-                    this.account = { name: user.displayName || "User", email: user.email, id: user.uid, year: defaultYear };
-                    alert("Synced Offline Mode.");
+                    console.error("Sync Error", e);
+                    this.account = { name: user.displayName || "Dr. User", email: user.email, id: user.uid, year: 1, location: "Offline" };
                 } finally {
-                    render();
+                    document.getElementById('loading').style.display = 'none';
+                    this.notify();
                 }
             }
 
             loadData() {
-                try {
-                    const stored = localStorage.getItem('mmed_struct');
-                    if (stored) {
-                        const data = JSON.parse(stored);
-                        this.account = data.account || null;
-                        this.modules = data.modules || {};
+                // Initial check for local data
+                const stored = localStorage.getItem('mmed_tracker_v2_cloud');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    if (data.account && data.account.id) {
+                        this.account = data.account;
+                        this.modules = data.modules || this.modules;
                         this.procedureLog = data.procedureLog || [];
                         this.milestones = data.milestones || {};
-                        this.logbook = data.logbook || {};
                     }
-                    // Ensure structure exists
-                    moduleConfigs.forEach(m => {
-                        if (!this.modules[m.id]) this.modules[m.id] = { assignments: {}, weeks: {}, caseReports: {} };
-                    });
-                } catch (e) { console.error("Load failed", e); }
-            }
-
-            saveData(skipCloud = false) {
-                const data = { account: this.account, modules: this.modules, procedureLog: this.procedureLog, milestones: this.milestones, logbook: this.logbook };
-                localStorage.setItem('mmed_struct', JSON.stringify(data));
-
-                if (!skipCloud && this.account && this.db && this.account.id) {
-                    this.db.collection('users').doc(this.account.id).set(data, { merge: true }).catch(e => console.error(e));
                 }
             }
 
-            // --- AUTH ACTIONS ---
-            signInWithGoogle() {
+            saveData(skipCloud = false) {
+                const data = { account: this.account, modules: this.modules, procedureLog: this.procedureLog, milestones: this.milestones };
+                localStorage.setItem('mmed_tracker_v2_cloud', JSON.stringify(data));
+
+                if (!skipCloud && this.account && this.db && this.account.id) {
+                    this.db.collection('users').doc(this.account.id).set(data, { merge: true }).catch(e => console.error("Cloud Save Failing:", e));
+                }
+                this.notify();
+            }
+
+            // Auth Methods
+            signInGoogle() {
                 const provider = new firebase.auth.GoogleAuthProvider();
-                // Strategy: Popup First -> Redirect Fallback
                 this.auth.signInWithPopup(provider)
-                    .then(result => this.handleCloudLogin(result.user))
-                    .catch(error => {
-                        console.warn("Popup blocked/closed, using redirect...", error.code);
+                    .then(r => this.handleCloudLogin(r.user))
+                    .catch(e => {
+                        console.warn("Popup blocked, trying redirect");
                         this.auth.signInWithRedirect(provider);
                     });
+            }
+
+            signInEmail() {
+                const e = document.getElementById('login-email').value;
+                const p = document.getElementById('login-password').value;
+                if (!e || !p) return alert("Please enter email and password");
+
+                this.auth.signInWithEmailAndPassword(e, p).catch(err => {
+                    if (err.code === 'auth/user-not-found') {
+                        if (confirm("User not found. Register new account?")) {
+                            this.auth.createUserWithEmailAndPassword(e, p).then(r => this.handleCloudLogin(r.user));
+                        }
+                    } else alert(err.message);
+                });
             }
 
             logout() {
                 this._loginHandled = false;
                 if (this.auth) this.auth.signOut();
                 this.account = null;
-                this.session = null;
-                this.saveData(true); // <--- CRITICAL FIX: Wipes user from localStorage
+                // WIPE LOCAL DATA
+                localStorage.removeItem('mmed_tracker_v2_cloud');
+
+                this.notify();
                 location.reload();
             }
 
-            signInWithEmail() {
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                if (!email || !password) return alert("Enter email/password");
-
-                this.auth.signInWithEmailAndPassword(email, password)
-                    .catch(e => {
-                        if (e.code === 'auth/user-not-found') {
-                            if (confirm("User not found. Create Account?")) this.auth.createUserWithEmailAndPassword(email, password);
-                        } else alert("Error: " + e.message);
-                    });
+            // App Actions
+            setTab(tab) {
+                this.activeTab = tab;
+                if (window.innerWidth <= 768 && document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+                this.notify();
             }
 
-            // --- DATA ACTIONS ---
-            updateModule(modId, type, itemId, val) {
-                if (!this.modules[modId]) this.modules[modId] = { weeks: {}, assignments: {}, caseReports: {} };
-
+            updateModuleData(moduleId, type, id, value) {
                 if (type === 'week') {
-                    if (!this.modules[modId].weeks[itemId]) this.modules[modId].weeks[itemId] = {};
-                    this.modules[modId].weeks[itemId] = { ...this.modules[modId].weeks[itemId], ...val };
-                }
-                else if (type === 'assign') {
-                    if (!this.modules[modId].assignments[itemId]) this.modules[modId].assignments[itemId] = {};
-                    this.modules[modId].assignments[itemId] = { ...this.modules[modId].assignments[itemId], ...val };
-                }
-                else if (type === 'case') {
-                    if (!this.modules[modId].caseReports) this.modules[modId].caseReports = {};
-                    this.modules[modId].caseReports[itemId] = val; // 'Done' or null
+                    if (!this.modules[moduleId].weeks[id]) this.modules[moduleId].weeks[id] = {};
+                    if (typeof value === 'object') this.modules[moduleId].weeks[id] = { ...this.modules[moduleId].weeks[id], ...value };
+                    else this.modules[moduleId].weeks[id].status = value;
+                } else if (type === 'assignment') {
+                    if (!this.modules[moduleId].assignments[id]) this.modules[moduleId].assignments[id] = {};
+                    this.modules[moduleId].assignments[id] = { ...this.modules[moduleId].assignments[id], ...value };
+                } else if (type === 'caseReport') {
+                    this.modules[moduleId].caseReports[id] = value;
                 }
                 this.saveData();
-                render();
             }
 
             addProcedure(data) {
                 this.procedureLog.push({ ...data, timestamp: Date.now() });
                 this.saveData();
-                render();
             }
 
-            exportData() {
-                const blob = new Blob([JSON.stringify(localStorage.getItem('mmed_struct'))], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `mmed_backup_${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
+            updateMilestone(category, id, value, date) {
+                if (!this.milestones[category]) this.milestones[category] = {};
+                this.milestones[category][id] = { status: value, date: date };
+                this.saveData();
             }
 
-            importData(input) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    try {
-                        const raw = JSON.parse(e.target.result); // Unwraps the stringified storage
-                        const data = JSON.parse(raw);
-                        if (confirm("Restore backup?")) {
-                            localStorage.setItem('mmed_struct', JSON.stringify(data));
-                            location.reload();
-                        }
-                    } catch (e) { alert("Import failed: " + e.message); }
-                };
-                reader.readAsText(input.files[0]);
-            }
+            notify() { this.listeners.forEach(l => l()); }
+            subscribe(l) { this.listeners.push(l); }
         }
 
         const state = new AppState();
 
-        // --- VIEWS ---
+        // --- RENDER FUNCTIONS (Tailwind) ---
 
-        function renderLogin() {
-            document.getElementById('app').innerHTML = `
-                <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; background-color:#0d1117; color:#c9d1d9;">
-                    <div style="width:100%; max-width:350px; text-align:center;">
-                        <div style="font-size:3rem; margin-bottom:10px;">🏥</div>
-                        <h1 style="color:white; font-size:1.5rem; font-weight:300; margin-bottom:20px;">Sign in to MMED Rural</h1>
-                        
-                        <div style="background:#161b22; padding:20px; border:1px solid #30363d; border-radius:6px; text-align:left;">
-                            <label style="display:block; margin-bottom:8px; font-size:14px;">Email address</label>
-                            <input type="email" id="email" style="margin-bottom:15px; background:#0d1117; border-color:#30363d; color:white;">
-                            
-                            <label style="display:block; margin-bottom:8px; font-size:14px;">Password</label>
-                            <input type="password" id="password" style="margin-bottom:20px; background:#0d1117; border-color:#30363d; color:white;">
-                            
-                            <button onclick="state.signInWithEmail()" style="width:100%; padding:10px; background:#238636; color:white; border:none; border-radius:6px; font-weight:bold; margin-bottom:15px;">Sign in / Sign up</button>
+        function renderSidebarLinks() {
+            const container = document.getElementById('module-nav-links');
+            container.innerHTML = moduleConfigs.map(m => `
+                <button onclick="state.setTab('${m.id}')" id="tab-${m.id}" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors text-sm text-left truncate">
+                    <div class="w-3 h-3 rounded-full ${m.color}"></div>
+                    <span class="truncate">${m.name.split(' (')[0]}</span>
+                </button>
+            `).join('');
 
-                            <div style="text-align:center; position:relative; margin:15px 0;">
-                                <span style="background:#161b22; padding:0 10px; color:#8b949e; position:relative; z-index:1; font-size:12px;">OR</span>
-                                <div style="position:absolute; top:50%; left:0; width:100%; height:1px; background:#30363d;"></div>
-                            </div>
-
-                            <button onclick="state.signInWithGoogle()" style="width:100%; padding:8px; background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:10px;">
-                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Continue with Google
-                            </button>
-                            
-                            <button onclick="document.getElementById('import').click()" style="width:100%; margin-top:10px; padding:8px; background:none; border:none; color:#58a6ff; font-size:12px; cursor:pointer;">📥 Import Offline Backup</button>
-                            <input type="file" id="import" style="display:none" onchange="state.importData(this)" accept=".json">
-                        </div>
-                    </div>
-                </div>
-            `;
+            // Active Tab Styles
+            document.querySelectorAll('aside button').forEach(btn => {
+                btn.classList.remove('bg-slate-800', 'text-white', 'border-l-4', 'border-teal-500');
+                if (btn.id === `tab-${state.activeTab}`) {
+                    btn.classList.add('bg-slate-800', 'text-white', 'border-l-4', 'border-teal-500', 'pl-2');
+                }
+            });
         }
 
         function renderDashboard() {
-            const user = state.account;
-            const completedProcs = state.procedureLog.length;
+            const totalProcedures = state.procedureLog.length;
+            const targetProcedures = moduleConfigs.reduce((acc, m) => acc + (m.requiredProcedures?.reduce((a, p) => a + p.target, 0) || 0), 0);
+            const totalAssignments = Object.values(state.modules).reduce((acc, m) => acc + (m.assignments ? Object.values(m.assignments).filter(a => a.dateSubmitted).length : 0), 0);
 
             return `
-                <div class="card" style="border-top: 4px solid var(--forest-green);">
-                    <h2 style="color:var(--forest-green); margin-bottom:5px;">Welcome, Dr. ${user.name}</h2>
-                    <p style="color:#6b7280;">Masters in Medicine (Rural) | Year ${user.year}</p>
-                    
-                    <div style="margin-top:20px; display:flex; gap:20px; flex-wrap:wrap;">
-                        <div style="flex:1; background:#f0fdf4; padding:15px; border-radius:8px; border:1px solid #bbf7d0;">
-                            <span style="display:block; font-size:0.8em; color:#166534; font-weight:bold;">PROCEDURES</span>
-                            <span style="font-size:2em; font-weight:bold; color:#15803d;">${completedProcs}</span>
+                <div class="flex justify-between items-end mb-8 no-print">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
+                        <p class="text-slate-500 mt-1">Welcome back, Dr. ${state.account.name}</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 border-l-4 border-l-slate-800">
+                    <h3 class="font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Profile Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Name</label>
+                            <input value="${state.account.name}" onchange="state.account.name=this.value; state.saveData()" class="w-full border border-slate-300 rounded p-2">
                         </div>
-                        <div style="flex:1; background:#fefce8; padding:15px; border-radius:8px; border:1px solid #fde047;">
-                            <span style="display:block; font-size:0.8em; color:#854d0e; font-weight:bold;">PENDING WEEKS</span>
-                            <span style="font-size:2em; font-weight:bold; color:#ca8a04;">
-                                ${Object.values(state.modules).reduce((num, m) => num + Object.values(m.weeks || {}).filter(w => w.status === 'Pending').length, 0)}
-                            </span>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Year</label>
+                            <select onchange="state.account.year=parseInt(this.value); state.saveData(); state.notify()" class="w-full border border-slate-300 rounded p-2">
+                                ${[1, 2, 3, 4, 5, 6].map(y => `<option value="${y}" ${state.account.year === y ? 'selected' : ''}>Year ${y}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Hospital</label>
+                            <input value="${state.account.location || ''}" onchange="state.account.location=this.value; state.saveData()" class="w-full border border-slate-300 rounded p-2">
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3>Profile Settings</h3>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                        <div>
-                            <label style="font-size:0.8em; font-weight:bold;">Display Name</label>
-                            <input type="text" value="${user.name}" onchange="state.account.name = this.value; state.saveData()">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 border-t-4 border-t-teal-600">
+                        <h3 class="text-slate-500 text-sm uppercase font-bold tracking-wider mb-2">Procedures Logged</h3>
+                        <div class="flex items-end gap-2">
+                            <span class="text-4xl font-black text-slate-800">${totalProcedures}</span>
+                            <span class="text-slate-400 font-medium mb-1">/ ${targetProcedures} Total</span>
                         </div>
-                        <div>
-                            <label style="font-size:0.8em; font-weight:bold;">Year</label>
-                            <select onchange="state.account.year = parseInt(this.value); state.saveData(); render();">
-                                ${[1, 2, 3, 4, 5, 6].map(y => `<option value="${y}" ${user.year === y ? 'selected' : ''}>Year ${y}</option>`).join('')}
-                            </select>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 border-t-4 border-t-amber-600">
+                        <h3 class="text-slate-500 text-sm uppercase font-bold tracking-wider mb-2">Assignments</h3>
+                        <div class="flex items-end gap-2">
+                            <span class="text-4xl font-black text-slate-800">${totalAssignments}</span>
+                            <span class="text-slate-400 font-medium mb-1">Submitted</span>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        function renderModule(id) {
-            const config = moduleConfigs.find(c => c.id === id);
-            const data = state.modules[id];
+        // Re-using user's render logic for Milestones/MasterLog/Details (simplified for brevity but functionally identical)
+        function renderMilestones() {
+            return `
+                <h1 class="text-3xl font-bold text-slate-800 mb-6">Milestones</h1>
+                ${Object.keys(milestoneConfigs).map(cat => `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 overflow-hidden">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 font-bold uppercase text-xs tracking-wider">${cat}</div>
+                        <div class="divide-y divide-slate-100">
+                            ${milestoneConfigs[cat].map(m => {
+                const mData = state.milestones[cat]?.[m.id] || {};
+                const isDone = mData.status === 'Done' || mData.status === 'Passed';
+                return `
+                                <div class="p-4 flex flex-col sm:flex-row justify-between items-center gap-4 ${isDone ? 'bg-green-50' : ''}">
+                                    <span class="font-medium text-slate-700">${m.label}</span>
+                                    <div class="flex gap-2">
+                                        <select onchange="state.updateMilestone('${cat}','${m.id}',this.value, this.nextElementSibling.value)" class="border rounded px-2 py-1 text-sm ${isDone ? 'bg-green-600 text-white' : ''}">
+                                            <option value="Pending">Pending</option>
+                                            <option value="Done" ${isDone ? 'selected' : ''}>Done</option>
+                                        </select>
+                                        <input type="date" value="${mData.date || ''}" onchange="state.updateMilestone('${cat}','${m.id}',this.previousElementSibling.value,this.value)" class="border rounded px-2 py-1 text-sm">
+                                    </div>
+                                </div>`;
+            }).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function renderMasterLogbook() {
+            return `
+                <div class="flex justify-between items-end mb-8 no-print">
+                    <h1 class="text-3xl font-bold text-slate-800">Master Logbook</h1>
+                    <button onclick="window.print()" class="bg-slate-100 px-4 py-2 rounded-lg font-medium hover:bg-slate-200"><i class="fas fa-print mr-2"></i> Print</button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    ${moduleConfigs.filter(m => m.requiredProcedures?.length).map(m => `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 break-inside-avoid">
+                            <h3 class="font-bold ${m.text} mb-4 border-b pb-2">${m.name}</h3>
+                            ${m.requiredProcedures.map(req => {
+                const count = state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length;
+                const isDone = count >= req.target;
+                return `
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="${isDone ? 'text-green-700 font-medium' : ''}">${req.name}</span>
+                                        <span class="${isDone ? 'text-green-600 font-bold' : 'text-slate-400'}">${count} / ${req.target}</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-100 rounded-full mb-3 no-print">
+                                        <div class="h-1.5 rounded-full ${isDone ? 'bg-green-500' : 'bg-teal-500'}" style="width:${Math.min(100, (count / req.target) * 100)}%"></div>
+                                    </div>
+                                `;
+            }).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderModuleDetail(mid) {
+            const conf = moduleConfigs.find(c => c.id === mid);
+            const data = state.modules[mid];
+            const logs = state.procedureLog.filter(p => p.moduleId === mid);
 
             return `
-                <div style="padding:20px; background:${config.color}; color:white; border-radius:12px 12px 0 0; margin-bottom:20px;">
-                    <h1>${config.name}</h1>
+                <div class="${conf.color} rounded-2xl p-8 text-white mb-8 shadow-md">
+                    <h1 class="text-3xl font-bold">${conf.name}</h1>
+                    <div class="flex gap-4 mt-2 text-white/80 text-sm">
+                        <span><i class="far fa-clock"></i> ${conf.duration}</span>
+                    </div>
                 </div>
 
-                <!-- WEEKS -->
-                ${config.weeks ? `
-                <div class="card">
-                    <h3>Clinical Schedule</h3>
-                    <div style="display:grid; gap:10px; margin-top:10px;">
-                    ${config.weeks.map(w => {
-                const stat = (data.weeks[w.id] || {}).status || 'Not Started';
-                return `
-                            <div style="padding:10px; border:1px solid #e5e7eb; border-radius:6px; background:${stat === 'Completed' ? '#f0fdf4' : 'white'}; display:flex; align-items:center; justify-content:space-between;">
-                                <div><strong>${w.title}</strong></div>
-                                <select onchange="state.updateModule('${id}','week','${w.id}',{status:this.value})">
-                                    <option ${stat === 'Not Started' ? 'selected' : ''}>Not Started</option>
-                                    <option ${stat === 'Pending' ? 'selected' : ''}>Pending</option>
-                                    <option ${stat === 'Completed' ? 'selected' : ''}>Completed</option>
-                                </select>
+                ${conf.weeks ? `
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+                    <h3 class="font-bold text-slate-800 mb-4 pb-2 border-b">Clinical Schedule</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${conf.weeks.map(w => {
+                const st = data.weeks[w.id]?.status || 'Not Started';
+                return `<div class="border rounded p-3 ${st === 'Completed' ? 'bg-green-50 border-green-200' : ''}">
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="font-bold text-sm text-slate-700">${w.title}</div>
+                                    <select onchange="state.updateModuleData('${mid}','week','${w.id}',{status:this.value})" class="text-xs border rounded px-1 py-1 ${st === 'Completed' ? 'bg-green-600 text-white' : ''}">
+                                        <option ${st === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                                        <option ${st === 'Pending' ? 'selected' : ''}>Pending</option>
+                                        <option ${st === 'Completed' ? 'selected' : ''}>Completed</option>
+                                    </select>
+                                </div>
                             </div>`;
             }).join('')}
                     </div>
                 </div>` : ''}
 
-                <!-- PROCEDURES -->
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Procedure Log (${state.procedureLog.filter(p => p.moduleId === id).length} / ${config.procedures || 0})</h3>
-                        <div>
-                            <button class="btn-secondary" onclick="renderPrintView('${id}')">🖨️ Print</button>
-                            <button class="btn-rural" onclick="showLogModal('${id}')">+ New</button>
-                        </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-12">
+                     <div class="flex justify-between items-center mb-4 border-b pb-2 no-print">
+                        <h3 class="font-bold text-slate-800">Procedure Log</h3>
+                        <button onclick="window.print()" class="text-sm bg-slate-100 px-3 py-1 rounded hover:bg-slate-200"><i class="fas fa-print"></i> Print</button>
                     </div>
-                    ${state.procedureLog.filter(p => p.moduleId === id).length === 0 ? '<p style="margin-top:10px; color:#9ca3af;">No logs yet.</p>' : ''}
-                    <div style="margin-top:10px;">
-                        ${state.procedureLog.filter(p => p.moduleId === id).map(p => `
-                            <div style="padding:8px; border-bottom:1px solid #eee;">
-                                <strong>${p.procedure}</strong> (${p.date}) - Sup: ${p.supervisor}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        // --- MASTER RENDER ---
-        function render() {
-            if (!state.account) return renderLogin();
-
-            const app = document.getElementById('app');
-            let content = '';
-
-            if (state.activeTab === 'dashboard') content = renderDashboard();
-            else if (state.activeTab === 'logbook') content = renderMasterLogbookView(); // Renamed to avoid confusion
-            else content = renderModule(state.activeTab);
-
-            app.innerHTML = `
-                <div style="display:flex; min-height:100vh;">
-                    <!-- Sidebar -->
-                    <div id="sidebar">
-                        <div style="padding:20px; font-weight:bold; font-size:1.2em; color:white;">MMED Rural</div>
-                        <a href="#" class="nav-item ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="state.activeTab='dashboard';render()">Dashboard</a>
-                        ${moduleConfigs.map(m => `<a href="#" class="nav-item ${state.activeTab === m.id ? 'active' : ''}" onclick="state.activeTab='${m.id}';render()">${m.name}</a>`).join('')}
-                        <div style="margin-top:auto; padding:20px;">
-                            <button onclick="state.logout()" style="width:100%; background:#ef4444; color:white; border:none; padding:10px; border-radius:6px;">Sign Out</button>
-                        </div>
+                    
+                    <div class="hidden print:block mb-6 pt-4 border-t">
+                        <h2 class="text-xl font-bold uppercase text-center">${conf.name} Logbook</h2>
+                        <p class="text-center text-sm">Trainee: ${state.account.name}</p>
                     </div>
 
-                    <!-- Overlay for mobile -->
-                    <div class="${state.sidebarOpen ? 'modal-overlay' : ''}" onclick="state.sidebarOpen=false;render()" style="${state.sidebarOpen ? '' : 'display:none;'}"></div>
-
-                    <!-- Main Content -->
-                    <div style="flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden;">
-                        <!-- Mobile Header -->
-                        <div class="no-print" style="padding:15px; background:var(--forest-green); color:white; display:flex; align-items:center; gap:15px; display:none;">
-                            <button onclick="document.getElementById('sidebar').classList.add('open')" style="background:none; border:none; color:white; font-size:1.5em;">☰</button>
-                            <strong>MMED Rural</strong>
-                        </div>
-                        <style>@media(max-width:768px){ .no-print[style*="background:var(--forest-green)"] { display:flex !important; } }</style>
-
-                        <div style="flex:1; overflow-y:auto; padding:20px;">
-                            ${content}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function showLogModal(modId) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h2>Log Procedure</h2>
-                    <form onsubmit="event.preventDefault(); submitLog(this, '${modId}')">
-                        <label>Date</label><input type="date" name="date" required value="${new Date().toISOString().split('T')[0]}" style="margin-bottom:10px;">
-                        <label>Procedure</label><input type="text" name="proc" required placeholder="e.g. Appendectomy" style="margin-bottom:10px;">
-                        <label>Supervisor</label><input type="text" name="sup" required style="margin-bottom:20px;">
-                        <button class="btn-rural" style="width:100%">Save Log</button>
-                    </form>
-                    <button onclick="this.closest('.modal-overlay').remove()" style="margin-top:10px; width:100%; border:none; background:none; color:#6b7280;">Cancel</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        window.submitLog = (form, modId) => {
-            state.addProcedure({ moduleId: modId, date: form.date.value, procedure: form.proc.value, supervisor: form.sup.value });
-            document.querySelector('.modal-overlay').remove();
-        };
-
-        function renderPrintView(modId) {
-            const config = moduleConfigs.find(c => c.id === modId);
-            const logs = state.procedureLog.filter(p => p.moduleId === modId);
-            document.body.innerHTML = `
-                <div style="padding:40px; font-family:serif;">
-                    <h1 style="text-align:center;">${config.name} Logbook</h1>
-                    <p style="text-align:center;">Resident: ${state.account.name} (Year ${state.account.year})</p>
-                    <table style="width:100%; border-collapse:collapse; margin-top:30px;">
-                        <thead>
-                            <tr style="background:#eee;"><th style="border:1px solid #000; padding:10px;">Date</th><th style="border:1px solid #000; padding:10px;">Procedure</th><th style="border:1px solid #000; padding:10px;">Supervisor</th><th style="border:1px solid #000; padding:10px;">Signature</th></tr>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                            <tr><th class="px-4 py-2">Date</th><th class="px-4 py-2">Procedure</th><th class="px-4 py-2">Supervisor</th><th class="px-4 py-2 text-right">Signature</th></tr>
                         </thead>
-                        <tbody>
-                            ${logs.map(l => `<tr><td style="border:1px solid #000; padding:10px;">${l.date}</td><td style="border:1px solid #000; padding:10px;">${l.procedure}</td><td style="border:1px solid #000; padding:10px;">${l.supervisor}</td><td style="border:1px solid #000; padding:10px;"></td></tr>`).join('')}
+                        <tbody class="divide-y divide-slate-100">
+                            ${logs.map(p => `
+                                <tr>
+                                    <td class="px-4 py-3 align-top">${p.date}</td>
+                                    <td class="px-4 py-3 font-medium align-top">${p.procedure}</td>
+                                    <td class="px-4 py-3 align-top">${p.supervisor}</td>
+                                    <td class="px-4 py-3 border-b border-slate-200 h-12"></td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
-                    <div class="no-print" style="margin-top:20px; text-align:center;">
-                        <button onclick="window.print()" class="btn-rural">Print</button>
-                        <button onclick="location.reload()" class="btn-secondary">Back</button>
-                    </div>
                 </div>
             `;
         }
 
-        // Initial Render Call
-        render();
 
+        // --- MAIN RENDERER ---
+        function renderApp() {
+            const app = document.getElementById('main-layout');
+            const login = document.getElementById('login-container');
+            const fab = document.getElementById('fab-btn');
+
+            if (!state.account) {
+                app.classList.add('hidden');
+                fab.classList.add('hidden');
+                login.classList.remove('hidden');
+                return;
+            }
+
+            // Logged In State
+            app.classList.remove('hidden');
+            login.classList.add('hidden');
+            fab.classList.remove('hidden');
+
+            renderSidebarLinks();
+
+            const container = document.getElementById('app-container');
+            if (state.activeTab === 'dashboard') container.innerHTML = renderDashboard();
+            else if (state.activeTab === 'milestones') container.innerHTML = renderMilestones();
+            else if (state.activeTab === 'master_logbook') container.innerHTML = renderMasterLogbook();
+            else container.innerHTML = renderModuleDetail(state.activeTab);
+
+            window.scrollTo(0, 0);
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('mobile-overlay').classList.toggle('hidden');
+        }
+
+        // --- QUICK LOG MODAL (Simplified) ---
+        function showQuickLogModal() {
+            const mid = state.activeTab === 'dashboard' ? '' : state.activeTab;
+            const p = prompt("Procedure Name:");
+            const s = prompt("Supervisor:");
+            if (p && s) {
+                state.addProcedure({
+                    moduleId: mid || moduleConfigs[0].id,
+                    procedure: p,
+                    supervisor: s,
+                    date: new Date().toISOString().split('T')[0],
+                    location: state.account.location
+                });
+                renderApp();
+            }
+        }
+
+        // Initial Render
+        // State listener handles updates
     </script>
 </body>
 
