@@ -436,33 +436,46 @@
 
             async handleCloudLogin(user) {
                 console.log("Cloud User:", user.email);
-                this.account = {
+
+                // 1. Prepare default account structure
+                let newAccount = {
                     name: user.displayName,
                     email: user.email,
                     photo: user.photoURL,
-                    id: user.uid, // Use Firebase UID
-                    lastBackup: Date.now()
+                    id: user.uid,
+                    lastBackup: Date.now(),
+                    year: (this.account && this.account.year) || 1 // Default to 1 if missing
                 };
 
-                // Pull data from Firestore
+                // 2. Pull data from Firestore
                 try {
                     const doc = await this.db.collection('users').doc(user.uid).get();
                     if (doc.exists) {
                         const cloudData = doc.data();
                         console.log("Methods: Cloud data found, merging...");
-                        // Simple merge: Cloud wins if we just logged in
+
+                        // Merge Data
                         this.modules = cloudData.modules || {};
                         this.procedureLog = cloudData.procedureLog || [];
                         this.milestones = cloudData.milestones || {};
                         this.logbook = cloudData.logbook || {};
-                        this.saveData(true); // Save to local without pushing back immediately
+
+                        // Important: Use Cloud Year if it exists
+                        if (cloudData.account && cloudData.account.year) {
+                            newAccount.year = cloudData.account.year;
+                        }
+
+                        this.account = newAccount;
+                        this.saveData(true);
                     } else {
                         console.log("New cloud user, pushing local data...");
-                        this.saveData(); // Push local data to cloud
+                        this.account = newAccount;
+                        this.saveData();
                     }
                 } catch (e) {
                     console.error("Sync Error:", e);
                     alert("Cloud Sync Warning: Could not connect to database (Check AdBlocker?). App will work offline.");
+                    this.account = newAccount; // Ensure account is set even on error
                 } finally {
                     render();
                 }
@@ -552,9 +565,8 @@
             // --- Auth Logic ---
             signInWithGoogle() {
                 const provider = new firebase.auth.GoogleAuthProvider();
-                this.auth.signInWithPopup(provider).catch(error => {
-                    alert("Login Failed: " + error.message);
-                });
+                // Use Redirect instead of Popup (Better for mobile & prevents blocking)
+                this.auth.signInWithRedirect(provider);
             }
 
             logout() {
