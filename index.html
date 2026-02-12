@@ -526,99 +526,98 @@
                 URL.revokeObjectURL(url);
                 render(); // Re-render to clear warning if present
             }
-        }
 
-        importData(input) {
-            const file = input.files[0];
-            if (!file) return;
+            importData(input) {
+                const file = input.files[0];
+                if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (confirm(`Replace current data with backup from ${data.account ? data.account.name : 'Success'}? This cannot be undone.`)) {
-                        localStorage.setItem('mmed_tracker_data', JSON.stringify(data));
-                        location.reload();
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (confirm(`Replace current data with backup from ${data.account ? data.account.name : 'Success'}? This cannot be undone.`)) {
+                            localStorage.setItem('mmed_tracker_data', JSON.stringify(data));
+                            location.reload();
+                        }
+                    } catch (err) {
+                        alert('Error importing data: ' + err.message);
                     }
-                } catch (err) {
-                    alert('Error importing data: ' + err.message);
-                }
-            };
-            reader.readAsText(file);
-            input.value = '';
-        }
-
-        // --- Auth Logic ---
-        signInWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            this.auth.signInWithPopup(provider).catch(error => {
-                alert("Login Failed: " + error.message);
-            });
-        }
-
-        logout() {
-            if (this.auth) this.auth.signOut();
-            this.account = null;
-            this.session = null;
-            this.notify();
-            location.reload();
-        }
-
-        updateModuleData(moduleId, type, id, value) {
-            if (!this.modules[moduleId]) this.modules[moduleId] = { assignments: {}, weeks: {}, caseReports: {} };
-            if (type === 'week') {
-                if (!this.modules[moduleId].weeks) this.modules[moduleId].weeks = {};
-                if (!this.modules[moduleId].weeks[id]) this.modules[moduleId].weeks[id] = {};
-                if (typeof value === 'object') {
-                    this.modules[moduleId].weeks[id] = { ...this.modules[moduleId].weeks[id], ...value };
-                } else {
-                    this.modules[moduleId].weeks[id].status = value;
-                }
-            } else if (type === 'assignment') {
-                // Check if value is object (date) or string
-                if (!this.modules[moduleId].assignments) this.modules[moduleId].assignments = {};
-                if (!this.modules[moduleId].assignments[id]) this.modules[moduleId].assignments[id] = {};
-                this.modules[moduleId].assignments[id] = { ...this.modules[moduleId].assignments[id], ...value };
-            } else if (type === 'caseReport') {
-                if (!this.modules[moduleId].caseReports) this.modules[moduleId].caseReports = {};
-                this.modules[moduleId].caseReports[id] = value; // 'Done' or null
+                };
+                reader.readAsText(file);
+                input.value = '';
             }
-            this.saveData();
-        }
 
-        addProcedure(data) {
-            this.procedureLog.push({ ...data, timestamp: Date.now() });
-            this.saveData();
-            render();
-        }
+            // --- Auth Logic ---
+            signInWithGoogle() {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                this.auth.signInWithPopup(provider).catch(error => {
+                    alert("Login Failed: " + error.message);
+                });
+            }
 
-        logProcedure(moduleId) {
-            // Legacy prompt method (keeping for fallback)
-            const lastSup = this.procedureLog.length > 0 ? this.procedureLog[this.procedureLog.length - 1].supervisor : '';
-            const date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
-            if (!date) return;
-            const procedure = prompt("Procedure Name (e.g., Appendectomy):");
-            if (!procedure) return;
-            const supervisor = prompt("Supervisor Name (Auto-filled last used):", lastSup);
-            if (!supervisor) return;
+            logout() {
+                if (this.auth) this.auth.signOut();
+                this.account = null;
+                this.session = null;
+                this.notify();
+                location.reload();
+            }
 
-            this.addProcedure({ moduleId, date, procedure, supervisor });
-        }
+            updateModuleData(moduleId, type, id, value) {
+                if (!this.modules[moduleId]) this.modules[moduleId] = { assignments: {}, weeks: {}, caseReports: {} };
+                if (type === 'week') {
+                    if (!this.modules[moduleId].weeks) this.modules[moduleId].weeks = {};
+                    if (!this.modules[moduleId].weeks[id]) this.modules[moduleId].weeks[id] = {};
+                    if (typeof value === 'object') {
+                        this.modules[moduleId].weeks[id] = { ...this.modules[moduleId].weeks[id], ...value };
+                    } else {
+                        this.modules[moduleId].weeks[id].status = value;
+                    }
+                } else if (type === 'assignment') {
+                    // Check if value is object (date) or string
+                    if (!this.modules[moduleId].assignments) this.modules[moduleId].assignments = {};
+                    if (!this.modules[moduleId].assignments[id]) this.modules[moduleId].assignments[id] = {};
+                    this.modules[moduleId].assignments[id] = { ...this.modules[moduleId].assignments[id], ...value };
+                } else if (type === 'caseReport') {
+                    if (!this.modules[moduleId].caseReports) this.modules[moduleId].caseReports = {};
+                    this.modules[moduleId].caseReports[id] = value; // 'Done' or null
+                }
+                this.saveData();
+            }
 
-        updateMilestone(category, id, value, date) {
-            if (!this.milestones[category]) this.milestones[category] = {};
-            this.milestones[category][id] = { status: value, date: date };
-            this.saveData();
-        }
+            addProcedure(data) {
+                this.procedureLog.push({ ...data, timestamp: Date.now() });
+                this.saveData();
+                render();
+            }
 
-        updateLogbook(id, value) {
-            this.logbook[id] = value;
-            this.saveData();
-            render(); // Re-render to show progress
-        }
+            logProcedure(moduleId) {
+                // Legacy prompt method (keeping for fallback)
+                const lastSup = this.procedureLog.length > 0 ? this.procedureLog[this.procedureLog.length - 1].supervisor : '';
+                const date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+                if (!date) return;
+                const procedure = prompt("Procedure Name (e.g., Appendectomy):");
+                if (!procedure) return;
+                const supervisor = prompt("Supervisor Name (Auto-filled last used):", lastSup);
+                if (!supervisor) return;
 
-        notify() { this.listeners.forEach(l => l()); }
-        subscribe(l) { this.listeners.push(l); }
+                this.addProcedure({ moduleId, date, procedure, supervisor });
+            }
+
+            updateMilestone(category, id, value, date) {
+                if (!this.milestones[category]) this.milestones[category] = {};
+                this.milestones[category][id] = { status: value, date: date };
+                this.saveData();
+            }
+
+            updateLogbook(id, value) {
+                this.logbook[id] = value;
+                this.saveData();
+                render(); // Re-render to show progress
+            }
+
+            notify() { this.listeners.forEach(l => l()); }
+            subscribe(l) { this.listeners.push(l); }
         }
 
         const state = new AppState();
