@@ -10,10 +10,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-    <!-- Design & Icons -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
     <style>
         ::-webkit-scrollbar {
             width: 6px;
@@ -49,6 +49,7 @@
             }
         }
 
+        /* Sidebar transition for mobile */
         #sidebar {
             transition: transform 0.3s ease-in-out;
         }
@@ -120,6 +121,49 @@
         <span class="font-medium tracking-wide">Syncing Data...</span>
     </div>
 
+    <!-- Login Container -->
+    <div id="login-container" class="fixed inset-0 bg-slate-900 z-40 flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden fade-in">
+            <div class="bg-slate-800 p-8 text-center border-b border-slate-700">
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-700 mb-4 ring-4 ring-slate-600">
+                    <i class="fas fa-user-md text-3xl text-teal-400"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">MMed Rural Portfolio</h1>
+                <p class="text-slate-400 text-sm mt-1">Please sign in to continue</p>
+            </div>
+            <div class="p-8 space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+                    <input type="email" id="login-email"
+                        class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                    <input type="password" id="login-password"
+                        class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
+                </div>
+                <button onclick="state.signInEmail()"
+                    class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                    Sign In with Email
+                </button>
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-semibold uppercase">OR</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+                <button onclick="state.signInGoogle()"
+                    class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg flex items-center justify-center gap-3 transition-colors">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+                    Continue with Google
+                </button>
+            </div>
+            <div class="bg-slate-50 p-4 text-center text-xs text-slate-500 border-t border-slate-100">
+                Authorized Access Only &bull; Papua New Guinea Medical Board
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Overlay -->
     <div id="mobile-overlay" onclick="toggleSidebar()"
         class="fixed inset-0 bg-slate-900 bg-opacity-50 z-40 hidden md:hidden fade-in"></div>
@@ -164,6 +208,13 @@
                 class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors text-sm font-medium">
                 <i class="fas fa-sign-out-alt"></i> Sign Out
             </button>
+            <button onclick="state.exportData()"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg transition-colors text-sm font-medium">
+                <i class="fas fa-download"></i> Backup Data
+            </button>
+            <div class="text-center mt-2">
+                <span class="text-xs text-slate-500">Cloud Sync Active</span>
+            </div>
         </div>
     </aside>
 
@@ -185,81 +236,305 @@
         </main>
     </div>
 
-    <!-- Login Container -->
-    <div id="login-container" class="flex-1 min-h-screen bg-slate-900 flex items-center justify-center p-4 hidden">
-        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden fade-in">
-            <div class="bg-slate-800 p-8 text-center border-b border-slate-700">
-                <div
-                    class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-700 mb-4 ring-4 ring-slate-600">
-                    <i class="fas fa-user-md text-3xl text-teal-400"></i>
-                </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">MMed Rural Portfolio</h1>
-                <p class="text-slate-400 text-sm mt-1">Please sign in to continue</p>
-            </div>
-            <div class="p-8 space-y-6">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
-                    <input type="email" id="login-email"
-                        class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
-                    <input type="password" id="login-password"
-                        class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
-                </div>
-                <button onclick="state.signInEmail()"
-                    class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
-                    Sign In with Email
-                </button>
-
-                <div class="relative flex py-2 items-center">
-                    <div class="flex-grow border-t border-slate-200"></div>
-                    <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-semibold uppercase">OR</span>
-                    <div class="flex-grow border-t border-slate-200"></div>
-                </div>
-
-                <button onclick="state.signInGoogle()"
-                    class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg flex items-center justify-center gap-3 transition-colors">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
-                    Continue with Google
-                </button>
-            </div>
-            <div class="bg-slate-50 p-4 text-center text-xs text-slate-500 border-t border-slate-100">
-                Authorized Access Only &bull; Papua New Guinea Medical Board
-            </div>
-        </div>
-    </div>
-
     <!-- Quick Log FAB -->
-    <button id="fab-btn" onclick="showQuickLogModal()"
-        class="hidden fixed bottom-6 right-6 w-14 h-14 bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all items-center justify-center text-2xl z-40 no-print hover:scale-105">
+    <button onclick="showQuickLogModal()"
+        class="fixed bottom-6 right-6 w-14 h-14 bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-2xl z-40 no-print hover:scale-105">
         <i class="fas fa-plus"></i>
     </button>
 
     <script>
-        // --- DATA CONFIGURATIONS (From User Input) ---
+        // --- 1. BYPASS OLD SERVICE WORKERS (Prevents blank screens on launch) ---
+        try {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                        console.log('Old ServiceWorker unregistered to ensure fresh load.');
+                    }
+                }).catch(function (error) {
+                    console.log('Service Worker unregistration skipped due to environment state:', error);
+                });
+            }
+        } catch (e) {
+            console.log('Service Worker API unavailable in this context:', e);
+        }
+
+        // --- 2. EXHAUSTIVE DATA CONFIGURATIONS ---
         const moduleConfigs = [
-            { id: 'surgery', name: 'Surgery (Module 1)', color: 'bg-green-700', text: 'text-green-700', border: 'border-green-700', duration: '9 months', weeks: [{ id: 'w1', title: 'Trauma Assessment & Shock' }, { id: 'w2', title: 'Antibiotics & Pre-op Prep' }, { id: 'w3', title: 'Instruments & Sterilization' }, { id: 'w4', title: 'Theatre Setup' }, { id: 'w5', title: 'Acute Pain' }, { id: 'w6', title: 'Chronic Pain' }, { id: 'w7', title: 'Wounds & Suturing' }, { id: 'w8', title: 'Transfer Principles' }, { id: 'w9', title: 'Pyomyositis & Osteo' }, { id: 'w10', title: 'Chest Drains' }, { id: 'w11', title: 'Closed Fractures' }, { id: 'w12', title: 'Neurovascular' }, { id: 'w13', title: 'Dental/Airway Infections' }, { id: 'w14', title: 'Abscesses' }, { id: 'w15', title: 'Appendicitis' }, { id: 'w16', title: 'Laparotomy Basics' }, { id: 'w17', title: 'Gut Repair' }, { id: 'w18', title: 'Stomas & Ulcers' }, { id: 'w19', title: 'Bowel Obstruction' }, { id: 'w20', title: 'Casting & Splinting' }, { id: 'w21', title: 'Traction' }, { id: 'w22', title: 'Open Fractures' }, { id: 'w23', title: 'Dislocations' }, { id: 'w24', title: 'Upper Limb Trauma' }, { id: 'w25', title: 'Bleeding Control' }, { id: 'w26', title: 'Enucleation' }, { id: 'w27', title: 'Hernia Repair' }, { id: 'w28', title: 'Strangulated Hernia' }, { id: 'w29', title: 'Minor Procedures' }, { id: 'w30', title: 'Head & Spinal Injury' }, { id: 'w31', title: 'Burns' }, { id: 'w32', title: 'Ethics' }], assignmentList: ['1. Cancer Pathophysiology', '2. Cancer Screening in PNG', '3. Blood Transfusion Protocols', '4. Blood / Haemopoiesis', '5. Cytokines', '6. Wound Healing Physiology', '7. Hb & Oxygen Transport', '8. Genetics', '9. Nerve Conduction', '10. Pain Pathways', '11. Urodynamics', '12. CSF & ICP', '13. Calcium Homeostasis', '14. Liver Function', '15. Bile & Gallstones', '16. Oedema', '17. Thrombosis', '18. Gastric Secretion', '19. Surgical Infections', '20. Antibiotics Policy'], requiredProcedures: [{ name: 'Pleural tap (thoracoscentesis)', target: 3 }, { name: 'Abdominal tap (parascentesis)', target: 2 }, { name: 'Insertion of a chest drain', target: 5 }, { name: 'Debriding a wound', target: 3 }, { name: 'Doing an appendicectomy', target: 3 }, { name: 'Repair of inguinal hernia', target: 2 }, { name: 'Cesarean Section', target: 6 }, { name: 'Laparotomy', target: 5 }] },
-            { id: 'anaesthesia', name: 'Anaesthesiology (Module 2)', color: 'bg-slate-700', text: 'text-slate-700', border: 'border-slate-700', duration: '4 months', weeks: [{ id: 'w1', title: 'Machine Check & Equipment' }, { id: 'w2', title: 'Ketamine (Pharma & Use)' }, { id: 'w3', title: 'Propofol & Benzos' }, { id: 'w4', title: 'Pre-op Assessment' }, { id: 'w5', title: 'Opiates & Deferring Surgery' }, { id: 'w6', title: 'Chronic Pain' }, { id: 'w7', title: 'Spinal & LUSCS' }, { id: 'w8', title: 'Brachial Plexus Blocks' }, { id: 'w9', title: 'Wrist/Ankle Blocks' }, { id: 'w10', title: 'Neonatal Resuscitation' }, { id: 'w11', title: 'Cannot Intubate/Ventilate' }, { id: 'w12', title: 'IV Access' }, { id: 'w13', title: 'Cardiac Arrest' }, { id: 'w14', title: 'Handling Negative Outcomes' }], caseReports: ['General Anaesthesia', 'Ketamine', 'Spinal', 'Paediatric', 'Resuscitation'], requiredProcedures: [{ name: 'Adult intubation', target: 10 }, { name: 'Spinal (pregnant)', target: 10 }, { name: 'Spinal (non-pregnant)', target: 10 }, { name: 'Ketamine', target: 10 }] },
-            { id: 'childhealth', name: 'Child Health (Module 3)', color: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500', duration: '1 month', weeks: [{ id: 'w1', title: 'Milestones & Malnutrition' }, { id: 'w2', title: 'Pneumonia & Oxygen' }, { id: 'w3', title: 'Cardiac & Kidney' }, { id: 'w4', title: 'Newborn Exam' }, { id: 'w5', title: 'Ponsetti & Diarrhoea' }, { id: 'w6', title: 'Immunization' }], caseReports: ['Pneumonia', 'Diarrhoea', 'Malnutrition', 'Meningitis', 'Neonatal Sepsis'], requiredProcedures: [{ name: 'Neonatal resuscitation', target: 4 }, { name: 'Management of LBW neonate', target: 4 }, { name: 'Intraosseous needle placement', target: 1 }] },
-            { id: 'obs_gyn', name: 'Obs & Gynae (Module 4)', color: 'bg-pink-500', text: 'text-pink-500', border: 'border-pink-500', duration: '3 months', weeks: [{ id: 'w1', title: 'Menstrual Cycle' }, { id: 'w2', title: 'Contraception' }, { id: 'w3', title: 'Routine Antenatal' }, { id: 'w4', title: 'Basic USS' }, { id: 'w5', title: 'Miscarriage/Ectopic' }, { id: 'w6', title: 'Normal Labour' }, { id: 'w7', title: 'Partograms' }, { id: 'w8', title: 'CS Technique' }, { id: 'w9', title: 'APH & Pre-eclampsia' }, { id: 'w10', title: 'Failure to Progress' }, { id: 'w11', title: 'PPH' }, { id: 'w12', title: 'Puerperal Sepsis' }, { id: 'w13', title: 'Infertility' }, { id: 'w15', title: 'Ovarian Tumours' }, { id: 'w17', title: 'Endometrial CA' }, { id: 'w19', title: 'Cervical CA' }, { id: 'w21', title: 'Pelvic Sepsis' }, { id: 'w23', title: 'Pre-eclampsia/Eclampsia' }, { id: 'w26', title: 'PPH Advanced' }, { id: 'w29', title: 'Destructive Delivery' }], assignmentList: ['1. Family Planning', '2. Supervised Birthing Rates', '3. Cervical Cancer'], requiredProcedures: [{ name: 'Management of PPH', target: 6 }, { name: 'Breech delivery', target: 5 }, { name: 'Vacuum extraction', target: 6 }, { name: 'ERPC', target: 6 }] },
-            { id: 'medicine', name: 'Internal Medicine (Module 5)', color: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-600', duration: '2 months', weeks: [{ id: 'w1', title: 'Diabetes' }, { id: 'w2', title: 'Antibiotics & Sepsis' }, { id: 'w3', title: 'Tuberculosis' }, { id: 'w4', title: 'Snake Bite & ECG' }, { id: 'w5', title: 'Hypertension & HIV' }, { id: 'w6', title: 'Asthma/COAD' }], caseReports: ['Severe malaria', 'Severe Asthma', 'Epilepsy', 'Tuberculosis'], requiredProcedures: [{ name: 'Severe malaria management', target: 4 }, { name: 'Tuberculosis management', target: 6 }, { name: 'HIV/AIDS management', target: 4 }, { name: 'Perform an ECG', target: 4 }, { name: 'Lumbar puncture', target: 2 }] },
-            { id: 'psychiatry', name: 'Psychiatry (Module 6)', color: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500', duration: '1 month', caseReports: ['Acute Psychosis', 'Somatoform Disorder'], requiredProcedures: [] },
-            { id: 'publichealth', name: 'Public Health (Module 7)', color: 'bg-teal-500', text: 'text-teal-500', border: 'border-teal-500', duration: 'Longitudinal', assignmentList: ['Part A: District Health Report', 'Part B: Outbreak of Food Poisoning', 'Part B: Disease Surveillance'], requiredProcedures: [] },
-            { id: 'eye_ent', name: 'Eye/ENT (Module 8)', color: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-500', duration: '1 month', caseReports: ['Eye Injury', 'Red Eye', 'Epistaxis'], requiredProcedures: [{ name: 'Remove foreign body', target: 2 }] },
-            { id: 'lab', name: 'Laboratory (Module 9)', color: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-indigo-500', duration: '1 month', assignmentList: ['Cross-match', 'Malaria Stain'], requiredProcedures: [{ name: 'Blood grouping', target: 4 }, { name: 'HIV Rapid test', target: 2 }, { name: 'Giemsa stain', target: 2 }] },
-            { id: 'management', name: 'Management (Module 10)', color: 'bg-slate-600', text: 'text-slate-600', border: 'border-slate-600', duration: '4 weeks', assignmentList: ['Management Systems Essay'], requiredProcedures: [] }
+            {
+                id: 'surgery', name: 'Surgery (Module 1)', color: 'bg-green-700', text: 'text-green-700', border: 'border-green-700', duration: '9 months',
+                weeks: [
+                    { id: 'w1', title: 'Trauma Assessment & Shock' }, { id: 'w2', title: 'Antibiotics & Pre-op Prep' },
+                    { id: 'w3', title: 'Instruments & Sterilization' }, { id: 'w4', title: 'Theatre Setup (Case: Stab wound)' },
+                    { id: 'w5', title: 'Acute Pain' }, { id: 'w6', title: 'Chronic Pain' },
+                    { id: 'w7', title: 'Wounds & Suturing' }, { id: 'w8', title: 'Transfer Principles' },
+                    { id: 'w9', title: 'Pyomyositis & Osteo' }, { id: 'w10', title: 'Chest Drains' },
+                    { id: 'w11', title: 'Closed Fractures' }, { id: 'w12', title: 'Neurovascular & Secondary Intention' },
+                    { id: 'w13', title: 'Dental/Airway Infections' }, { id: 'w14', title: 'Abscesses' },
+                    { id: 'w15', title: 'Appendicitis' }, { id: 'w16', title: 'Laparotomy Basics' },
+                    { id: 'w17', title: 'Gut Repair' }, { id: 'w18', title: 'Stomas & Ulcers' },
+                    { id: 'w19', title: 'Bowel Obstruction' }, { id: 'w20', title: 'Casting & Splinting' },
+                    { id: 'w21', title: 'Traction' }, { id: 'w22', title: 'Open Fractures' },
+                    { id: 'w23', title: 'Dislocations' }, { id: 'w24', title: 'Upper Limb Trauma' },
+                    { id: 'w25', title: 'Bleeding Control' }, { id: 'w26', title: 'Enucleation' },
+                    { id: 'w27', title: 'Hernia Repair' }, { id: 'w28', title: 'Strangulated Hernia' },
+                    { id: 'w29', title: 'Minor Procedures' }, { id: 'w30', title: 'Head & Spinal Injury' },
+                    { id: 'w31', title: 'Burns' }, { id: 'w32', title: 'Ethics' }
+                ],
+                assignmentList: [
+                    { title: '1. Cancer Pathophysiology', prompt: 'Staging and development in rural contexts.' },
+                    { title: '2. Cancer Screening in PNG', prompt: 'Pros/cons of screening programs.' },
+                    { title: '3. Blood Transfusion Protocols', prompt: 'Risks, safety, and rural alternatives.' },
+                    { title: '4. Blood / Haemopoiesis', prompt: 'Blood cell development, splenomegaly pathology.' },
+                    { title: '5. Cytokines', prompt: 'Role in wound healing, inflammation, haemostasis, neoplasia.' },
+                    { title: '6. Wound Healing Physiology', prompt: 'Stages of healing in different tissues.' },
+                    { title: '7. Hb & Oxygen Transport', prompt: 'Oxygen dissociation curve, respiratory failure types.' },
+                    { title: '8. Genetics', prompt: 'Genetic defects, gene therapy, counselling.' },
+                    { title: '9. Nerve Conduction', prompt: 'Peripheral nerve injuries, diagnosis, assessment.' },
+                    { title: '10. Pain Pathways', prompt: 'Pathways, analgesics, local anaesthetics.' },
+                    { title: '11. Urodynamics', prompt: 'Incontinence, spinal cord injury, bladder function.' },
+                    { title: '12. CSF & ICP', prompt: 'Pathophysiology of raised intracranial pressure.' },
+                    { title: '13. Calcium Homeostasis', prompt: 'Renal calculi, hypercalcemia, osteoporosis.' },
+                    { title: '14. Liver Function', prompt: 'Portal hypertension, cirrhosis, ascites, encephalopathy.' },
+                    { title: '15. Bile & Gallstones', prompt: 'Bile composition, gallbladder function, stones.' },
+                    { title: '16. Oedema', prompt: 'Pathophysiology of unilateral leg swelling.' },
+                    { title: '17. Thrombosis', prompt: 'Thrombosis, embolism, anticoagulants.' },
+                    { title: '18. Gastric Secretion', prompt: 'Physiology, H. pylori, ulcer, cancer.' },
+                    { title: '19. Surgical Infections', prompt: 'Osteomyelitis, HIV, TB, Necrotising Fasciitis.' },
+                    { title: '20. Antibiotics Policy', prompt: 'Antibiotic policy recommendations and monitoring.' }
+                ],
+                requiredProcedures: [
+                    { name: 'Pleural tap (thoracoscentesis)', target: 3 }, { name: 'Abdominal tap (parascentesis)', target: 2 },
+                    { name: 'Pericardial tap (pericardioscentesis)', target: 1 }, { name: 'Emergency IV access including I/O', target: 3 },
+                    { name: 'Needle thoracotomy', target: 2 }, { name: 'Insertion of a chest drain', target: 5 },
+                    { name: 'Cervical spine stabilization & log rolling', target: 1 }, { name: 'Setting up IV drip & rapid infusion sets', target: 2 },
+                    { name: 'Irrigating, decontaminating, immobilizing limb', target: 3 }, { name: 'Debriding a wound', target: 3 },
+                    { name: 'Manage case of facial injury', target: 3 }, { name: 'Manage gun-shot wound', target: 2 },
+                    { name: 'Simple nerve repair', target: 2 }, { name: 'Vascular injury (managed or observed)', target: 2 },
+                    { name: 'Performing simple amputations', target: 3 }, { name: 'A proper surgical scrub', target: 1 },
+                    { name: 'Learning to gown and glove', target: 1 }, { name: 'Surgical management of furuncle/carbuncle', target: 2 },
+                    { name: 'Draining a pyomyositis', target: 3 }, { name: 'Drilling tibia in acute osteomyelitis', target: 1 },
+                    { name: 'Draining pus/irrigation of knee joint', target: 2 }, { name: 'Incising a pulp space infection', target: 1 },
+                    { name: 'Enlocating a dislocated finger', target: 1 }, { name: 'Managing a dislocated elbow', target: 1 },
+                    { name: 'Managing a dislocated shoulder', target: 3 }, { name: 'Managing a dislocated hip', target: 2 },
+                    { name: 'Managing a distal radius fracture', target: 3 }, { name: 'Managing a forearm fracture', target: 3 },
+                    { name: 'Managing a fractured humerus', target: 3 }, { name: 'Managing a fractured tibia', target: 3 },
+                    { name: 'Managing a fractured femur', target: 3 }, { name: 'Doing an appendicectomy', target: 3 },
+                    { name: 'Surgical access to hip & irrigation', target: 1 }, { name: 'Surgical access to ankle & irrigation', target: 1 },
+                    { name: 'Draining an empyema', target: 1 }, { name: 'Culdoscentesis and drain pelvic abscess PV', target: 1 },
+                    { name: 'Entering the abdomen safely', target: 5 }, { name: 'Intestinal obstruction', target: 2 },
+                    { name: 'Basic transverse loop colostomy', target: 1 }, { name: 'Repairing perforations in stomach/gut', target: 3 },
+                    { name: 'End to end anastomosis small gut', target: 2 }, { name: 'Irrigating and closing the abdomen', target: 5 },
+                    { name: 'Inserting a nasogastric tube', target: 3 }, { name: 'Basic volar slab for forearm', target: 3 },
+                    { name: 'Basic dorsal slab for forearm', target: 1 }, { name: 'Applying a below elbow forearm cast', target: 3 },
+                    { name: 'Applying an above elbow cast', target: 3 }, { name: 'Applying a slab to the lower leg', target: 3 },
+                    { name: 'Applying a below knee cast', target: 3 }, { name: 'Applying an above knee cast', target: 3 },
+                    { name: 'Inserting tibial Steinmann pin for traction', target: 2 }, { name: 'Applying skin traction to lower leg', target: 1 },
+                    { name: 'Repair of epigastric hernia', target: 3 }, { name: 'Repair of umbilical hernia', target: 3 },
+                    { name: 'Repair of inguinal hernia', target: 2 }, { name: 'Excision of lipoma', target: 3 },
+                    { name: 'Excision of epidermal (sebaceous) cyst', target: 2 }, { name: 'Insertion of suprapubic catheter', target: 3 },
+                    { name: 'Operation for hydrocoele', target: 1 }, { name: 'Managing a case of head injury', target: 3 },
+                    { name: 'Performing cranial burr holes', target: 1 }, { name: 'Managing a case of spinal injury', target: 3 },
+                    { name: 'Fitting a cervical spine collar', target: 1 }, { name: 'Interpreting Cervical spine films', target: 1 },
+                    { name: 'First aid for head injury / coma position', target: 1 }, { name: 'Identifying neurosurgical instruments', target: 1 },
+                    { name: 'Assessing extent and depth of burn', target: 3 }, { name: 'Splinting burns correctly', target: 2 },
+                    { name: 'Initial burns surgery (debridement/escharotomy)', target: 3 }, { name: 'Performing a split skin graft', target: 3 }
+                ]
+            },
+            {
+                id: 'anaesthesia', name: 'Anaesthesiology (Module 2)', color: 'bg-slate-700', text: 'text-slate-700', border: 'border-slate-700', duration: '4 months',
+                weeks: [
+                    { id: 'w1', title: 'Machine Check & Equipment' }, { id: 'w2', title: 'Ketamine (Pharma & Use)' },
+                    { id: 'w3', title: 'Propofol & Benzos' }, { id: 'w4', title: 'Pre-op Assessment' },
+                    { id: 'w5', title: 'Opiates & Deferring Surgery' }, { id: 'w6', title: 'Chronic Pain' },
+                    { id: 'w7', title: 'Spinal & LUSCS' }, { id: 'w8', title: 'Brachial Plexus Blocks' },
+                    { id: 'w9', title: 'Wrist/Ankle Blocks' }, { id: 'w10', title: 'Neonatal Resuscitation' },
+                    { id: 'w11', title: 'Cannot Intubate/Ventilate' }, { id: 'w12', title: 'IV Access' },
+                    { id: 'w13', title: 'Cardiac Arrest' }, { id: 'w14', title: 'Handling Negative Outcomes' }
+                ],
+                caseReports: [
+                    'A case requiring general anaesthesia with paralysis', 'A case of regional anaesthesia', 'A case of sepsis with haemodynamic instability',
+                    'A complicated pregnancy that went to surgery', 'A major head injury', 'Diabetic patient requiring peri-operative BSL management',
+                    'Patient requiring management of acute perioperative or chronic pain'
+                ],
+                assignmentList: [
+                    { title: 'Surgical procedures with the surgeon as anaesthetist', prompt: 'Problems and solutions (1500-2500 words)' }
+                ],
+                requiredProcedures: [
+                    { name: 'Cardiopulmonary resuscitation', target: 3 }, { name: 'Insertion of central line', target: 1 },
+                    { name: 'Adult intubation', target: 10 }, { name: 'LMA insertion', target: 5 },
+                    { name: 'Non instrumental airway management', target: 10 }, { name: 'Cricothyroidotomy', target: 1 },
+                    { name: 'Tracheostomy', target: 1 }, { name: 'Spinal (pregnant)', target: 10 },
+                    { name: 'Spinal (non-pregnant)', target: 10 }, { name: 'Caudal', target: 1 },
+                    { name: 'Axillary block or brachial plexus block', target: 5 }, { name: 'Wrist block', target: 3 },
+                    { name: 'Ankle blocks', target: 2 }, { name: 'Digital nerve block', target: 3 },
+                    { name: 'Anaesthesia: Neonate', target: 2 }, { name: 'Anaesthesia: Infant (< 2yrs)', target: 3 },
+                    { name: 'Anaesthesia: Toddler (2-5yrs)', target: 5 }, { name: 'Anaesthesia: Elderly >60 yrs', target: 3 },
+                    { name: 'Anaesthesia: Pregnancy Induced Hypertension', target: 2 }, { name: 'Anaesthesia: Ruptured Ectopic Pregnancy', target: 2 },
+                    { name: 'Anaesthesia: Trauma with major blood loss', target: 2 }, { name: 'Anaesthesia: Laparotomy (penetrating wound)', target: 2 },
+                    { name: 'Anaesthesia: Severe Head Injury', target: 1 }, { name: 'Anaesthesia: Head or Neck', target: 2 },
+                    { name: 'Anaesthesia: ENT or Dental', target: 2 }, { name: 'Anaesthesia: Neurosurgery', target: 1 },
+                    { name: 'Non-ketamine neurolepsis', target: 5 }, { name: 'Ketamine', target: 10 }
+                ]
+            },
+            {
+                id: 'childhealth', name: 'Child Health (Module 3)', color: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500', duration: '1 month',
+                weeks: [
+                    { id: 'w1', title: 'Milestones & Malnutrition' }, { id: 'w2', title: 'Pneumonia & Oxygen' },
+                    { id: 'w3', title: 'Cardiac & Kidney' }, { id: 'w4', title: 'Newborn Exam' },
+                    { id: 'w5', title: 'Ponsetti & Diarrhoea' }, { id: 'w6', title: 'Immunization' }
+                ],
+                caseReports: [
+                    'Child with tuberculosis', 'Meningitis', 'Severe Acute Malnutrition', 'Severe diarrhoea with dehydration',
+                    'Low birth weight neonate <2000gm', 'Child presenting with HIV infection and AIDS', 'Severe anaemia requiring transfusion'
+                ],
+                assignmentList: [
+                    { title: '1. Severe Malnutrition', prompt: 'WHO recommendations and practical implementation in district hospital' },
+                    { title: '2. Meningitis', prompt: 'Rationale for current standard treatment in children' },
+                    { title: '3. Asthma', prompt: 'Ideal vs practical management at District Hospital' },
+                    { title: '4. HIV/AIDS in Children', prompt: 'PMTCT, ART programs and district hospital challenges' },
+                    { title: '5. Oxygen Therapy', prompt: 'Indications for pneumonia, supply problems and solutions' },
+                    { title: '6. Neonatal Mortality', prompt: 'Reducing mortality at district and community levels' },
+                    { title: '7. Immunization', prompt: 'Reasons for falling coverage and improvement strategies' }
+                ],
+                requiredProcedures: [
+                    { name: 'Neonatal resuscitation', target: 4 }, { name: 'Management of LBW neonate', target: 4 },
+                    { name: 'Intraosseous needle placement', target: 1 }, { name: 'Healthy Newborn examination', target: 5 },
+                    { name: 'Ponsetti cast', target: 2 }, { name: 'IV access with splinting (child <5 yrs)', target: 5 },
+                    { name: 'Assembly of oxygen bottle/regulator system', target: 1 }, { name: 'Insert/secure nasopharyngeal oxygen catheter', target: 2 },
+                    { name: 'Give intradermal BCG vaccine', target: 5 }
+                ]
+            },
+            {
+                id: 'obs_gyn', name: 'Obs & Gynae (Module 4)', color: 'bg-pink-500', text: 'text-pink-500', border: 'border-pink-500', duration: '3 months',
+                weeks: [
+                    { id: 'w1', title: 'Menstrual Cycle' }, { id: 'w2', title: 'Contraception' },
+                    { id: 'w3', title: 'Routine Antenatal' }, { id: 'w4', title: 'Basic USS' },
+                    { id: 'w5', title: 'Miscarriage/Ectopic' }, { id: 'w6', title: 'Normal Labour' },
+                    { id: 'w7', title: 'Partograms' }, { id: 'w8', title: 'CS Technique' },
+                    { id: 'w9', title: 'APH & Pre-eclampsia' }, { id: 'w10', title: 'Failure to Progress' },
+                    { id: 'w11', title: 'PPH' }, { id: 'w12', title: 'Puerperal Sepsis' },
+                    { id: 'w13', title: 'Infertility' }, { id: 'w15', title: 'Ovarian Tumours' },
+                    { id: 'w17', title: 'Endometrial CA' }, { id: 'w19', title: 'Cervical CA' },
+                    { id: 'w21', title: 'Pelvic Sepsis' }, { id: 'w23', title: 'Pre-eclampsia/Eclampsia' },
+                    { id: 'w26', title: 'PPH Advanced' }, { id: 'w29', title: 'Destructive Delivery' }
+                ],
+                caseReports: [
+                    'Failure to progress in labour', 'Abnormal menstruation', 'Puerperal Sepsis',
+                    'Antepartum haemorrhage OR ectopic pregnancy', 'Postpartum haemorrhage', 'Gynaecological malignancy'
+                ],
+                assignmentList: [
+                    { title: '1. Family Planning', prompt: 'Options, attitudes and practical difficulties in rural areas' },
+                    { title: '2. Supervised Birthing Rates', prompt: 'Reasons for low rates and health system improvements' },
+                    { title: '3. Cervical Cancer', prompt: 'Types, causes, staging and treatment modalities' },
+                    { title: '4. Cervical Cancer Prevention', prompt: 'Strategies, effectiveness and future possibilities' },
+                    { title: '5. Ultrasound in Rural Areas', prompt: 'Utilization of new technology in O&G practice' },
+                    { title: '6. Infertility', prompt: 'Types, causes, presentation frequency and cultural attitudes' }
+                ],
+                requiredProcedures: [
+                    { name: 'Surgical management of ectopic pregnancy', target: 4 }, { name: 'Management of PPH (at least 1 with transfusion)', target: 6 },
+                    { name: 'Obstructed labour requiring destructive delivery', target: 1 }, { name: 'Retained placenta and manual removal', target: 5 },
+                    { name: 'Management of Placenta Praevia', target: 2 }, { name: 'Breech delivery', target: 5 },
+                    { name: 'Ovarian cystectomy', target: 1 }, { name: 'Management of severe PET', target: 2 },
+                    { name: 'Lower uterine segment Caesarean section', target: 6 }, { name: 'Vacuum extraction', target: 6 },
+                    { name: 'Major placental abruption', target: 1 }, { name: 'Post-partum tubal ligation', target: 5 },
+                    { name: 'Interval tubal ligation', target: 2 }, { name: 'ERPC for incomplete abortion', target: 6 },
+                    { name: 'Dilatation and curettage', target: 2 }, { name: 'Paracervical block', target: 2 },
+                    { name: 'Failure to progress and augmentation of labour', target: 6 }, { name: 'Insertion of IUD', target: 2 },
+                    { name: 'Twin delivery (including internal version)', target: 4 }
+                ]
+            },
+            {
+                id: 'medicine', name: 'Internal Medicine (Module 5)', color: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-600', duration: '2 months',
+                weeks: [
+                    { id: 'w1', title: 'Diabetes' }, { id: 'w2', title: 'Antibiotics & Sepsis' },
+                    { id: 'w3', title: 'Tuberculosis' }, { id: 'w4', title: 'Snake Bite & ECG' },
+                    { id: 'w5', title: 'Hypertension & HIV' }, { id: 'w6', title: 'Asthma/COAD' }
+                ],
+                caseReports: ['Severe malaria', 'Severe Asthma or COAD', 'Epilepsy', 'Inflammatory polyarthritis', 'Myocardial Infarction', 'Tuberculosis'],
+                assignmentList: [
+                    { title: 'Part A: Chronic Respiratory Diseases', prompt: 'Management at district level and prevalence' },
+                    { title: 'Part A: DOTS Programs', prompt: 'Issues conducting DOTS in rural vs urban locations' },
+                    { title: 'Part A: Type 2 Diabetes', prompt: 'Prevalence and rural management differences' },
+                    { title: 'Part A: Typhoid Fever', prompt: 'Peculiar issues of presentation, diagnosis and treatment' },
+                    { title: 'Part A: Hypertension & Stroke', prompt: 'Prevention and Management' },
+                    { title: 'Part A: Coronary Artery Disease', prompt: 'Prevalence, prevention, diagnosis and management' },
+                    { title: 'Part A: HIV/AIDS', prompt: 'ART prescribing, community attitudes and district challenges' },
+                    { title: 'Part A: Chronic Liver Disease', prompt: 'Prevalence, diagnosis, community beliefs and treatment' },
+                    { title: 'Part A: Haemopoiesis/Coagulation', prompt: 'Diagnostic and management challenges at district hospital' },
+                    { title: 'Part B: Cancer in PNG (2500 words)', prompt: 'Patterns of neoplasia, attitudes, diagnostic challenges, and palliative care' }
+                ],
+                requiredProcedures: [
+                    { name: 'Severe malaria (one with renal impairment)', target: 4 }, { name: 'Asthma', target: 2 },
+                    { name: 'COAD', target: 3 }, { name: 'Acute Myocardial Infarction', target: 3 },
+                    { name: 'CVA', target: 2 }, { name: 'Congestive Cardiac Failure', target: 3 },
+                    { name: 'Severe Hypertension', target: 1 }, { name: 'Anaphylaxis', target: 1 },
+                    { name: 'Status Epilepticus', target: 1 }, { name: 'Snake bite envenomation (one with antivenom)', target: 2 },
+                    { name: 'Tuberculosis (incl. extrapulmonary, relapse, resistant)', target: 6 }, { name: 'HIV/AIDS', target: 4 },
+                    { name: 'Severe Sepsis', target: 2 }, { name: 'Acute hepatitis', target: 1 },
+                    { name: 'Chronic liver disease and hepatoma', target: 2 }, { name: 'Severe community acquired pneumonia', target: 2 },
+                    { name: 'Peptic Ulcer Disease and Gastritis', target: 1 }, { name: 'Drug Overdose or poisoning', target: 2 },
+                    { name: 'Perform an ECG', target: 4 }, { name: 'Teach use of a metered dose inhaler', target: 2 },
+                    { name: 'Create a spacer', target: 1 }, { name: 'Snake bite immobilization bandage', target: 1 },
+                    { name: 'Lumbar puncture', target: 2 }
+                ]
+            },
+            {
+                id: 'psychiatry', name: 'Psychiatry (Module 6)', color: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500', duration: '1 month',
+                caseReports: ['Acute Psychosis (including post-partum psychosis)', 'Somatoform Disorder'],
+                requiredProcedures: []
+            },
+            {
+                id: 'publichealth', name: 'Public Health (Module 7)', color: 'bg-teal-500', text: 'text-teal-500', border: 'border-teal-500', duration: 'Longitudinal',
+                assignmentList: [
+                    { title: 'Part A: District Health Report (3500 words)', prompt: 'Comprehensive analysis of district health geography, administration, and epidemiology' },
+                    { title: 'Part B: Outbreak of Food Poisoning', prompt: 'Management at a residential institution' },
+                    { title: 'Part B: Disease Surveillance', prompt: 'Measles, polio, and investigating unknown deaths' },
+                    { title: 'Part B: Domestic Violence', prompt: 'Epidemiology, contributing factors and costs in your district' },
+                    { title: 'Part B: Immunization', prompt: 'Current coverage and improvement strategies' },
+                    { title: 'Part B: Reproductive Health Services', prompt: 'Current services and outline plans for improvement' },
+                    { title: 'Part B: Occupational/Environmental Health', prompt: 'Industries in your district (mining, agriculture)' }
+                ],
+                requiredProcedures: []
+            },
+            {
+                id: 'eye_ent', name: 'Eye/ENT (Module 8)', color: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-500', duration: '1 month',
+                caseReports: ['Perforating eye injury', 'Acute red eye', 'Epistaxis', 'Chronic Suppurative Otitis Media'],
+                requiredProcedures: [
+                    { name: 'Remove a foreign body from the eye', target: 2 }
+                ]
+            },
+            {
+                id: 'lab', name: 'Laboratory (Module 9)', color: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-indigo-500', duration: '1 month',
+                assignmentList: ['Skill: Cross-match', 'Skill: Malaria Stain'],
+                requiredProcedures: [
+                    { name: 'Blood grouping and cross-match', target: 4 }, { name: 'Finger prick BSL', target: 2 },
+                    { name: 'Urine microscopy', target: 1 }, { name: 'Stool microscopy', target: 1 },
+                    { name: 'HIV Rapid test', target: 2 }, { name: 'Giemsa stain', target: 2 }
+                ]
+            },
+            {
+                id: 'management', name: 'Management (Module 10)', color: 'bg-slate-600', text: 'text-slate-600', border: 'border-slate-600', duration: '4 weeks',
+                assignmentList: [
+                    { title: 'Management Systems at 3 Hospitals (3500 words)', prompt: 'Evaluate authority chains, legal basis, and decision making' }
+                ],
+                requiredProcedures: []
+            }
         ];
 
         const milestoneConfigs = {
             research: [{ id: 'res_topic', label: 'Research Topic Approved' }, { id: 'res_data', label: 'Data Collection Completed' }, { id: 'res_submit', label: 'Research Submitted' }, { id: 'res_present', label: 'Research Presented' }],
             exams: [{ id: 'exam_part1', label: 'Part 1 Exam Passed' }, { id: 'exam_part2_written', label: 'Part 2 Written Passed' }, { id: 'exam_part2_clinical', label: 'Part 2 Clinical Passed' }],
-            management: [{ id: 'mgmt_course', label: '4-Week Intensive Course Completed' }, { id: 'mgmt_assign', label: 'Assignment Completed' }],
-            other: [{ id: 'sc_emst', label: 'EMST Course' }, { id: 'sc_emsb', label: 'EMSB Course' }, { id: 'sc_us', label: 'Basic Ultrasonography' }, { id: 'sc_als', label: 'Advanced Life Support' }]
+            management: [{ id: 'mgmt_course', label: '4-Week Intensive Course Completed' }, { id: 'mgmt_assign', label: '3500 Word Assignment Completed' }],
+            short_courses: [
+                { id: 'sc_emst', label: 'Emergency Management Severe Trauma (EMST)' }, { id: 'sc_emsb', label: 'Emergency Management Severe Burns (EMSB)' },
+                { id: 'sc_ccrisp', label: 'Care of Critically Injured Surgical Patient (CCRISP)' }, { id: 'sc_us', label: 'Basic Ultrasonography' },
+                { id: 'sc_xray', label: 'Basic Radiography' }, { id: 'sc_als', label: 'Advanced Life Support' },
+                { id: 'sc_paed', label: 'Paediatric Refresher' }, { id: 'sc_solar', label: 'Solar & Radio Maintenance Course' }
+            ]
         };
 
-
-        // --- APP STATE (Merged with Firebase) ---
+        // --- 3. STATE MANAGEMENT (with Firebase) ---
         class AppState {
             constructor() {
                 this.account = null; // Start null to force login
@@ -270,11 +545,10 @@
                 this.listeners = [];
                 this._loginHandled = false;
 
-                // Init modules structure
                 moduleConfigs.forEach(m => { this.modules[m.id] = { assignments: {}, weeks: {}, caseReports: {} }; });
 
                 this.initFirebase();
-                this.loadData(); // Load local storage check
+                this.loadData();
             }
 
             initFirebase() {
@@ -289,34 +563,40 @@
 
                 try {
                     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                    this.auth = firebase.auth();
-                    this.db = firebase.firestore();
+                    window.auth = firebase.auth();
+                    window.db = firebase.firestore();
 
                     // Guarded Redirect Check
-                    if (!this.auth.currentUser) {
-                        this.auth.getRedirectResult().then(result => {
+                    if (!window.auth.currentUser) {
+                        window.auth.getRedirectResult().then(result => {
                             if (result.user) this.handleCloudLogin(result.user);
                         }).catch(e => console.error("Redirect Error:", e));
                     }
 
-                    this.auth.onAuthStateChanged(user => {
+                    window.auth.onAuthStateChanged(user => {
                         if (user) this.handleCloudLogin(user);
                         else {
                             this.account = null;
-                            this.notify(); // Triggers renderLogin
+                            this.notify();
                         }
                     });
-                } catch (e) { console.error("Firebase Init Failed", e); }
+                } catch (e) {
+                    console.error("Firebase Init Failed", e);
+                    // Fallback to local only for demo if offline
+                    const stored = localStorage.getItem('mmed_tracker_v2_cloud');
+                    if (stored) this.account = JSON.parse(stored).account;
+                }
             }
 
             async handleCloudLogin(user) {
                 if (this._loginHandled && this.account && this.account.id === user.uid) return;
                 this._loginHandled = true;
 
-                document.getElementById('loading').style.display = 'flex';
+                const loading = document.getElementById('loading');
+                if (loading) loading.style.display = 'flex';
 
                 try {
-                    const doc = await this.db.collection('users').doc(user.uid).get();
+                    const doc = await window.db.collection('users').doc(user.uid).get();
                     const cloudData = doc.exists ? doc.data() : {};
 
                     this.account = {
@@ -324,10 +604,11 @@
                         email: user.email,
                         id: user.uid,
                         year: cloudData.account?.year || 1,
-                        location: cloudData.account?.location || "General Hospital"
+                        location: cloudData.account?.location || "General Hospital",
+                        lastBackup: Date.now()
                     };
 
-                    // Merge Module Data
+                    // Merge Module Data (Cloud wins if exists, else keep local/default)
                     if (cloudData.modules) this.modules = cloudData.modules;
                     if (cloudData.procedureLog) this.procedureLog = cloudData.procedureLog;
                     if (cloudData.milestones) this.milestones = cloudData.milestones;
@@ -335,45 +616,50 @@
                     this.saveData(true); // Save local copy
                 } catch (e) {
                     console.error("Sync Error", e);
-                    this.account = { name: user.displayName || "Dr. User", email: user.email, id: user.uid, year: 1, location: "Offline" };
+                    // Fallback to offline user
+                    this.account = { name: user.displayName || "Dr. User", email: user.email, id: user.uid, year: 1, location: "Offline Mode" };
                 } finally {
-                    document.getElementById('loading').style.display = 'none';
+                    if (loading) loading.style.display = 'none';
                     this.notify();
+                    // Force refresh to ensure UI updates
+                    if (document.getElementById('login-container')) document.getElementById('login-container').classList.add('hidden');
+                    if (document.getElementById('main-layout')) document.getElementById('main-layout').classList.remove('hidden');
                 }
             }
 
             loadData() {
-                // Initial check for local data
-                const stored = localStorage.getItem('mmed_tracker_v2_cloud');
-                if (stored) {
-                    const data = JSON.parse(stored);
-                    if (data.account && data.account.id) {
-                        this.account = data.account;
-                        this.modules = data.modules || this.modules;
-                        this.procedureLog = data.procedureLog || [];
-                        this.milestones = data.milestones || {};
+                try {
+                    const stored = localStorage.getItem('mmed_tracker_v2_cloud');
+                    if (stored && stored !== "null") {
+                        const data = JSON.parse(stored);
+                        if (data && typeof data === 'object') {
+                            if (data.account) this.account = data.account;
+                            if (data.modules) this.modules = data.modules;
+                            if (data.procedureLog) this.procedureLog = data.procedureLog;
+                            if (data.milestones) this.milestones = data.milestones;
+                        }
                     }
-                }
+                } catch (e) { console.error("Local Load Failed", e); }
             }
 
             saveData(skipCloud = false) {
                 const data = { account: this.account, modules: this.modules, procedureLog: this.procedureLog, milestones: this.milestones };
                 localStorage.setItem('mmed_tracker_v2_cloud', JSON.stringify(data));
 
-                if (!skipCloud && this.account && this.db && this.account.id) {
-                    this.db.collection('users').doc(this.account.id).set(data, { merge: true }).catch(e => console.error("Cloud Save Failing:", e));
+                if (!skipCloud && this.account && window.db && this.account.id) {
+                    window.db.collection('users').doc(this.account.id).set(data, { merge: true }).catch(e => console.error("Cloud Save Failing:", e));
                 }
                 this.notify();
             }
 
-            // Auth Methods
+            // Auth Actions
             signInGoogle() {
                 const provider = new firebase.auth.GoogleAuthProvider();
-                this.auth.signInWithPopup(provider)
+                window.auth.signInWithPopup(provider)
                     .then(r => this.handleCloudLogin(r.user))
                     .catch(e => {
                         console.warn("Popup blocked, trying redirect");
-                        this.auth.signInWithRedirect(provider);
+                        window.auth.signInWithRedirect(provider);
                     });
             }
 
@@ -382,10 +668,10 @@
                 const p = document.getElementById('login-password').value;
                 if (!e || !p) return alert("Please enter email and password");
 
-                this.auth.signInWithEmailAndPassword(e, p).catch(err => {
+                window.auth.signInWithEmailAndPassword(e, p).catch(err => {
                     if (err.code === 'auth/user-not-found') {
                         if (confirm("User not found. Register new account?")) {
-                            this.auth.createUserWithEmailAndPassword(e, p).then(r => this.handleCloudLogin(r.user));
+                            window.auth.createUserWithEmailAndPassword(e, p).then(r => this.handleCloudLogin(r.user));
                         }
                     } else alert(err.message);
                 });
@@ -393,19 +679,25 @@
 
             logout() {
                 this._loginHandled = false;
-                if (this.auth) this.auth.signOut();
+                if (window.auth) window.auth.signOut();
                 this.account = null;
-                // WIPE LOCAL DATA
-                localStorage.removeItem('mmed_tracker_v2_cloud');
-
-                this.notify();
+                localStorage.removeItem('mmed_tracker_v2_cloud'); // Clear active session data
                 location.reload();
             }
 
-            // App Actions
+            exportData() {
+                const dataStr = localStorage.getItem('mmed_tracker_v2_cloud');
+                this.saveData();
+                const blob = new Blob([dataStr || "{}"], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'mmed_backup_' + new Date().toISOString().split('T')[0] + '.json';
+                a.click(); URL.revokeObjectURL(url);
+            }
+
             setTab(tab) {
                 this.activeTab = tab;
-                if (window.innerWidth <= 768 && document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+                if (window.innerWidth <= 768) toggleSidebar();
                 this.notify();
             }
 
@@ -440,7 +732,7 @@
 
         const state = new AppState();
 
-        // --- RENDER FUNCTIONS (Tailwind) ---
+        // --- 4. UI RENDERING FUNCTIONS ---
 
         function renderSidebarLinks() {
             const container = document.getElementById('module-nav-links');
@@ -451,7 +743,7 @@
                 </button>
             `).join('');
 
-            // Active Tab Styles
+            // Highlight active tab
             document.querySelectorAll('aside button').forEach(btn => {
                 btn.classList.remove('bg-slate-800', 'text-white', 'border-l-4', 'border-teal-500');
                 if (btn.id === `tab-${state.activeTab}`) {
@@ -462,33 +754,37 @@
 
         function renderDashboard() {
             const totalProcedures = state.procedureLog.length;
-            const targetProcedures = moduleConfigs.reduce((acc, m) => acc + (m.requiredProcedures?.reduce((a, p) => a + p.target, 0) || 0), 0);
+            const targetProcedures = moduleConfigs.reduce((acc, m) => acc + (m.requiredProcedures ? m.requiredProcedures.reduce((a, p) => a + p.target, 0) : 0), 0);
             const totalAssignments = Object.values(state.modules).reduce((acc, m) => acc + (m.assignments ? Object.values(m.assignments).filter(a => a.dateSubmitted).length : 0), 0);
+            const targetAssignments = moduleConfigs.reduce((acc, m) => acc + (m.assignmentList ? m.assignmentList.length : 0), 0);
+
+            const partText = state.account.year <= 3 ? 'Part 1 (Years 1-3)' : 'Part 2 (Years 4-6)';
 
             return `
                 <div class="flex justify-between items-end mb-8 no-print">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
-                        <p class="text-slate-500 mt-1">Welcome back, Dr. ${state.account.name}</p>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Welcome, ${state.account.name}</h1>
+                        <p class="text-slate-500 mt-1">MMed (Rural) &bull; Year ${state.account.year} &bull; <span class="font-medium text-teal-700">${partText}</span></p>
                     </div>
                 </div>
 
+                <!-- Trainee Profile & Location Settings -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 border-l-4 border-l-slate-800">
-                    <h3 class="font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Profile Settings</h3>
+                    <h3 class="font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2"><i class="fas fa-user-circle text-slate-400 mr-2"></i>Trainee Profile & Current Rotation</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Name</label>
-                            <input value="${state.account.name}" onchange="state.account.name=this.value; state.saveData()" class="w-full border border-slate-300 rounded p-2">
+                            <input type="text" value="${state.account.name || ''}" onchange="state.account.name=this.value; state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Year</label>
-                            <select onchange="state.account.year=parseInt(this.value); state.saveData(); state.notify()" class="w-full border border-slate-300 rounded p-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Current Year</label>
+                            <select onchange="state.account.year=parseInt(this.value); state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
                                 ${[1, 2, 3, 4, 5, 6].map(y => `<option value="${y}" ${state.account.year === y ? 'selected' : ''}>Year ${y}</option>`).join('')}
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Hospital</label>
-                            <input value="${state.account.location || ''}" onchange="state.account.location=this.value; state.saveData()" class="w-full border border-slate-300 rounded p-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Current Hospital</label>
+                            <input type="text" placeholder="e.g. Kundiawa, Sir Joseph Nombri" value="${state.account.location || ''}" onchange="state.account.location=this.value; state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
                         </div>
                     </div>
                 </div>
@@ -498,195 +794,444 @@
                         <h3 class="text-slate-500 text-sm uppercase font-bold tracking-wider mb-2">Procedures Logged</h3>
                         <div class="flex items-end gap-2">
                             <span class="text-4xl font-black text-slate-800">${totalProcedures}</span>
-                            <span class="text-slate-400 font-medium mb-1">/ ${targetProcedures} Total</span>
+                            <span class="text-slate-400 font-medium mb-1">/ ${targetProcedures} Total Req.</span>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 border-t-4 border-t-amber-600">
-                        <h3 class="text-slate-500 text-sm uppercase font-bold tracking-wider mb-2">Assignments</h3>
+                        <h3 class="text-slate-500 text-sm uppercase font-bold tracking-wider mb-2">Assignments Submitted</h3>
                         <div class="flex items-end gap-2">
                             <span class="text-4xl font-black text-slate-800">${totalAssignments}</span>
-                            <span class="text-slate-400 font-medium mb-1">Submitted</span>
+                            <span class="text-slate-400 font-medium mb-1">/ ${targetAssignments} Required</span>
                         </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800"><i class="fas fa-history text-teal-600 mr-2"></i>Recent Clinical Logs</h3>
+                    </div>
+                    <div class="divide-y divide-slate-100">
+                        ${state.procedureLog.slice().reverse().slice(0, 5).map(p => `
+                            <div class="px-6 py-4 hover:bg-slate-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                                <div>
+                                    <div class="font-bold text-slate-800">${p.procedure}</div>
+                                    <div class="text-sm text-slate-500">Module: ${moduleConfigs.find(m => m.id === p.moduleId)?.name || 'General'} &bull; Supervisor: ${p.supervisor}</div>
+                                </div>
+                                <div class="text-sm font-medium text-slate-500 flex items-center gap-1">
+                                    <i class="far fa-calendar-alt"></i> ${p.date}
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${state.procedureLog.length === 0 ? '<div class="p-8 text-center text-slate-500">No procedures logged yet. Use the + button to start.</div>' : ''}
                     </div>
                 </div>
             `;
         }
 
-        // Re-using user's render logic for Milestones/MasterLog/Details (simplified for brevity but functionally identical)
         function renderMilestones() {
             return `
-                <h1 class="text-3xl font-bold text-slate-800 mb-6">Milestones</h1>
-                ${Object.keys(milestoneConfigs).map(cat => `
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 overflow-hidden">
-                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 font-bold uppercase text-xs tracking-wider">${cat}</div>
-                        <div class="divide-y divide-slate-100">
-                            ${milestoneConfigs[cat].map(m => {
-                const mData = state.milestones[cat]?.[m.id] || {};
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Milestones & Short Courses</h1>
+                    <p class="text-slate-500 mt-1">Track major program requirements, exams, and professional development.</p>
+                </div>
+                <div class="space-y-6">
+                    ${Object.keys(milestoneConfigs).map(cat => `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                                <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">${cat.replace('_', ' ')}</h3>
+                            </div>
+                            <div class="divide-y divide-slate-100">
+                                ${milestoneConfigs[cat].map(m => {
+                const mData = state.milestones[cat] && state.milestones[cat][m.id] ? state.milestones[cat][m.id] : {};
                 const isDone = mData.status === 'Done' || mData.status === 'Passed';
                 return `
-                                <div class="p-4 flex flex-col sm:flex-row justify-between items-center gap-4 ${isDone ? 'bg-green-50' : ''}">
-                                    <span class="font-medium text-slate-700">${m.label}</span>
-                                    <div class="flex gap-2">
-                                        <select onchange="state.updateMilestone('${cat}','${m.id}',this.value, this.nextElementSibling.value)" class="border rounded px-2 py-1 text-sm ${isDone ? 'bg-green-600 text-white' : ''}">
-                                            <option value="Pending">Pending</option>
-                                            <option value="Done" ${isDone ? 'selected' : ''}>Done</option>
-                                        </select>
-                                        <input type="date" value="${mData.date || ''}" onchange="state.updateMilestone('${cat}','${m.id}',this.previousElementSibling.value,this.value)" class="border rounded px-2 py-1 text-sm">
-                                    </div>
-                                </div>`;
+                                        <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 transition-colors ${isDone ? 'bg-green-50' : 'hover:bg-slate-50'}">
+                                            <span class="font-semibold ${isDone ? 'text-green-800' : 'text-slate-700'}">${m.label}</span>
+                                            <div class="flex items-center gap-3">
+                                                <select onchange="state.updateMilestone('${cat}','${m.id}',this.value, this.nextElementSibling.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500 ${isDone ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600'}">
+                                                    <option value="Not Started" ${!isDone ? 'selected' : ''}>Pending</option>
+                                                    <option value="${cat === 'exams' ? 'Passed' : 'Done'}" ${isDone ? 'selected' : ''}>${cat === 'exams' ? 'Passed' : 'Done'}</option>
+                                                </select>
+                                                <input type="date" value="${mData.date || ''}" onchange="state.updateMilestone('${cat}','${m.id}',this.previousElementSibling.value,this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                                            </div>
+                                        </div>
+                                    `;
             }).join('')}
-                        </div>
-                    </div>
-                `).join('')}
-            `;
-        }
-
-        function renderMasterLogbook() {
-            return `
-                <div class="flex justify-between items-end mb-8 no-print">
-                    <h1 class="text-3xl font-bold text-slate-800">Master Logbook</h1>
-                    <button onclick="window.print()" class="bg-slate-100 px-4 py-2 rounded-lg font-medium hover:bg-slate-200"><i class="fas fa-print mr-2"></i> Print</button>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    ${moduleConfigs.filter(m => m.requiredProcedures?.length).map(m => `
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 break-inside-avoid">
-                            <h3 class="font-bold ${m.text} mb-4 border-b pb-2">${m.name}</h3>
-                            ${m.requiredProcedures.map(req => {
-                const count = state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length;
-                const isDone = count >= req.target;
-                return `
-                                    <div class="flex justify-between text-sm mb-2">
-                                        <span class="${isDone ? 'text-green-700 font-medium' : ''}">${req.name}</span>
-                                        <span class="${isDone ? 'text-green-600 font-bold' : 'text-slate-400'}">${count} / ${req.target}</span>
-                                    </div>
-                                    <div class="h-1.5 bg-slate-100 rounded-full mb-3 no-print">
-                                        <div class="h-1.5 rounded-full ${isDone ? 'bg-green-500' : 'bg-teal-500'}" style="width:${Math.min(100, (count / req.target) * 100)}%"></div>
-                                    </div>
-                                `;
-            }).join('')}
+                            </div>
                         </div>
                     `).join('')}
                 </div>
             `;
         }
 
-        function renderModuleDetail(mid) {
-            const conf = moduleConfigs.find(c => c.id === mid);
-            const data = state.modules[mid];
-            const logs = state.procedureLog.filter(p => p.moduleId === mid);
-
+        function renderMasterLogbook() {
             return `
-                <div class="${conf.color} rounded-2xl p-8 text-white mb-8 shadow-md">
-                    <h1 class="text-3xl font-bold">${conf.name}</h1>
-                    <div class="flex gap-4 mt-2 text-white/80 text-sm">
-                        <span><i class="far fa-clock"></i> ${conf.duration}</span>
+                <div class="flex justify-between items-end mb-8 no-print">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Master Logbook Checklist</h1>
+                        <p class="text-slate-500 mt-1">Automatically tracks your progress against graduation requirements based on your logs.</p>
+                    </div>
+                    <button onclick="window.print()" class="hidden md:flex items-center gap-2 bg-white border border-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition shadow-sm font-medium">
+                        <i class="fas fa-print"></i> Print Summary
+                    </button>
+                </div>
+                
+                <div class="hidden print:block p-6 text-center border-b border-slate-200 bg-white mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-widest">Master Logbook Summary</h2>
+                    <div class="mt-4 flex justify-between text-left border border-slate-300 p-4 rounded-lg bg-slate-50 text-sm">
+                        <div><p><strong>Trainee:</strong> ${state.account.name}</p><p><strong>Year of Training:</strong> Year ${state.account.year}</p></div>
+                        <div class="text-right"><p><strong>Current Hospital:</strong> ${state.account.location || '-'}</p></div>
                     </div>
                 </div>
 
-                ${conf.weeks ? `
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
-                    <h3 class="font-bold text-slate-800 mb-4 pb-2 border-b">Clinical Schedule</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${conf.weeks.map(w => {
-                const st = data.weeks[w.id]?.status || 'Not Started';
-                return `<div class="border rounded p-3 ${st === 'Completed' ? 'bg-green-50 border-green-200' : ''}">
-                                <div class="flex justify-between items-center mb-2">
-                                    <div class="font-bold text-sm text-slate-700">${w.title}</div>
-                                    <select onchange="state.updateModuleData('${mid}','week','${w.id}',{status:this.value})" class="text-xs border rounded px-1 py-1 ${st === 'Completed' ? 'bg-green-600 text-white' : ''}">
-                                        <option ${st === 'Not Started' ? 'selected' : ''}>Not Started</option>
-                                        <option ${st === 'Pending' ? 'selected' : ''}>Pending</option>
-                                        <option ${st === 'Completed' ? 'selected' : ''}>Completed</option>
-                                    </select>
-                                </div>
-                            </div>`;
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    ${moduleConfigs.filter(m => m.requiredProcedures && m.requiredProcedures.length > 0).map(m => `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 break-inside-avoid">
+                            <h3 class="font-bold ${m.text} mb-4 pb-2 border-b border-slate-100">${m.name}</h3>
+                            <div class="space-y-3">
+                                ${m.requiredProcedures.map(req => {
+                const count = state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length;
+                const isDone = count >= req.target;
+                const pct = Math.min(100, Math.round((count / req.target) * 100));
+                return `
+                                        <div class="text-sm">
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="font-medium ${isDone ? 'text-green-700' : 'text-slate-700'}">${req.name}</span>
+                                                <span class="font-bold ${isDone ? 'text-green-600' : 'text-slate-500'} w-12 text-right">${count} / ${req.target}</span>
+                                            </div>
+                                            <div class="w-full bg-slate-100 rounded-full h-1.5 no-print">
+                                                <div class="h-1.5 rounded-full ${isDone ? 'bg-green-500' : 'bg-teal-500'}" style="width: ${pct}%"></div>
+                                            </div>
+                                        </div>
+                                    `;
             }).join('')}
-                    </div>
-                </div>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
 
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-12">
-                     <div class="flex justify-between items-center mb-4 border-b pb-2 no-print">
-                        <h3 class="font-bold text-slate-800">Procedure Log</h3>
-                        <button onclick="window.print()" class="text-sm bg-slate-100 px-3 py-1 rounded hover:bg-slate-200"><i class="fas fa-print"></i> Print</button>
+        function renderModuleDetail(moduleId) {
+            const config = moduleConfigs.find(m => m.id === moduleId);
+            const data = state.modules[moduleId] || { assignments: {}, weeks: {}, caseReports: {} };
+            const logs = state.procedureLog.filter(p => p.moduleId === moduleId);
+
+            return `
+                <div class="${config.color} rounded-2xl p-8 text-white mb-8 shadow-md">
+                    <h1 class="text-3xl font-bold tracking-tight">${config.name}</h1>
+                    <div class="flex gap-4 mt-3 text-white/80 text-sm font-medium">
+                        <span><i class="far fa-clock mr-1"></i> ${config.duration}</span>
+                        ${config.requiredProcedures ? `<span><i class="fas fa-notes-medical mr-1"></i> ${config.requiredProcedures.reduce((a, r) => a + r.target, 0)} Required Procedures</span>` : ''}
+                    </div>
+                </div>
+
+                ${config.weeks ? `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 no-print">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Weekly Clinical Schedule</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${config.weeks.map(w => {
+                const wData = (data.weeks && data.weeks[w.id]) || {};
+                const wStatus = wData.status || 'Not Started';
+                const statusColor = wStatus === 'Completed' ? 'bg-green-50 border-green-200' : wStatus === 'Pending' ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200';
+
+                return `
+                                    <div class="${statusColor} border rounded-lg p-4 transition-colors">
+                                        <div class="flex justify-between items-start gap-2 mb-3">
+                                            <div class="font-semibold text-slate-800 text-sm leading-tight"><span class="${config.text} mr-1">${w.id.toUpperCase()}</span> ${w.title}</div>
+                                            <select onchange="state.updateModuleData('${moduleId}','week','${w.id}',{status:this.value})" class="text-xs font-bold rounded px-2 py-1 outline-none border border-slate-300 ${wStatus === 'Completed' ? 'bg-green-600 text-white' : wStatus === 'Pending' ? 'bg-amber-500 text-white' : 'bg-white text-slate-600'}">
+                                                <option value="Not Started" ${wStatus === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                                                <option value="Pending" ${wStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                                                <option value="Completed" ${wStatus === 'Completed' ? 'selected' : ''}>Completed</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-center gap-3 text-xs">
+                                            <div class="flex items-center gap-1"><span class="text-slate-500">Start:</span><input type="date" value="${wData.startDate || ''}" onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {startDate: this.value ${wStatus === 'Not Started' ? `, status: 'Pending'` : ''}})" class="border border-slate-300 rounded px-1.5 py-1 bg-white/50 w-full max-w-[110px]"></div>
+                                            <div class="flex items-center gap-1"><span class="text-slate-500">End:</span><input type="date" value="${wData.completeDate || ''}" onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {completeDate: this.value, status: 'Completed'})" class="border border-slate-300 rounded px-1.5 py-1 bg-white/50 w-full max-w-[110px]"></div>
+                                        </div>
+                                    </div>
+                                `;
+            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 no-print">
+                    ${config.caseReports ? `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 self-start">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Case Reports</h3>
+                            <div class="space-y-2">
+                                ${config.caseReports.map((cr, i) => {
+                const isDone = data.caseReports && data.caseReports['cr_' + i] === 'Done';
+                return `
+                                        <button onclick="state.updateModuleData('${moduleId}','caseReport','cr_${i}','${isDone ? '' : 'Done'}')" class="w-full flex items-center justify-between p-3 rounded-lg border transition-all ${isDone ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-600'}">
+                                            <span class="font-medium text-sm text-left">${cr}</span>
+                                            <div class="w-5 h-5 rounded border flex items-center justify-center shrink-0 ml-2 ${isDone ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}">
+                                                ${isDone ? '<i class="fas fa-check text-xs"></i>' : ''}
+                                            </div>
+                                        </button>
+                                    `;
+            }).join('')}
+                            </div>
+                        </div>
+                    ` : '<div></div>'}
+
+                    ${config.assignmentList ? `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Assignments</h3>
+                            <div class="space-y-4">
+                                ${config.assignmentList.map((a, i) => {
+                const aData = (data.assignments && data.assignments['a_' + i]) || {};
+                const title = typeof a === 'string' ? a : a.title;
+                const prompt = typeof a === 'string' ? '' : a.prompt;
+                return `
+                                        <div class="p-4 rounded-lg border border-slate-100 bg-slate-50">
+                                            <h4 class="font-bold text-slate-800 text-sm">${title}</h4>
+                                            ${prompt ? `<p class="text-xs text-slate-500 mt-1 mb-3 leading-relaxed">${prompt}</p>` : ''}
+                                            <div class="grid grid-cols-2 gap-3 mt-3">
+                                                <div>
+                                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Started</label>
+                                                    <input type="date" value="${aData.dateStarted || ''}" onchange="state.updateModuleData('${moduleId}','assignment','a_${i}',{dateStarted:this.value})" class="w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-teal-500">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Submitted</label>
+                                                    <input type="date" value="${aData.dateSubmitted || ''}" onchange="state.updateModuleData('${moduleId}','assignment','a_${i}',{dateSubmitted:this.value})" class="w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-teal-500">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+            }).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${config.requiredProcedures ? `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 no-print">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Required Procedures Checklist</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            ${config.requiredProcedures.map(req => {
+                const count = logs.filter(p => p.procedure === req.name).length;
+                const isDone = count >= req.target;
+                const pct = Math.min(100, Math.round((count / req.target) * 100));
+                return `
+                                    <div class="border rounded-lg p-3 ${isDone ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}">
+                                        <div class="flex justify-between items-start mb-1.5">
+                                            <span class="text-xs font-semibold leading-tight pr-2 ${isDone ? 'text-green-800' : 'text-slate-700'}">${req.name}</span>
+                                            <span class="text-xs font-bold shrink-0 ml-auto ${isDone ? 'text-green-600' : 'text-teal-600'}">${count} / ${req.target}</span>
+                                        </div>
+                                        <div class="w-full bg-slate-200 rounded-full h-1">
+                                            <div class="${isDone ? 'bg-green-500' : 'bg-teal-500'} h-1 rounded-full transition-all" style="width: ${pct}%"></div>
+                                        </div>
+                                    </div>
+                                `;
+            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-12">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center no-print">
+                        <div class="flex items-center gap-3">
+                            <h3 class="font-bold text-slate-800">Module Procedure Log</h3>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">${logs.length} Logged</span>
+                        </div>
+                        <button onclick="window.print()" class="text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition no-print flex items-center gap-2">
+                            <i class="fas fa-print"></i> Print Log
+                        </button>
                     </div>
                     
-                    <div class="hidden print:block mb-6 pt-4 border-t">
-                        <h2 class="text-xl font-bold uppercase text-center">${conf.name} Logbook</h2>
-                        <p class="text-center text-sm">Trainee: ${state.account.name}</p>
+                    <!-- Print-Only Official Header -->
+                    <div class="hidden print:block p-6 text-center border-b border-slate-200 bg-white">
+                        <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-widest">${config.name}</h2>
+                        <h3 class="text-lg font-semibold text-slate-600 mt-1">Clinical Procedure Logbook</h3>
+                        <div class="mt-6 flex justify-between text-left border border-slate-300 p-4 rounded-lg bg-slate-50 text-sm">
+                            <div>
+                                <p><strong>Trainee:</strong> ${state.account.name}</p>
+                                <p><strong>Year of Training:</strong> Year ${state.account.year} (${state.account.year <= 3 ? 'Part 1' : 'Part 2'})</p>
+                            </div>
+                            <div class="text-right">
+                                <p><strong>Current Hospital/Location:</strong> ${state.account.location || '_________________________'}</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
-                            <tr><th class="px-4 py-2">Date</th><th class="px-4 py-2">Procedure</th><th class="px-4 py-2">Supervisor</th><th class="px-4 py-2 text-right">Signature</th></tr>
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3 font-semibold">Date</th>
+                                <th class="px-6 py-3 font-semibold">Procedure</th>
+                                <th class="px-6 py-3 font-semibold">Location</th>
+                                <th class="px-6 py-3 font-semibold">Supervisor</th>
+                                <th class="px-6 py-3 font-semibold print:w-48 text-right print:text-left">Signature</th>
+                            </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             ${logs.map(p => `
-                                <tr>
-                                    <td class="px-4 py-3 align-top">${p.date}</td>
-                                    <td class="px-4 py-3 font-medium align-top">${p.procedure}</td>
-                                    <td class="px-4 py-3 align-top">${p.supervisor}</td>
-                                    <td class="px-4 py-3 border-b border-slate-200 h-12"></td>
+                                <tr class="hover:bg-slate-50 print:h-20 break-inside-avoid">
+                                    <td class="px-6 py-3 whitespace-nowrap text-slate-600 align-middle print:align-bottom print:pb-6">${p.date}</td>
+                                    <td class="px-6 py-3 font-medium text-slate-800 align-middle print:align-bottom print:pb-6">${p.procedure}</td>
+                                    <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6 text-xs">${p.location || '-'}</td>
+                                    <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6">${p.supervisor}</td>
+                                    <td class="px-6 py-3 align-middle print:align-bottom">
+                                        <!-- Physical signature line visible only on print -->
+                                        <div class="hidden print:block border-b-2 border-slate-400 w-full mb-6"></div>
+                                        <!-- Delete button visible only on screen -->
+                                        <button onclick="deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 no-print flex justify-end w-full"><i class="fas fa-trash"></i></button>
+                                    </td>
                                 </tr>
-                            `).join('')}
+                            `).join('') || `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No procedures logged for this module.</td></tr>`}
                         </tbody>
                     </table>
                 </div>
             `;
         }
 
-
-        // --- MAIN RENDERER ---
-        function renderApp() {
-            const app = document.getElementById('main-layout');
-            const login = document.getElementById('login-container');
-            const fab = document.getElementById('fab-btn');
-
-            if (!state.account) {
-                app.classList.add('hidden');
-                fab.classList.add('hidden');
-                login.classList.remove('hidden');
-                return;
-            }
-
-            // Logged In State
-            app.classList.remove('hidden');
-            login.classList.add('hidden');
-            fab.classList.remove('hidden');
-
-            renderSidebarLinks();
-
-            const container = document.getElementById('app-container');
-            if (state.activeTab === 'dashboard') container.innerHTML = renderDashboard();
-            else if (state.activeTab === 'milestones') container.innerHTML = renderMilestones();
-            else if (state.activeTab === 'master_logbook') container.innerHTML = renderMasterLogbook();
-            else container.innerHTML = renderModuleDetail(state.activeTab);
-
-            window.scrollTo(0, 0);
-        }
+        // --- 5. CORE INTERACTION FUNCTIONS ---
 
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('mobile-overlay').classList.toggle('hidden');
         }
 
-        // --- QUICK LOG MODAL (Simplified) ---
-        function showQuickLogModal() {
-            const mid = state.activeTab === 'dashboard' ? '' : state.activeTab;
-            const p = prompt("Procedure Name:");
-            const s = prompt("Supervisor:");
-            if (p && s) {
-                state.addProcedure({
-                    moduleId: mid || moduleConfigs[0].id,
-                    procedure: p,
-                    supervisor: s,
-                    date: new Date().toISOString().split('T')[0],
-                    location: state.account.location
-                });
+        function deleteProcedure(timestamp) {
+            if (confirm("Delete this log entry?")) {
+                state.procedureLog = state.procedureLog.filter(p => p.timestamp !== timestamp);
+                state.saveData();
                 renderApp();
             }
         }
 
-        // Initial Render
-        // State listener handles updates
+        window.updateProcList = (moduleId) => {
+            const module = moduleConfigs.find(m => m.id === moduleId);
+            const datalist = document.getElementById('proc-datalist');
+            if (datalist && module && module.requiredProcedures) {
+                datalist.innerHTML = module.requiredProcedures.map(p => `<option value="${p.name.replace(/"/g, '&quot;')}">`).join('');
+            } else if (datalist) {
+                datalist.innerHTML = '';
+            }
+        };
+
+        function showQuickLogModal() {
+            const modal = document.createElement('div');
+            modal.id = 'quickLogModal';
+            modal.className = 'fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center p-4 fade-in backdrop-blur-sm';
+
+            const lastSup = state.procedureLog.length > 0 ? state.procedureLog[state.procedureLog.length - 1].supervisor : '';
+
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                    <div class="px-6 py-4 bg-teal-50 border-b border-teal-100 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-teal-800"><i class="fas fa-bolt text-amber-500 mr-2"></i> Quick Log Procedure</h2>
+                        <button onclick="document.getElementById('quickLogModal').remove()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                    </div>
+                    <form onsubmit="event.preventDefault();submitQuickLog(this);" class="p-6 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Module</label>
+                                <select name="module" required onchange="updateProcList(this.value)" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
+                                    <option value="" disabled selected>Select Module</option>
+                                    ${moduleConfigs.map(m => `<option value="${m.id}" ${state.activeTab === m.id ? 'selected' : ''}>${m.name.split(' (')[0]}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Date</label>
+                                <input type="date" name="date" required value="${new Date().toISOString().split('T')[0]}" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Procedure</label>
+                            <input type="text" id="quickProcName" name="procedure" list="proc-datalist" placeholder="Type or select from list..." required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
+                            <datalist id="proc-datalist"></datalist>
+                            <p class="text-xs text-slate-500 mt-1">Select a required procedure to track your progress automatically.</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Location/Hospital</label>
+                                <input type="text" name="location" placeholder="e.g. Kundiawa" value="${state.account.location || ''}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Supervisor</label>
+                                <input type="text" name="supervisor" placeholder="Dr. Name" value="${lastSup}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg mt-2 shadow-md transition">Save Log Entry</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+            // Auto populate list if a tab is already selected
+            if (state.activeTab && moduleConfigs.find(m => m.id === state.activeTab)) {
+                updateProcList(state.activeTab);
+            }
+            setTimeout(() => document.getElementById('quickProcName').focus(), 100);
+        }
+
+        window.submitQuickLog = form => {
+            state.addProcedure({
+                moduleId: form.module.value,
+                date: form.date.value,
+                procedure: form.procedure.value,
+                location: form.location.value,
+                supervisor: form.supervisor.value
+            });
+            document.getElementById('quickLogModal').remove();
+
+            // Toast
+            const toast = document.createElement('div');
+            toast.innerHTML = `<div class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl font-medium border border-slate-700 flex items-center gap-3"><i class="fas fa-check-circle text-green-400"></i> Procedure Logged Successfully</div>`;
+            toast.className = 'fixed bottom-24 right-6 z-50 fade-in';
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 2500);
+            renderApp();
+        };
+
+        // --- 6. SAFE RENDERER (With Auth Gate) ---
+        function renderApp() {
+            try {
+                const loginContainer = document.getElementById('login-container');
+                const mainLayout = document.getElementById('main-layout');
+                const fab = document.querySelector('button[onclick="showQuickLogModal()"]');
+
+                if (!state.account) {
+                    if (loginContainer) loginContainer.classList.remove('hidden');
+                    if (mainLayout) mainLayout.classList.add('hidden');
+                    if (fab) fab.classList.add('hidden');
+                    return;
+                }
+
+                // Logged In
+                if (loginContainer) loginContainer.classList.add('hidden');
+                if (mainLayout) mainLayout.classList.remove('hidden');
+                if (fab) fab.classList.remove('hidden');
+
+                renderSidebarLinks();
+                const container = document.getElementById('app-container');
+
+                if (state.activeTab === 'dashboard') container.innerHTML = renderDashboard();
+                else if (state.activeTab === 'milestones') container.innerHTML = renderMilestones();
+                else if (state.activeTab === 'master_logbook') container.innerHTML = renderMasterLogbook();
+                else container.innerHTML = renderModuleDetail(state.activeTab);
+
+                window.scrollTo(0, 0);
+            } catch (error) {
+                console.error("Render error:", error);
+                document.getElementById('app-container').innerHTML = `
+                    <div class="p-8 text-center max-w-lg mx-auto mt-12 bg-white rounded-2xl shadow-xl border border-slate-200">
+                        <div class="text-rose-500 text-5xl mb-4"><i class="fas fa-exclamation-triangle"></i></div>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">Something went wrong</h2>
+                        <button onclick="localStorage.clear(); window.location.reload();" class="bg-rose-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700 transition w-full">Reset App Data</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Init
+        state.subscribe(renderApp);
+        document.addEventListener('DOMContentLoaded', () => { renderApp(); });
+
     </script>
 </body>
 
