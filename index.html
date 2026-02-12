@@ -420,6 +420,16 @@
                     this.auth = firebase.auth();
                     this.db = firebase.firestore();
 
+                    // --- ADDED: Handle Redirect Result (Crucial for Mobile/GitHub Pages) ---
+                    this.auth.getRedirectResult().then(result => {
+                        if (result.user) {
+                            console.log("Redirect Login Success:", result.user.email);
+                            this.handleCloudLogin(result.user);
+                        }
+                    }).catch(error => {
+                        console.error("Redirect Error:", error);
+                    });
+
                     // Auth Listener
                     this.auth.onAuthStateChanged(user => {
                         if (user) {
@@ -568,8 +578,13 @@
             // --- Auth Logic ---
             signInWithGoogle() {
                 const provider = new firebase.auth.GoogleAuthProvider();
-                // Use Redirect instead of Popup (Better for mobile & prevents blocking)
+                // 1. Try Redirect (Best for Mobile)
                 this.auth.signInWithRedirect(provider);
+
+                // 2. Fallback: If you prefer Popup (Uncomment this and comment out line above)
+                // this.auth.signInWithPopup(provider).then(result => {
+                //     this.handleCloudLogin(result.user);
+                // }).catch(error => alert("Popup Failed: " + error.message));
             }
 
             // --- Email/Password Auth ---
@@ -668,6 +683,7 @@
         }
 
         const state = new AppState();
+        render(); // Force initial render to show login immediately
 
         // --- UI Rendering ---
 
