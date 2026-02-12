@@ -698,36 +698,48 @@
 
         function renderLogin() {
             const app = document.getElementById('app');
-            const isRegistered = !!state.account;
-
             app.innerHTML = `
-                <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
-                    <div style="background:white; padding:40px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); width:100%; max-width:400px; border-top: 6px solid var(--forest-green); text-align:center;">
-                        <h1 style="color:var(--forest-green); font-size:1.6em; font-weight:bold; margin-bottom:10px;">Master of Medicine (Rural)</h1>
-                        <p style="color:#6b7280; font-size:0.9em; margin-bottom:30px;">Cloud-Synced Portfolio</p>
-                        
-                        <!-- Email/Password Form -->
-                        <div style="margin-bottom:20px; text-align:left;">
-                            <input type="email" id="email" placeholder="Email Address" style="margin-bottom:10px;">
-                            <input type="password" id="password" placeholder="Password" style="margin-bottom:15px;">
-                            <button onclick="state.signInWithEmail()" class="btn-rural" style="width:100%; margin-bottom:10px;">Sign In / Sign Up</button>
-                        </div>
-                        
-                        <div style="display:flex; align-items:center; margin: 20px 0; color:#9ca3af;">
-                            <div style="flex:1; height:1px; background:#e5e7eb;"></div>
-                            <span style="padding:0 10px; font-size:0.8em;">OR</span>
-                            <div style="flex:1; height:1px; background:#e5e7eb;"></div>
+                <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; background-color:#0d1117; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;">
+                    <div style="width:100%; max-width:350px;">
+                        <div style="text-align:center; margin-bottom:25px;">
+                             <!-- Logo could go here -->
+                             <div style="display:inline-block; border-radius:50%; background:white; padding:5px; margin-bottom:10px;">
+                                <span style="font-size:30px;">🏥</span>
+                             </div>
+                             <h1 style="color:white; font-size:24px; font-weight:300; margin:0;">Sign in to MMED Rural</h1>
                         </div>
 
-                        <button onclick="state.signInWithGoogle()" style="background:white; color:#374151; border:1px solid #d1d5db; padding:12px 20px; border-radius:6px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Sign in with Google
-                        </button>
-                        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #e5e7eb;">
-                            <button onclick="document.getElementById('importInput').click()" style="background:none; border:none; cursor:pointer; font-size:0.9em; color:var(--forest-green); text-decoration:underline;">📥 Import Backup</button>
+                        <div style="background:#161b22; padding:20px; border:1px solid #30363d; border-radius:6px; color:#c9d1d9;">
+                            
+                            <label style="display:block; margin-bottom:8px; font-size:14px;">Email address</label>
+                            <input type="email" id="email" style="width:100%; padding:5px 12px; margin-bottom:15px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:white; height:35px; outline:none;" onfocus="this.style.borderColor='#58a6ff'" onblur="this.style.borderColor='#30363d'">
+
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <label style="font-size:14px;">Password</label>
+                                <span style="font-size:12px; color:#58a6ff; cursor:pointer;" onclick="alert('Please contact admin to reset password.')">Forgot password?</span>
+                            </div>
+                            <input type="password" id="password" style="width:100%; padding:5px 12px; margin-bottom:20px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:white; height:35px; outline:none;" onfocus="this.style.borderColor='#58a6ff'" onblur="this.style.borderColor='#30363d'">
+
+                            <button onclick="state.signInWithEmail()" style="width:100%; padding:15px 20px; background:#238636; color:white; border:1px solid rgba(27,31,35,0.15); border-radius:6px; font-weight:600; cursor:pointer; font-size:14px; line-height:20px; margin-bottom:15px;">Sign in</button>
+                            
+                            <div style="text-align:center; margin:15px 0; position:relative;">
+                               <span style="background:#161b22; padding:0 10px; color:#8b949e; font-size:12px; position:relative; z-index:1;">or</span>
+                               <div style="position:absolute; top:50%; left:0; width:100%; height:1px; background:#30363d; z-index:0;"></div>
+                            </div>
+
+                            <button onclick="state.signInWithGoogle()" style="width:100%; padding:8px 16px; background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:10px; transition:0.2s;" onmouseover="this.style.background='#30363d'" onmouseout="this.style.background='#21262d'">
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Continue with Google
+                            </button>
+                            
+                            <button onclick="document.getElementById('importInput').click()" style="width:100%; padding:8px 16px; background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:0.2s;" onmouseover="this.style.background='#30363d'" onmouseout="this.style.background='#21262d'">
+                                 📥 Offline Backup
+                            </button>
                             <input type="file" id="importInput" style="display:none" onchange="state.importData(this)" accept=".json">
+
                         </div>
-                        <div style="margin-top:20px; background:#fff7ed; padding:10px; border-radius:6px; font-size:0.8em; color:#c2410c; border:1px solid #ffedd5;">
-                            Note: First time validation requires internet.
+
+                        <div style="text-align:center; margin-top:20px; font-size:12px; color:#8b949e; padding:15px; border:1px solid #30363d; border-radius:6px;">
+                            <p>New to MMED Rural? <span onclick="state.signInWithEmail()" style="color:#58a6ff; cursor:pointer; text-decoration:none;">Create an account</span></p>
                         </div>
                     </div>
                 </div>
