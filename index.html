@@ -130,7 +130,7 @@
                 <i class="fas fa-download"></i> Backup Data
             </button>
             <div class="text-center mt-2">
-                <span class="text-xs text-slate-500">Cloud Sync Active</span>
+                <span class="text-xs text-slate-500" id="connection-status">Cloud Sync Active</span>
             </div>
         </div>
     </aside>
@@ -193,7 +193,7 @@
             {
                 id: 'medicine', name: 'Internal Medicine (Module 5)', color: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-600', duration: '2 months',
                 weeks: [{id:'w1',title:'Diabetes'},{id:'w2',title:'Antibiotics & Sepsis'},{id:'w3',title:'TB'},{id:'w4',title:'Snake Bite & ECG'},{id:'w5',title:'Hypertension & HIV'},{id:'w6',title:'Asthma/COAD'}],
-                requiredProcedures: [ {name:'Severe malaria',target:4},{name:'Asthma',target:2},{name:'COAD',target:3},{name:'Acute MI',target:3},{name:'CVA',target:2},{name:'CCF',target:3},{name:'Severe Hypertension',target:1},{name:'Anaphylaxis',target:1},{name:'Status Epilepticus',target:1},{name:'Snake bite',target:2},{name:'TB',target:6},{name:'HIV/AIDS',target:4},{name:'Severe Sepsis',target:2},{name:'Acute hepatitis',target:1},{name:'Chronic liver disease',target:2},{name:'Severe pneumonia',target:2},{name:'PUD/Gastritis',target:1},{name:'Overdose/poisoning',target:2},{name:'ECG',target:4},{name:'Inhaler technique',target:2},{name:'Spacer creation',target:1},{name:'Snake bite bandage',target:1},{name:'Lumbar puncture',target:2} ],
+                requiredProcedures: [ {name:'Severe malaria',target:4},{name:'Asthma',target:2},{name:'COAD',target:3},{name:'Acute MI',target:3},{name:'CVA',target:2},{name:'Congestive Cardiac Failure',target:3},{name:'Severe Hypertension',target:1},{name:'Anaphylaxis',target:1},{name:'Status Epilepticus',target:1},{name:'Snake bite',target:2},{name:'TB',target:6},{name:'HIV/AIDS',target:4},{name:'Severe Sepsis',target:2},{name:'Acute hepatitis',target:1},{name:'Chronic liver disease',target:2},{name:'Severe pneumonia',target:2},{name:'PUD/Gastritis',target:1},{name:'Overdose/poisoning',target:2},{name:'ECG',target:4},{name:'Inhaler technique',target:2},{name:'Spacer creation',target:1},{name:'Snake bite bandage',target:1},{name:'Lumbar puncture',target:2} ],
                 caseReports: ['Severe malaria', 'Severe Asthma or COAD', 'Epilepsy', 'Inflammatory polyarthritis', 'Myocardial Infarction', 'Tuberculosis'], assignmentList: [ { title: 'Part A: Chronic Respiratory Diseases', prompt: 'Management at district level and prevalence' }, { title: 'Part A: DOTS Programs', prompt: 'Issues conducting DOTS in rural vs urban locations' }, { title: 'Part A: Type 2 Diabetes', prompt: 'Prevalence and rural management differences' }, { title: 'Part A: Typhoid Fever', prompt: 'Peculiar issues of presentation, diagnosis and treatment' }, { title: 'Part A: Hypertension & Stroke', prompt: 'Prevention and Management' }, { title: 'Part A: Coronary Artery Disease', prompt: 'Prevalence, prevention, diagnosis and management' }, { title: 'Part A: HIV/AIDS', prompt: 'ART prescribing, community attitudes and district challenges' }, { title: 'Part A: Chronic Liver Disease', prompt: 'Prevalence, diagnosis, community beliefs and treatment' }, { title: 'Part A: Haemopoiesis/Coagulation', prompt: 'Diagnostic and management challenges at district hospital' }, { title: 'Part B: Cancer in PNG (2500 words)', prompt: 'Patterns of neoplasia, attitudes, diagnostic challenges, and palliative care' } ]
             },
             { id: 'psychiatry', name: 'Psychiatry (Module 6)', color: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500', duration: '1 month', requiredProcedures: [], caseReports: ['Acute Psychosis (including post-partum psychosis)', 'Somatoform Disorder'] },
@@ -224,6 +224,7 @@
 
                 moduleConfigs.forEach(m => { this.modules[m.id] = { assignments: {}, weeks: {}, caseReports: {} }; });
 
+                // Check for forced offline mode first
                 const savedOffline = localStorage.getItem('mmed_force_offline');
                 if (savedOffline === 'true') {
                     this.startOfflineSession();
@@ -243,34 +244,45 @@
                     messagingSenderId: "826477177641",
                     appId: "1:826477177641:web:fe9de6e733b442fdffe538"
                 };
-
+                
                 try {
                     if (typeof firebase !== 'undefined' && !firebase.apps.length) firebase.initializeApp(firebaseConfig);
                     
-                    if (location.protocol !== 'file:') {
-                        this.auth = firebase.auth();
-                        this.db = firebase.firestore();
-                        
-                        // NEW: Enable Offline Persistence
-                        this.db.enablePersistence({ synchronizeTabs: true })
-                            .catch(err => console.log("Persistence warning:", err.code));
-
-                        this.auth.onAuthStateChanged(user => {
-                            if (user) {
-                                this.handleCloudLogin(user);
-                            } else {
-                                if (this.account?.id !== 'offline') {
-                                    this.account = null;
-                                    this.notify();
-                                }
-                            }
-                        });
-                    } else {
-                        console.warn("File protocol: running minimal offline");
+                    // Don't init Auth/DB on file protocol to avoid errors, just warn
+                    if (location.protocol === 'file:') {
+                        console.warn("File protocol detected: Offline mode only.");
+                        return; 
                     }
 
+                    this.db = firebase.firestore();
+                    this.auth = firebase.auth();
+
+                    // 1. Enable Offline Persistence
+                    this.db.enablePersistence({ synchronizeTabs: true })
+                        .catch(err => console.log("Persistence warning:", err.code));
+
+                    // 2. Safe Redirect Result Check
+                    if (!this.auth.currentUser) {
+                         this.auth.getRedirectResult()
+                            .then(result => { if (result.user) this.handleCloudLogin(result.user); })
+                            .catch(e => console.log("Redirect check skipped:", e.message));
+                    }
+
+                    // 3. Auth Listener
+                    this.auth.onAuthStateChanged(user => {
+                        if (user) {
+                            this.handleCloudLogin(user);
+                        } else {
+                            if (this.account?.id !== 'offline') {
+                                this.account = null;
+                                this.notify();
+                            }
+                        }
+                    });
+
                 } catch (e) {
-                    console.error("Firebase init skipped:", e);
+                    console.error("Firebase init failed:", e);
+                    // Don't crash, just let the user use offline mode manually
                 }
             }
 
@@ -280,6 +292,7 @@
                 localStorage.setItem('mmed_force_offline', 'true');
                 this.loadLocalData();
                 this.notify();
+                setTimeout(() => window.renderApp(), 100); 
             }
 
             async handleCloudLogin(user) {
@@ -347,12 +360,14 @@
             }
 
             signInGoogle() {
-                if (!this.auth) return alert("Offline: Cannot sign in.");
+                if (!this.auth) return alert("Offline: Cannot sign in. Use 'Use Offline Mode'.");
                 const provider = new firebase.auth.GoogleAuthProvider();
-                this.auth.signInWithPopup(provider).catch(e => {
-                    console.log("Popup blocked, redirecting...");
-                    this.auth.signInWithRedirect(provider);
-                });
+                this.auth.signInWithPopup(provider)
+                    .then(r => console.log("Sign in success"))
+                    .catch(e => {
+                        console.error("Popup Error:", e);
+                        alert("Google Sign In Failed: " + e.message + "\n\nTry using the Offline Mode button below.");
+                    });
             }
 
             signInEmail() {
@@ -390,9 +405,6 @@
                     if (!this.modules[modId].weeks[id]) this.modules[modId].weeks[id] = {};
                     if (typeof val === 'object') this.modules[modId].weeks[id] = { ...this.modules[modId].weeks[id], ...val };
                     else this.modules[modId].weeks[id].status = val;
-                } else if (type === 'assignment') {
-                    if (!this.modules[modId].assignments[id]) this.modules[modId].assignments[id] = {};
-                    this.modules[modId].assignments[id] = { ...this.modules[modId].assignments[id], ...value };
                 } else if (type === 'caseReport') {
                     this.modules[modId].caseReports[id] = val;
                 }
