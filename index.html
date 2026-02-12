@@ -460,9 +460,11 @@
                         console.log("New cloud user, pushing local data...");
                         this.saveData(); // Push local data to cloud
                     }
-                    render();
                 } catch (e) {
                     console.error("Sync Error:", e);
+                    alert("Cloud Sync Warning: Could not connect to database (Check AdBlocker?). App will work offline.");
+                } finally {
+                    render();
                 }
             }
 
