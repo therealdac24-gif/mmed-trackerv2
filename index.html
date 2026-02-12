@@ -917,7 +917,7 @@
 
 
         function render() {
-            if (!state.session || !state.session.isLoggedIn) {
+            if (!state.account) {
                 renderLogin();
                 return;
             }
