@@ -398,6 +398,7 @@
                 this.sidebarOpen = window.innerWidth > 768;
                 this.activeTab = 'dashboard';
                 this.listeners = [];
+                this._loginHandled = false; // FIX: Prevent duplicate handleCloudLogin calls
 
                 // Firebase Init
                 this.initFirebase();
@@ -405,7 +406,6 @@
             }
 
             initFirebase() {
-                // TODO: USER MUST REPLACE THESE VALUES
                 const firebaseConfig = {
                     apiKey: "AIzaSyBhEln9kmgq22NnNHI83eUH7_d6S4F1O5s",
                     authDomain: "rural-mmed-logbook-3e095.firebaseapp.com",
@@ -420,10 +420,8 @@
                     this.auth = firebase.auth();
                     this.db = firebase.firestore();
 
-                    this.db = firebase.firestore();
-
-                    // --- ADDED: Handle Redirect Result (Crucial for Mobile/GitHub Pages) ---
-                    // Only process redirect if we don't already have a user
+                    // FIX: Only process redirect result if no user is already signed in
+                    // This prevents the redirect loop
                     if (!this.auth.currentUser) {
                         this.auth.getRedirectResult().then(result => {
                             if (result.user) {
@@ -431,7 +429,8 @@
                                 this.handleCloudLogin(result.user);
                             }
                         }).catch(error => {
-                            console.error("Redirect Error:", error);
+                            console.error("Redirect Error:", error.code, error.message);
+                            // Don't alert on redirect errors - they're often benign
                         });
                     }
 
@@ -439,9 +438,6 @@
                     this.auth.onAuthStateChanged(user => {
                         if (user) {
                             this.handleCloudLogin(user);
-                        } else {
-                            // If logged out from cloud, we might still have local data
-                            // Optional: Clear local data on explicit logout?
                         }
                     });
                 } catch (e) {
@@ -450,6 +446,12 @@
             }
 
             async handleCloudLogin(user) {
+                // FIX: Prevent duplicate calls from both redirect and onAuthStateChanged
+                if (this._loginHandled && this.account && this.account.id === user.uid) {
+                    return;
+                }
+                this._loginHandled = true;
+
                 console.log("Cloud User:", user.email);
 
                 const defaultYear = 1;
@@ -465,7 +467,7 @@
                         email: user.email,
                         photo: user.photoURL,
                         id: user.uid,
-                        year: cloudData.account?.year || defaultYear, // Use Cloud Year or Default
+                        year: cloudData.account?.year || defaultYear,
                         lastBackup: Date.now()
                     };
 
@@ -529,7 +531,6 @@
 
                 // Cloud Sync
                 if (!skipCloud && this.account && this.db && this.account.id) {
-                    // Debounce could be added here
                     this.db.collection('users').doc(this.account.id).set(data, { merge: true })
                         .catch(e => console.error("Cloud Save Failed:", e));
                 }
@@ -557,7 +558,7 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                render(); // Re-render to clear warning if present
+                render();
             }
 
             importData(input) {
@@ -581,14 +582,14 @@
             }
 
             // --- Auth Logic ---
+            // FIX: Popup-first with redirect fallback (prevents redirect loops)
             signInWithGoogle() {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 this.auth.signInWithPopup(provider).then(result => {
                     this.handleCloudLogin(result.user);
                 }).catch(error => {
                     console.warn("Popup failed, trying redirect:", error.message);
-                    if (error.code === 'auth/popup-blocked' ||
-                        error.code === 'auth/popup-closed-by-user') {
+                    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
                         this.auth.signInWithRedirect(provider);
                     } else {
                         alert("Sign-in failed: " + error.message);
@@ -618,7 +619,6 @@
             signUpWithEmail(email, password) {
                 this.auth.createUserWithEmailAndPassword(email, password)
                     .then((userCredential) => {
-                        // User created, handleCloudLogin will be triggered by onAuthStateChanged
                         alert("Account Created! Logging you in...");
                     })
                     .catch((error) => {
@@ -627,6 +627,7 @@
             }
 
             logout() {
+                this._loginHandled = false; // Reset on logout
                 if (this.auth) this.auth.signOut();
                 this.account = null;
                 this.session = null;
@@ -645,13 +646,12 @@
                         this.modules[moduleId].weeks[id].status = value;
                     }
                 } else if (type === 'assignment') {
-                    // Check if value is object (date) or string
                     if (!this.modules[moduleId].assignments) this.modules[moduleId].assignments = {};
                     if (!this.modules[moduleId].assignments[id]) this.modules[moduleId].assignments[id] = {};
                     this.modules[moduleId].assignments[id] = { ...this.modules[moduleId].assignments[id], ...value };
                 } else if (type === 'caseReport') {
                     if (!this.modules[moduleId].caseReports) this.modules[moduleId].caseReports = {};
-                    this.modules[moduleId].caseReports[id] = value; // 'Done' or null
+                    this.modules[moduleId].caseReports[id] = value;
                 }
                 this.saveData();
             }
@@ -663,7 +663,6 @@
             }
 
             logProcedure(moduleId) {
-                // Legacy prompt method (keeping for fallback)
                 const lastSup = this.procedureLog.length > 0 ? this.procedureLog[this.procedureLog.length - 1].supervisor : '';
                 const date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
                 if (!date) return;
@@ -684,7 +683,7 @@
             updateLogbook(id, value) {
                 this.logbook[id] = value;
                 this.saveData();
-                render(); // Re-render to show progress
+                render();
             }
 
             notify() { this.listeners.forEach(l => l()); }
@@ -692,54 +691,42 @@
         }
 
         const state = new AppState();
-        render(); // Force initial render to show login immediately
+        render();
 
         // --- UI Rendering ---
 
         function renderLogin() {
             const app = document.getElementById('app');
+            const isRegistered = !!state.account;
+
             app.innerHTML = `
-                <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; background-color:#0d1117; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;">
-                    <div style="width:100%; max-width:350px;">
-                        <div style="text-align:center; margin-bottom:25px;">
-                             <!-- Logo could go here -->
-                             <div style="display:inline-block; border-radius:50%; background:white; padding:5px; margin-bottom:10px;">
-                                <span style="font-size:30px;">🏥</span>
-                             </div>
-                             <h1 style="color:white; font-size:24px; font-weight:300; margin:0;">Sign in to MMED Rural</h1>
+                <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
+                    <div style="background:white; padding:40px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); width:100%; max-width:400px; border-top: 6px solid var(--forest-green); text-align:center;">
+                        <h1 style="color:var(--forest-green); font-size:1.6em; font-weight:bold; margin-bottom:10px;">Master of Medicine (Rural)</h1>
+                        <p style="color:#6b7280; font-size:0.9em; margin-bottom:30px;">Cloud-Synced Portfolio</p>
+                        
+                        <!-- Email/Password Form -->
+                        <div style="margin-bottom:20px; text-align:left;">
+                            <input type="email" id="email" placeholder="Email Address" style="margin-bottom:10px;">
+                            <input type="password" id="password" placeholder="Password" style="margin-bottom:15px;">
+                            <button onclick="state.signInWithEmail()" class="btn-rural" style="width:100%; margin-bottom:10px;">Sign In / Sign Up</button>
+                        </div>
+                        
+                        <div style="display:flex; align-items:center; margin: 20px 0; color:#9ca3af;">
+                            <div style="flex:1; height:1px; background:#e5e7eb;"></div>
+                            <span style="padding:0 10px; font-size:0.8em;">OR</span>
+                            <div style="flex:1; height:1px; background:#e5e7eb;"></div>
                         </div>
 
-                        <div style="background:#161b22; padding:20px; border:1px solid #30363d; border-radius:6px; color:#c9d1d9;">
-                            
-                            <label style="display:block; margin-bottom:8px; font-size:14px;">Email address</label>
-                            <input type="email" id="email" style="width:100%; padding:5px 12px; margin-bottom:15px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:white; height:35px; outline:none;" onfocus="this.style.borderColor='#58a6ff'" onblur="this.style.borderColor='#30363d'">
-
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <label style="font-size:14px;">Password</label>
-                                <span style="font-size:12px; color:#58a6ff; cursor:pointer;" onclick="alert('Please contact admin to reset password.')">Forgot password?</span>
-                            </div>
-                            <input type="password" id="password" style="width:100%; padding:5px 12px; margin-bottom:20px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:white; height:35px; outline:none;" onfocus="this.style.borderColor='#58a6ff'" onblur="this.style.borderColor='#30363d'">
-
-                            <button onclick="state.signInWithEmail()" style="width:100%; padding:15px 20px; background:#238636; color:white; border:1px solid rgba(27,31,35,0.15); border-radius:6px; font-weight:600; cursor:pointer; font-size:14px; line-height:20px; margin-bottom:15px;">Sign in</button>
-                            
-                            <div style="text-align:center; margin:15px 0; position:relative;">
-                               <span style="background:#161b22; padding:0 10px; color:#8b949e; font-size:12px; position:relative; z-index:1;">or</span>
-                               <div style="position:absolute; top:50%; left:0; width:100%; height:1px; background:#30363d; z-index:0;"></div>
-                            </div>
-
-                            <button onclick="state.signInWithGoogle()" style="width:100%; padding:8px 16px; background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:10px; transition:0.2s;" onmouseover="this.style.background='#30363d'" onmouseout="this.style.background='#21262d'">
-                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Continue with Google
-                            </button>
-                            
-                            <button onclick="document.getElementById('importInput').click()" style="width:100%; padding:8px 16px; background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:0.2s;" onmouseover="this.style.background='#30363d'" onmouseout="this.style.background='#21262d'">
-                                 📥 Offline Backup
-                            </button>
+                        <button onclick="state.signInWithGoogle()" style="background:white; color:#374151; border:1px solid #d1d5db; padding:12px 20px; border-radius:6px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Sign in with Google
+                        </button>
+                        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #e5e7eb;">
+                            <button onclick="document.getElementById('importInput').click()" style="background:none; border:none; cursor:pointer; font-size:0.9em; color:var(--forest-green); text-decoration:underline;">📥 Import Backup</button>
                             <input type="file" id="importInput" style="display:none" onchange="state.importData(this)" accept=".json">
-
                         </div>
-
-                        <div style="text-align:center; margin-top:20px; font-size:12px; color:#8b949e; padding:15px; border:1px solid #30363d; border-radius:6px;">
-                            <p>New to MMED Rural? <span onclick="state.signInWithEmail()" style="color:#58a6ff; cursor:pointer; text-decoration:none;">Create an account</span></p>
+                        <div style="margin-top:20px; background:#fff7ed; padding:10px; border-radius:6px; font-size:0.8em; color:#c2410c; border:1px solid #ffedd5;">
+                            Note: First time validation requires internet.
                         </div>
                     </div>
                 </div>
@@ -775,7 +762,6 @@
                             ${config.weeks.map(w => {
                 const wData = (data.weeks && data.weeks[w.id]) || {};
                 const wStatus = wData.status || 'Not Started';
-                // Determine if we should auto-set Pending on start date change (only if Not Started)
                 return `
                                 <div style="padding:15px; border-bottom:1px solid #f3f4f6; background:${wStatus === 'Completed' ? '#dcfce7' : wStatus === 'Pending' ? '#fef9c3' : 'white'}; border-radius:8px; margin-bottom:10px; border:1px solid ${wStatus === 'Completed' ? '#bbf7d0' : '#e5e7eb'};">
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -906,7 +892,7 @@
                                     <td style="border:1px solid #d1d5db; padding:10px;">${p.date}</td>
                                     <td style="border:1px solid #d1d5db; padding:10px;">${p.procedure}</td>
                                     <td style="border:1px solid #d1d5db; padding:10px;">${p.supervisor}</td>
-                                    <td style="border:1px solid #d1d5db; padding:10px;"></td> <!-- Signature Box -->
+                                    <td style="border:1px solid #d1d5db; padding:10px;"></td>
                                 </tr>
                             `).join('')}
                             ${logs.length === 0 ? '<tr><td colspan="4" style="text-align:center; padding:20px; color:#9ca3af;">No procedures logged yet.</td></tr>' : ''}
@@ -923,7 +909,7 @@
 
         function renderMilestones() {
             return `
-            < div style = "padding:30px; max-width:1000px; margin:auto;" >
+            <div style="padding:30px; max-width:1000px; margin:auto;">
                 <h1 style="color:var(--forest-green); margin-bottom:30px;">Milestones & Progress</h1>
                     ${Object.keys(milestoneConfigs).map(cat => `
                         <div style="background:white; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
@@ -949,7 +935,7 @@
                         </div>
                     `).join('')
                 }
-                </div >
+            </div>
             `;
         }
 
@@ -1021,7 +1007,7 @@
                 <div class="mobile-header no-print">
                     <button onclick="toggleSidebar()" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">☰</button>
                     <span style="font-weight:bold; font-size:1.1em;">MMED Rural</span>
-                    <div style="width:24px;"></div> <!-- Spacer -->
+                    <div style="width:24px;"></div>
                 </div>
 
                 <div style="display:flex; min-height:100vh;">
@@ -1139,7 +1125,6 @@
                             </div>
                         </div>
                     `;
-                    // Only append if not already present
                     if (!document.getElementById('backup-notice')) {
                         document.body.appendChild(notice);
                     }
@@ -1160,7 +1145,6 @@
                 'Laparotomy', 'Ultrasound'
             ];
 
-            // Get last used supervisor
             const lastSup = state.procedureLog.length > 0 ? state.procedureLog[state.procedureLog.length - 1].supervisor : '';
 
             modal.innerHTML = `
@@ -1224,12 +1208,10 @@
             `;
             document.body.appendChild(modal);
 
-            // Close on outside click
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) modal.remove();
             });
 
-            // Focus name input if no chip selected
             setTimeout(() => document.getElementById('quickProcName').focus(), 100);
         }
 
@@ -1246,7 +1228,7 @@
 
         window.submitQuickLog = (form) => {
             const data = {
-                moduleId: form.module.value, // Note: Key is 'moduleId' to match existing structure
+                moduleId: form.module.value,
                 date: form.date.value,
                 procedure: form.procedure.value,
                 supervisor: form.supervisor.value,
@@ -1254,7 +1236,6 @@
             };
 
             state.addProcedure(data);
-            // Show success toast
             const toast = document.createElement('div');
             toast.textContent = 'Procedure Logged!';
             toast.style.cssText = 'position:fixed; bottom:100px; right:30px; background:#15803d; color:white; padding:12px 24px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.2); z-index:2000; animation: fadeUp 0.3s ease-out;';
@@ -1268,7 +1249,6 @@
         state.subscribe(render);
         render();
 
-        // --- Service Worker Registration (PWA) ---
         // --- Service Worker Registration (PWA) ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
