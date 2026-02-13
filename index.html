@@ -66,6 +66,10 @@
             }
         }
 
+        .section-collapsed .section-chevron {
+            transform: rotate(-90deg);
+        }
+
         @media print {
             .no-print {
                 display: none !important;
@@ -130,9 +134,14 @@
                     <i class="fas fa-user-md text-3xl text-teal-400"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-white tracking-tight">MMed Rural Portfolio</h1>
-                <p class="text-slate-400 text-sm mt-1">Please sign in to continue</p>
+                <p id="login-subtitle" class="text-slate-400 text-sm mt-1">Please sign in to continue</p>
             </div>
             <div class="p-8 space-y-6">
+                <div id="signup-name-field" class="hidden">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
+                    <input type="text" id="login-name" placeholder="Dr. John Doe"
+                        class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
+                </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
                     <input type="email" id="login-email"
@@ -140,13 +149,36 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
-                    <input type="password" id="login-password"
-                        class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
+                    <div class="relative">
+                        <input type="password" id="login-password" placeholder="Min. 6 characters"
+                            class="w-full border border-slate-300 rounded-lg px-4 py-3 pr-12 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
+                        <button type="button" onclick="togglePassword('login-password', this)"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                <button onclick="state.signInEmail()"
+                <div id="confirm-password-field" class="hidden">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="login-confirm-password"
+                            class="w-full border border-slate-300 rounded-lg px-4 py-3 pr-12 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all">
+                        <button type="button" onclick="togglePassword('login-confirm-password', this)"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="login-error"
+                    class="hidden text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-4 py-3"></div>
+                <button id="auth-submit-btn" onclick="state.signInEmail()"
                     class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
-                    Sign In with Email
+                    Sign In
                 </button>
+                <p id="auth-toggle" class="text-center text-sm text-slate-500">
+                    Don't have an account? <a href="#" onclick="toggleAuthMode(event)"
+                        class="text-teal-600 font-semibold hover:text-teal-700">Sign Up</a>
+                </p>
                 <div class="relative flex py-2 items-center">
                     <div class="flex-grow border-t border-slate-200"></div>
                     <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-semibold uppercase">OR</span>
@@ -159,7 +191,7 @@
                 </button>
             </div>
             <div class="bg-slate-50 p-4 text-center text-xs text-slate-500 border-t border-slate-100">
-                Authorized Access Only &bull; Papua New Guinea Medical Board
+                &copy; DAC
             </div>
         </div>
     </div>
@@ -212,6 +244,10 @@
                 class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg transition-colors text-sm font-medium">
                 <i class="fas fa-download"></i> Backup Data
             </button>
+            <button onclick="state.importData()"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-lg transition-colors text-sm font-medium">
+                <i class="fas fa-upload"></i> Restore Backup
+            </button>
             <div class="text-center mt-2">
                 <span class="text-xs text-slate-500">Cloud Sync Active</span>
             </div>
@@ -231,7 +267,7 @@
             <button onclick="window.print()"><i class="fas fa-print"></i></button>
         </header>
 
-        <main id="app-container" class="flex-1 p-4 md:p-8 lg:px-12 w-full max-w-6xl mx-auto fade-in">
+        <main id="app-container" class="flex-1 p-4 md:p-8 lg:px-16 w-full max-w-7xl mx-auto fade-in">
             <!-- Rendered by JS -->
         </main>
     </div>
@@ -420,7 +456,7 @@
                     { id: 'w26', title: 'PPH Advanced' }, { id: 'w29', title: 'Destructive Delivery' }
                 ],
                 caseReports: [
-                    'Failure to progress in labour', 'Abnormal menstruation', 'Puerperal Sepsis', 
+                    'Failure to progress in labour', 'Abnormal menstruation', 'Puerperal Sepsis',
                     'Antepartum haemorrhage OR ectopic pregnancy', 'Postpartum haemorrhage', 'Gynaecological malignancy'
                 ],
                 assignmentList: [
@@ -479,13 +515,13 @@
                     { name: 'Lumbar puncture', target: 2 }
                 ]
             },
-            { 
-                id: 'psychiatry', name: 'Psychiatry (Module 6)', color: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500', duration: '1 month', 
+            {
+                id: 'psychiatry', name: 'Psychiatry (Module 6)', color: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500', duration: '1 month',
                 caseReports: ['Acute Psychosis (including post-partum psychosis)', 'Somatoform Disorder'],
                 requiredProcedures: []
             },
-            { 
-                id: 'publichealth', name: 'Public Health (Module 7)', color: 'bg-teal-500', text: 'text-teal-500', border: 'border-teal-500', duration: 'Longitudinal', 
+            {
+                id: 'publichealth', name: 'Public Health (Module 7)', color: 'bg-teal-500', text: 'text-teal-500', border: 'border-teal-500', duration: 'Longitudinal',
                 assignmentList: [
                     { title: 'Part A: District Health Report (3500 words)', prompt: 'Comprehensive analysis of district health geography, administration, and epidemiology' },
                     { title: 'Part B: Outbreak of Food Poisoning', prompt: 'Management at a residential institution' },
@@ -497,24 +533,27 @@
                 ],
                 requiredProcedures: []
             },
-            { 
-                id: 'eye_ent', name: 'Eye/ENT (Module 8)', color: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-500', duration: '1 month', 
+            {
+                id: 'eye_ent', name: 'Eye/ENT (Module 8)', color: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-500', duration: '1 month',
                 caseReports: ['Perforating eye injury', 'Acute red eye', 'Epistaxis', 'Chronic Suppurative Otitis Media'],
                 requiredProcedures: [
                     { name: 'Remove a foreign body from the eye', target: 2 }
                 ]
             },
-            { 
+            {
                 id: 'lab', name: 'Laboratory (Module 9)', color: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-indigo-500', duration: '1 month',
-                assignmentList: ['Skill: Cross-match', 'Skill: Malaria Stain'],
+                assignmentList: [
+                    { title: 'Skill: Cross-match', prompt: 'Demonstrate competency in blood cross-matching procedures.' },
+                    { title: 'Skill: Malaria Stain', prompt: 'Demonstrate competency in preparing and reading malaria stains.' }
+                ],
                 requiredProcedures: [
                     { name: 'Blood grouping and cross-match', target: 4 }, { name: 'Finger prick BSL', target: 2 },
                     { name: 'Urine microscopy', target: 1 }, { name: 'Stool microscopy', target: 1 },
                     { name: 'HIV Rapid test', target: 2 }, { name: 'Giemsa stain', target: 2 }
                 ]
             },
-            { 
-                id: 'management', name: 'Management (Module 10)', color: 'bg-slate-600', text: 'text-slate-600', border: 'border-slate-600', duration: '4 weeks', 
+            {
+                id: 'management', name: 'Management (Module 10)', color: 'bg-slate-600', text: 'text-slate-600', border: 'border-slate-600', duration: '4 weeks',
                 assignmentList: [
                     { title: 'Management Systems at 3 Hospitals (3500 words)', prompt: 'Evaluate authority chains, legal basis, and decision making' }
                 ],
@@ -523,9 +562,9 @@
         ];
 
         const milestoneConfigs = {
-            research: [ { id: 'res_topic', label: 'Research Topic Approved' }, { id: 'res_data', label: 'Data Collection Completed' }, { id: 'res_submit', label: 'Research Submitted' }, { id: 'res_present', label: 'Research Presented' } ],
-            exams: [ { id: 'exam_part1', label: 'Part 1 Exam Passed' }, { id: 'exam_part2_written', label: 'Part 2 Written Passed' }, { id: 'exam_part2_clinical', label: 'Part 2 Clinical Passed' } ],
-            management: [ { id: 'mgmt_course', label: '4-Week Intensive Course Completed' }, { id: 'mgmt_assign', label: '3500 Word Assignment Completed' } ],
+            research: [{ id: 'res_topic', label: 'Research Topic Approved' }, { id: 'res_data', label: 'Data Collection Completed' }, { id: 'res_submit', label: 'Research Submitted' }, { id: 'res_present', label: 'Research Presented' }],
+            exams: [{ id: 'exam_part1', label: 'Part 1 Exam Passed' }, { id: 'exam_part2_written', label: 'Part 2 Written Passed' }, { id: 'exam_part2_clinical', label: 'Part 2 Clinical Passed' }],
+            management: [{ id: 'mgmt_course', label: '4-Week Intensive Course Completed' }, { id: 'mgmt_assign', label: '3500 Word Assignment Completed' }],
             short_courses: [
                 { id: 'sc_emst', label: 'Emergency Management Severe Trauma (EMST)' }, { id: 'sc_emsb', label: 'Emergency Management Severe Burns (EMSB)' },
                 { id: 'sc_ccrisp', label: 'Care of Critically Injured Surgical Patient (CCRISP)' }, { id: 'sc_us', label: 'Basic Ultrasonography' },
@@ -647,7 +686,10 @@
                 localStorage.setItem('mmed_tracker_v2_cloud', JSON.stringify(data));
 
                 if (!skipCloud && this.account && window.db && this.account.id) {
-                    window.db.collection('users').doc(this.account.id).set(data, { merge: true }).catch(e => console.error("Cloud Save Failing:", e));
+                    clearTimeout(this._saveTimeout);
+                    this._saveTimeout = setTimeout(() => {
+                        window.db.collection('users').doc(this.account.id).set(data, { merge: true }).catch(e => console.error("Cloud Save Failing:", e));
+                    }, 1500);
                 }
                 this.notify();
             }
@@ -664,17 +706,47 @@
             }
 
             signInEmail() {
-                const e = document.getElementById('login-email').value;
+                const e = document.getElementById('login-email').value.trim();
                 const p = document.getElementById('login-password').value;
-                if (!e || !p) return alert("Please enter email and password");
+                const errorEl = document.getElementById('login-error');
+                const showError = msg => { errorEl.textContent = msg; errorEl.classList.remove('hidden'); };
+                errorEl.classList.add('hidden');
 
-                window.auth.signInWithEmailAndPassword(e, p).catch(err => {
-                    if (err.code === 'auth/user-not-found') {
-                        if (confirm("User not found. Register new account?")) {
-                            window.auth.createUserWithEmailAndPassword(e, p).then(r => this.handleCloudLogin(r.user));
-                        }
-                    } else alert(err.message);
-                });
+                if (!e || !p) return showError('Please enter email and password.');
+
+                const friendlyErrors = {
+                    'auth/wrong-password': 'Incorrect password. Please try again.',
+                    'auth/invalid-credential': 'Incorrect email or password. Please try again.',
+                    'auth/invalid-email': 'Please enter a valid email address.',
+                    'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again.',
+                    'auth/user-disabled': 'This account has been disabled. Contact your administrator.',
+                    'auth/network-request-failed': 'Network error. Please check your internet connection.',
+                    'auth/email-already-in-use': 'An account with this email already exists. Please sign in instead.',
+                    'auth/weak-password': 'Password must be at least 6 characters.',
+                    'auth/user-not-found': 'No account found with this email. Please sign up first.'
+                };
+
+                const isSignUp = this._isSignUpMode;
+
+                if (isSignUp) {
+                    const cp = document.getElementById('login-confirm-password').value;
+                    if (p.length < 6) return showError('Password must be at least 6 characters.');
+                    if (p !== cp) return showError('Passwords do not match.');
+
+                    window.auth.createUserWithEmailAndPassword(e, p)
+                        .then(r => {
+                            const displayName = document.getElementById('login-name').value.trim();
+                            if (displayName) {
+                                r.user.updateProfile({ displayName }).then(() => this.handleCloudLogin(r.user));
+                            } else {
+                                this.handleCloudLogin(r.user);
+                            }
+                        })
+                        .catch(err => showError(friendlyErrors[err.code] || err.message));
+                } else {
+                    window.auth.signInWithEmailAndPassword(e, p)
+                        .catch(err => showError(friendlyErrors[err.code] || err.message));
+                }
             }
 
             logout() {
@@ -686,13 +758,44 @@
             }
 
             exportData() {
+                this.saveData(true);
                 const dataStr = localStorage.getItem('mmed_tracker_v2_cloud');
-                this.saveData();
                 const blob = new Blob([dataStr || "{}"], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url; a.download = 'mmed_backup_' + new Date().toISOString().split('T')[0] + '.json';
                 a.click(); URL.revokeObjectURL(url);
+            }
+
+            importData() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+                            if (!data || typeof data !== 'object') throw new Error('Invalid format');
+                            if (confirm('This will replace all current data with the backup. Are you sure?')) {
+                                if (data.account) this.account = data.account;
+                                if (data.modules) this.modules = data.modules;
+                                if (data.procedureLog) this.procedureLog = data.procedureLog;
+                                if (data.milestones) this.milestones = data.milestones;
+                                this.saveData();
+                                renderApp();
+                                alert('Backup restored successfully!');
+                            }
+                        } catch (err) {
+                            alert('Failed to restore backup: Invalid file format.');
+                            console.error('Import error:', err);
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
             }
 
             setTab(tab) {
@@ -732,6 +835,13 @@
 
         const state = new AppState();
 
+        // HTML escape utility to prevent XSS
+        function esc(str) {
+            const el = document.createElement('span');
+            el.textContent = str || '';
+            return el.innerHTML;
+        }
+
         // --- 4. UI RENDERING FUNCTIONS ---
 
         function renderSidebarLinks() {
@@ -763,7 +873,7 @@
             return `
                 <div class="flex justify-between items-end mb-8 no-print">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Welcome, ${state.account.name}</h1>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Welcome, ${esc(state.account.name)}</h1>
                         <p class="text-slate-500 mt-1">MMed (Rural) &bull; Year ${state.account.year} &bull; <span class="font-medium text-teal-700">${partText}</span></p>
                     </div>
                 </div>
@@ -774,7 +884,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Name</label>
-                            <input type="text" value="${state.account.name || ''}" onchange="state.account.name=this.value; state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                            <input type="text" value="${esc(state.account.name || '')}" onchange="state.account.name=this.value; state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Current Year</label>
@@ -784,7 +894,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Current Hospital</label>
-                            <input type="text" placeholder="e.g. Kundiawa, Sir Joseph Nombri" value="${state.account.location || ''}" onchange="state.account.location=this.value; state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                            <input type="text" placeholder="e.g. Kundiawa, Sir Joseph Nombri" value="${esc(state.account.location || '')}" onchange="state.account.location=this.value; state.saveData(); renderApp();" class="w-full border border-slate-300 rounded p-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
                         </div>
                     </div>
                 </div>
@@ -812,16 +922,13 @@
                     </div>
                     <div class="divide-y divide-slate-100">
                         ${state.procedureLog.slice().reverse().slice(0, 5).map(p => `
-                            <div class="px-6 py-4 hover:bg-slate-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 group">
+                            <div class="px-6 py-4 hover:bg-slate-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                                 <div>
-                                    <div class="font-bold text-slate-800">${p.procedure}</div>
-                                    <div class="text-sm text-slate-500">Module: ${moduleConfigs.find(m => m.id === p.moduleId)?.name || 'General'} &bull; Supervisor: ${p.supervisor}</div>
+                                    <div class="font-bold text-slate-800">${esc(p.procedure)} ${p.isOther ? '<span class="inline-block ml-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-700 border border-amber-200">Other</span>' : ''}</div>
+                                    <div class="text-sm text-slate-500">Module: ${moduleConfigs.find(m => m.id === p.moduleId)?.name || 'General'} &bull; Supervisor: ${esc(p.supervisor)}</div>
                                 </div>
-                                <div class="text-sm font-medium text-slate-500 flex items-center gap-3">
-                                    <span><i class="far fa-calendar-alt"></i> ${p.date}</span>
-                                    <button onclick="deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 transition p-1 no-print" title="Delete Procedure">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                <div class="text-sm font-medium text-slate-500 flex items-center gap-1">
+                                    <i class="far fa-calendar-alt"></i> ${p.date}
                                 </div>
                             </div>
                         `).join('')}
@@ -882,21 +989,29 @@
                 <div class="hidden print:block p-6 text-center border-b border-slate-200 bg-white mb-6">
                     <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-widest">Master Logbook Summary</h2>
                     <div class="mt-4 flex justify-between text-left border border-slate-300 p-4 rounded-lg bg-slate-50 text-sm">
-                        <div><p><strong>Trainee:</strong> ${state.account.name}</p><p><strong>Year of Training:</strong> Year ${state.account.year}</p></div>
-                        <div class="text-right"><p><strong>Current Hospital:</strong> ${state.account.location || '-'}</p></div>
+                        <div><p><strong>Trainee:</strong> ${esc(state.account.name)}</p><p><strong>Year of Training:</strong> Year ${state.account.year}</p></div>
+                        <div class="text-right"><p><strong>Current Hospital:</strong> ${esc(state.account.location) || '-'}</p></div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    ${moduleConfigs.filter(m => m.requiredProcedures && m.requiredProcedures.length > 0).map(m => `
+                    ${moduleConfigs.filter(m => m.requiredProcedures && m.requiredProcedures.length > 0).map(m => {
+                const otherLogs = state.procedureLog.filter(p => p.moduleId === m.id && p.isOther);
+                // Group other procedures by name and count
+                const otherGroups = {};
+                otherLogs.forEach(p => {
+                    if (!otherGroups[p.procedure]) otherGroups[p.procedure] = 0;
+                    otherGroups[p.procedure]++;
+                });
+                return `
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 break-inside-avoid">
                             <h3 class="font-bold ${m.text} mb-4 pb-2 border-b border-slate-100">${m.name}</h3>
                             <div class="space-y-3">
                                 ${m.requiredProcedures.map(req => {
-                const count = state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length;
-                const isDone = count >= req.target;
-                const pct = Math.min(100, Math.round((count / req.target) * 100));
-                return `
+                    const count = state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length;
+                    const isDone = count >= req.target;
+                    const pct = Math.min(100, Math.round((count / req.target) * 100));
+                    return `
                                         <div class="text-sm">
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="font-medium ${isDone ? 'text-green-700' : 'text-slate-700'}">${req.name}</span>
@@ -907,10 +1022,25 @@
                                             </div>
                                         </div>
                                     `;
-            }).join('')}
+                }).join('')}
+                                ${Object.keys(otherGroups).length > 0 ? `
+                                    <div class="mt-4 pt-3 border-t border-amber-200">
+                                        <div class="flex items-center gap-2 mb-3">
+                                            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-700 border border-amber-200">Other Procedures</span>
+                                            <span class="text-xs text-slate-400">${otherLogs.length} logged</span>
+                                        </div>
+                                        ${Object.entries(otherGroups).map(([name, cnt]) => `
+                                            <div class="text-sm flex justify-between items-center py-1">
+                                                <span class="font-medium text-amber-800">${esc(name)}</span>
+                                                <span class="font-bold text-amber-600">${cnt}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
-                    `).join('')}
+                    `;
+            }).join('')}
                 </div>
             `;
         }
@@ -929,44 +1059,116 @@
                     </div>
                 </div>
 
-                ${config.weeks ? `
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 no-print">
-                        <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Weekly Clinical Schedule</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            ${config.weeks.map(w => {
-                const wData = (data.weeks && data.weeks[w.id]) || {};
-                const wStatus = wData.status || 'Not Started';
-                const statusColor = wStatus === 'Completed' ? 'bg-green-50 border-green-200' : wStatus === 'Pending' ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200';
+                ${config.weeks ? (() => {
+                    const completedCount = config.weeks.filter(w => ((data.weeks && data.weeks[w.id]) || {}).status === 'Completed').length;
+                    const totalWeeks = config.weeks.length;
+                    const pctWeeks = Math.round((completedCount / totalWeeks) * 100);
+                    const activeWeeks = config.weeks.filter(w => ((data.weeks && data.weeks[w.id]) || {}).status !== 'Completed');
+                    const doneWeeks = config.weeks.filter(w => ((data.weeks && data.weeks[w.id]) || {}).status === 'Completed')
+                        .sort((a, b) => {
+                            const dA = (data.weeks && data.weeks[a.id])?.completeDate || '';
+                            const dB = (data.weeks && data.weeks[b.id])?.completeDate || '';
+                            return dB.localeCompare(dA);
+                        });
 
-                return `
-                                    <div class="${statusColor} border rounded-lg p-4 transition-colors">
-                                        <div class="flex justify-between items-start gap-2 mb-3">
-                                            <div class="font-semibold text-slate-800 text-sm leading-tight"><span class="${config.text} mr-1">${w.id.toUpperCase()}</span> ${w.title}</div>
-                                            <select onchange="state.updateModuleData('${moduleId}','week','${w.id}',{status:this.value})" class="text-xs font-bold rounded px-2 py-1 outline-none border border-slate-300 ${wStatus === 'Completed' ? 'bg-green-600 text-white' : wStatus === 'Pending' ? 'bg-amber-500 text-white' : 'bg-white text-slate-600'}">
+                    const renderWeekRow = (w) => {
+                        const wData = (data.weeks && data.weeks[w.id]) || {};
+                        const wStatus = wData.status || 'Not Started';
+                        const statusBadge = wStatus === 'Completed' ? 'bg-green-100 text-green-700' : wStatus === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500';
+                        const rowBg = wStatus === 'Completed' ? 'bg-green-50/50' : '';
+                        return `
+                            <div class="${rowBg}">
+                                <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-90')"
+                                    class="w-full flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors text-left">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        ${wStatus === 'Completed' ? '<i class="fas fa-check-circle text-green-500 text-sm shrink-0"></i>' : ''}
+                                        <span class="text-xs font-bold ${config.text} shrink-0 w-8">${w.id.toUpperCase()}</span>
+                                        <span class="font-medium text-sm ${wStatus === 'Completed' ? 'text-green-800' : 'text-slate-800'} truncate">${w.title}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0 ml-3">
+                                        ${wStatus === 'Completed' && wData.completeDate ? `<span class="text-[10px] text-green-600 font-medium">${wData.completeDate}</span>` : ''}
+                                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusBadge}">${wStatus}</span>
+                                        <i class="fas fa-chevron-right text-slate-300 text-xs chevron transition-transform duration-200"></i>
+                                    </div>
+                                </button>
+                                <div class="hidden px-6 pb-4 pt-1">
+                                    <div class="flex flex-wrap items-center gap-4 text-sm">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-slate-500 text-xs font-medium">Status:</span>
+                                            <select onchange="state.updateModuleData('${moduleId}','week','${w.id}',{status:this.value})" class="text-xs font-bold rounded-lg px-3 py-1.5 outline-none border border-slate-300 ${wStatus === 'Completed' ? 'bg-green-600 text-white border-green-600' : wStatus === 'Pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600'}">
                                                 <option value="Not Started" ${wStatus === 'Not Started' ? 'selected' : ''}>Not Started</option>
                                                 <option value="Pending" ${wStatus === 'Pending' ? 'selected' : ''}>Pending</option>
                                                 <option value="Completed" ${wStatus === 'Completed' ? 'selected' : ''}>Completed</option>
                                             </select>
                                         </div>
-                                        <div class="flex items-center gap-3 text-xs">
-                                            <div class="flex items-center gap-1"><span class="text-slate-500">Start:</span><input type="date" value="${wData.startDate || ''}" onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {startDate: this.value ${wStatus === 'Not Started' ? `, status: 'Pending'` : ''}})" class="border border-slate-300 rounded px-1.5 py-1 bg-white/50 w-full max-w-[110px]"></div>
-                                            <div class="flex items-center gap-1"><span class="text-slate-500">End:</span><input type="date" value="${wData.completeDate || ''}" onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {completeDate: this.value, status: 'Completed'})" class="border border-slate-300 rounded px-1.5 py-1 bg-white/50 w-full max-w-[110px]"></div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-slate-500 text-xs font-medium">Start:</span>
+                                            <input type="date" value="${wData.startDate || ''}" onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {startDate: this.value ${wStatus === 'Not Started' ? `, status: 'Pending'` : ''}})" class="border border-slate-300 rounded-lg px-2 py-1 text-xs bg-white">
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-slate-500 text-xs font-medium">End:</span>
+                                            <input type="date" value="${wData.completeDate || ''}" onchange="state.updateModuleData('${moduleId}', 'week', '${w.id}', {completeDate: this.value, status: 'Completed'})" class="border border-slate-300 rounded-lg px-2 py-1 text-xs bg-white">
                                         </div>
                                     </div>
-                                `;
-            }).join('')}
+                                </div>
+                            </div>`;
+                    };
+
+                    return `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-8 no-print overflow-hidden">
+                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
+                                <h3 class="text-lg font-bold text-slate-800">Weekly Clinical Schedule</h3>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-24 bg-slate-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full transition-all" style="width: ${pctWeeks}%"></div>
+                                </div>
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${completedCount === totalWeeks ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}">
+                                    ${completedCount} / ${totalWeeks}
+                                </span>
+                            </div>
+                        </button>
+                        <div>
+                            ${activeWeeks.length > 0 ? `
+                                <div class="divide-y divide-slate-100">
+                                    ${activeWeeks.map(renderWeekRow).join('')}
+                                </div>
+                            ` : '<div class="px-6 py-4 text-center text-green-600 font-medium text-sm"><i class="fas fa-check-circle mr-2"></i>All weeks completed!</div>'}
+
+                            ${doneWeeks.length > 0 ? `
+                                <div class="border-t-2 border-green-200">
+                                    <button onclick="toggleSection(this)" class="w-full px-6 py-3 bg-green-50 flex justify-between items-center cursor-pointer hover:bg-green-100 transition-colors section-collapsed">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-chevron-down text-green-400 text-xs section-chevron transition-transform duration-200"></i>
+                                            <span class="text-sm font-bold text-green-700"><i class="fas fa-check-circle mr-1"></i> Completed Weeks</span>
+                                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-200 text-green-800">${doneWeeks.length}</span>
+                                        </div>
+                                    </button>
+                                    <div style="display:none" class="divide-y divide-green-100">
+                                        ${doneWeeks.map(renderWeekRow).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
-                ` : ''}
+                `;
+                })() : ''}
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 no-print">
+                ${(config.caseReports || config.assignmentList) ? `
+                <div class="grid grid-cols-1 ${config.caseReports && config.assignmentList ? 'lg:grid-cols-2' : ''} gap-8 mb-8 no-print">
                     ${config.caseReports ? `
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 self-start">
-                            <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Case Reports</h3>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden self-start">
+                            <button onclick="toggleSection(this)" class="w-full px-6 py-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
+                                <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
+                                <h3 class="text-lg font-bold text-slate-800">Case Reports</h3>
+                            </button>
+                            <div class="p-6">
                             <div class="space-y-2">
                                 ${config.caseReports.map((cr, i) => {
-                const isDone = data.caseReports && data.caseReports['cr_' + i] === 'Done';
-                return `
+                    const isDone = data.caseReports && data.caseReports['cr_' + i] === 'Done';
+                    return `
                                         <button onclick="state.updateModuleData('${moduleId}','caseReport','cr_${i}','${isDone ? '' : 'Done'}')" class="w-full flex items-center justify-between p-3 rounded-lg border transition-all ${isDone ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-600'}">
                                             <span class="font-medium text-sm text-left">${cr}</span>
                                             <div class="w-5 h-5 rounded border flex items-center justify-center shrink-0 ml-2 ${isDone ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}">
@@ -974,50 +1176,99 @@
                                             </div>
                                         </button>
                                     `;
-            }).join('')}
+                }).join('')}
                             </div>
-                        </div>
-                    ` : '<div></div>'}
-
-                    ${config.assignmentList ? `
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                            <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Assignments</h3>
-                            <div class="space-y-4">
-                                ${config.assignmentList.map((a, i) => {
-                const aData = (data.assignments && data.assignments['a_' + i]) || {};
-                const title = typeof a === 'string' ? a : a.title;
-                const prompt = typeof a === 'string' ? '' : a.prompt;
-                return `
-                                        <div class="p-4 rounded-lg border border-slate-100 bg-slate-50">
-                                            <h4 class="font-bold text-slate-800 text-sm">${title}</h4>
-                                            ${prompt ? `<p class="text-xs text-slate-500 mt-1 mb-3 leading-relaxed">${prompt}</p>` : ''}
-                                            <div class="grid grid-cols-2 gap-3 mt-3">
-                                                <div>
-                                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Started</label>
-                                                    <input type="date" value="${aData.dateStarted || ''}" onchange="state.updateModuleData('${moduleId}','assignment','a_${i}',{dateStarted:this.value})" class="w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-teal-500">
-                                                </div>
-                                                <div>
-                                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Submitted</label>
-                                                    <input type="date" value="${aData.dateSubmitted || ''}" onchange="state.updateModuleData('${moduleId}','assignment','a_${i}',{dateSubmitted:this.value})" class="w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-teal-500">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-            }).join('')}
                             </div>
                         </div>
                     ` : ''}
+
+                    ${config.assignmentList ? (() => {
+                        const allAssignments = config.assignmentList.map((a, i) => {
+                            const aData = (data.assignments && data.assignments['a_' + i]) || {};
+                            const title = typeof a === 'string' ? a : a.title;
+                            const prompt = typeof a === 'string' ? '' : a.prompt;
+                            return { i, aData, title, prompt, isDone: !!aData.dateSubmitted };
+                        });
+                        const pendingAssignments = allAssignments.filter(a => !a.isDone);
+                        const doneAssignments = allAssignments.filter(a => a.isDone)
+                            .sort((a, b) => (b.aData.dateSubmitted || '').localeCompare(a.aData.dateSubmitted || ''));
+                        const totalA = allAssignments.length;
+                        const doneA = doneAssignments.length;
+                        const pctA = Math.round((doneA / totalA) * 100);
+
+                        const renderAssignment = (a) => `
+                            <div class="p-4 rounded-lg border ${a.isDone ? 'border-green-200 bg-green-50' : 'border-slate-100 bg-slate-50'}">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-sm ${a.isDone ? 'text-green-800' : 'text-slate-800'}">${a.isDone ? '<i class="fas fa-check-circle text-green-500 mr-1.5"></i>' : ''}${a.title}</h4>
+                                        ${a.prompt ? `<p class="text-xs ${a.isDone ? 'text-green-600' : 'text-slate-500'} mt-1 mb-3 leading-relaxed">${a.prompt}</p>` : ''}
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mt-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold ${a.isDone ? 'text-green-500' : 'text-slate-400'} uppercase tracking-wider mb-1">Started</label>
+                                        <input type="date" value="${a.aData.dateStarted || ''}" onchange="state.updateModuleData('${moduleId}','assignment','a_${a.i}',{dateStarted:this.value})" class="w-full text-xs border ${a.isDone ? 'border-green-300' : 'border-slate-300'} rounded p-1.5 outline-none focus:border-teal-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold ${a.isDone ? 'text-green-500' : 'text-slate-400'} uppercase tracking-wider mb-1">Submitted</label>
+                                        <input type="date" value="${a.aData.dateSubmitted || ''}" onchange="state.updateModuleData('${moduleId}','assignment','a_${a.i}',{dateSubmitted:this.value})" class="w-full text-xs border ${a.isDone ? 'border-green-300' : 'border-slate-300'} rounded p-1.5 outline-none focus:border-teal-500">
+                                    </div>
+                                </div>
+                            </div>`;
+
+                        return `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <button onclick="toggleSection(this)" class="w-full px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
+                                    <h3 class="text-lg font-bold text-slate-800">Assignments</h3>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-20 bg-slate-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full transition-all" style="width: ${pctA}%"></div>
+                                    </div>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded-full ${doneA === totalA ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}">${doneA} / ${totalA}</span>
+                                </div>
+                            </button>
+                            <div class="p-6">
+                                ${pendingAssignments.length > 0 ? `
+                                    <div class="space-y-4">
+                                        ${pendingAssignments.map(renderAssignment).join('')}
+                                    </div>
+                                ` : '<div class="text-center text-green-600 font-medium text-sm py-2"><i class="fas fa-check-circle mr-2"></i>All assignments submitted!</div>'}
+
+                                ${doneAssignments.length > 0 ? `
+                                    <div class="mt-4 border-t-2 border-green-200 pt-3">
+                                        <button onclick="toggleSection(this)" class="w-full flex items-center gap-2 py-2 cursor-pointer hover:opacity-80 transition-opacity section-collapsed">
+                                            <i class="fas fa-chevron-down text-green-400 text-xs section-chevron transition-transform duration-200"></i>
+                                            <span class="text-sm font-bold text-green-700"><i class="fas fa-check-circle mr-1"></i> Submitted</span>
+                                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-200 text-green-800">${doneAssignments.length}</span>
+                                        </button>
+                                        <div style="display:none" class="space-y-3 mt-2">
+                                            ${doneAssignments.map(renderAssignment).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    })() : ''}
                 </div>
+                ` : ''}
 
                 ${config.requiredProcedures ? `
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 no-print">
-                        <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Required Procedures Checklist</h3>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-8 no-print overflow-hidden">
+                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
+                            <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
+                            <h3 class="text-lg font-bold text-slate-800">Required Procedures Checklist</h3>
+                        </button>
+                        <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             ${config.requiredProcedures.map(req => {
-                const count = logs.filter(p => p.procedure === req.name).length;
-                const isDone = count >= req.target;
-                const pct = Math.min(100, Math.round((count / req.target) * 100));
-                return `
+                        const count = logs.filter(p => p.procedure === req.name).length;
+                        const isDone = count >= req.target;
+                        const pct = Math.min(100, Math.round((count / req.target) * 100));
+                        return `
                                     <div class="border rounded-lg p-3 ${isDone ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}">
                                         <div class="flex justify-between items-start mb-1.5">
                                             <span class="text-xs font-semibold leading-tight pr-2 ${isDone ? 'text-green-800' : 'text-slate-700'}">${req.name}</span>
@@ -1028,21 +1279,70 @@
                                         </div>
                                     </div>
                                 `;
-            }).join('')}
+                    }).join('')}
+                        </div>
                         </div>
                     </div>
                 ` : ''}
 
+                ${(() => {
+                    const otherLogs = logs.filter(p => p.isOther);
+                    if (otherLogs.length === 0) return '';
+                    return `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-amber-400 overflow-hidden mb-8">
+                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-amber-50 flex justify-between items-center cursor-pointer hover:bg-amber-100 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-chevron-down text-amber-400 text-xs section-chevron transition-transform duration-200"></i>
+                                <h3 class="font-bold text-amber-800"><i class="fas fa-clipboard-list text-amber-500 mr-2"></i>Other Procedures (Daily Log)</h3>
+                                <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-200 text-amber-800">${otherLogs.length} Logged</span>
+                            </div>
+                            <span class="text-sm bg-amber-200 text-amber-800 px-3 py-1.5 rounded-lg font-medium no-print flex items-center gap-2" onclick="event.stopPropagation(); window.print()">
+                                <i class="fas fa-print"></i> Print
+                            </span>
+                        </button>
+                        <div>
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-amber-50/50 border-b border-slate-200 text-slate-500 uppercase text-xs">
+                                <tr>
+                                    <th class="px-6 py-3 font-semibold">Date</th>
+                                    <th class="px-6 py-3 font-semibold">Procedure</th>
+                                    <th class="px-6 py-3 font-semibold">Location</th>
+                                    <th class="px-6 py-3 font-semibold">Supervisor</th>
+                                    <th class="px-6 py-3 font-semibold print:w-48 text-right print:text-left">Signature</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                ${otherLogs.map(p => `
+                                    <tr class="hover:bg-amber-50/30 print:h-20 break-inside-avoid">
+                                        <td class="px-6 py-3 whitespace-nowrap text-slate-600 align-middle print:align-bottom print:pb-6">${esc(p.date)}</td>
+                                        <td class="px-6 py-3 font-medium text-amber-800 align-middle print:align-bottom print:pb-6">${esc(p.procedure)}</td>
+                                        <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6 text-xs">${esc(p.location) || '-'}</td>
+                                        <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6">${esc(p.supervisor)}</td>
+                                        <td class="px-6 py-3 align-middle print:align-bottom">
+                                            <div class="hidden print:block border-b-2 border-slate-400 w-full mb-6"></div>
+                                            <button onclick="deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 no-print flex justify-end w-full"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                    `;
+                })()}
+
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-12">
-                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center no-print">
+                    <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center no-print cursor-pointer hover:bg-slate-100 transition-colors">
                         <div class="flex items-center gap-3">
+                            <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                             <h3 class="font-bold text-slate-800">Module Procedure Log</h3>
                             <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">${logs.length} Logged</span>
                         </div>
-                        <button onclick="window.print()" class="text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition no-print flex items-center gap-2">
+                        <span class="text-sm bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium no-print flex items-center gap-2" onclick="event.stopPropagation(); window.print()">
                             <i class="fas fa-print"></i> Print Log
-                        </button>
-                    </div>
+                        </span>
+                    </button>
+                    <div>
                     
                     <!-- Print-Only Official Header -->
                     <div class="hidden print:block p-6 text-center border-b border-slate-200 bg-white">
@@ -1050,11 +1350,11 @@
                         <h3 class="text-lg font-semibold text-slate-600 mt-1">Clinical Procedure Logbook</h3>
                         <div class="mt-6 flex justify-between text-left border border-slate-300 p-4 rounded-lg bg-slate-50 text-sm">
                             <div>
-                                <p><strong>Trainee:</strong> ${state.account.name}</p>
+                                <p><strong>Trainee:</strong> ${esc(state.account.name)}</p>
                                 <p><strong>Year of Training:</strong> Year ${state.account.year} (${state.account.year <= 3 ? 'Part 1' : 'Part 2'})</p>
                             </div>
                             <div class="text-right">
-                                <p><strong>Current Hospital/Location:</strong> ${state.account.location || '_________________________'}</p>
+                                <p><strong>Current Hospital/Location:</strong> ${esc(state.account.location) || '_________________________'}</p>
                             </div>
                         </div>
                     </div>
@@ -1070,12 +1370,12 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            ${logs.map(p => `
+                            ${logs.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.timestamp || 0) - (a.timestamp || 0)).map(p => `
                                 <tr class="hover:bg-slate-50 print:h-20 break-inside-avoid">
-                                    <td class="px-6 py-3 whitespace-nowrap text-slate-600 align-middle print:align-bottom print:pb-6">${p.date}</td>
-                                    <td class="px-6 py-3 font-medium text-slate-800 align-middle print:align-bottom print:pb-6">${p.procedure}</td>
-                                    <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6 text-xs">${p.location || '-'}</td>
-                                    <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6">${p.supervisor}</td>
+                                    <td class="px-6 py-3 whitespace-nowrap text-slate-600 align-middle print:align-bottom print:pb-6">${esc(p.date)}</td>
+                                    <td class="px-6 py-3 font-medium text-slate-800 align-middle print:align-bottom print:pb-6">${esc(p.procedure)}</td>
+                                    <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6 text-xs">${esc(p.location) || '-'}</td>
+                                    <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6">${esc(p.supervisor)}</td>
                                     <td class="px-6 py-3 align-middle print:align-bottom">
                                         <!-- Physical signature line visible only on print -->
                                         <div class="hidden print:block border-b-2 border-slate-400 w-full mb-6"></div>
@@ -1086,6 +1386,7 @@
                             `).join('') || `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No procedures logged for this module.</td></tr>`}
                         </tbody>
                     </table>
+                    </div>
                 </div>
             `;
         }
@@ -1097,6 +1398,13 @@
             document.getElementById('mobile-overlay').classList.toggle('hidden');
         }
 
+        function toggleSection(btn) {
+            const content = btn.nextElementSibling;
+            if (!content) return;
+            const isCollapsed = btn.classList.toggle('section-collapsed');
+            content.style.display = isCollapsed ? 'none' : '';
+        }
+
         function deleteProcedure(timestamp) {
             if (confirm("Delete this log entry?")) {
                 state.procedureLog = state.procedureLog.filter(p => p.timestamp !== timestamp);
@@ -1105,7 +1413,34 @@
             }
         }
 
-        function updateProcList(moduleId) {
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function toggleAuthMode(e) {
+            if (e) e.preventDefault();
+            const isSignUp = !state._isSignUpMode;
+            state._isSignUpMode = isSignUp;
+
+            document.getElementById('signup-name-field').classList.toggle('hidden', !isSignUp);
+            document.getElementById('confirm-password-field').classList.toggle('hidden', !isSignUp);
+            document.getElementById('auth-submit-btn').textContent = isSignUp ? 'Create Account' : 'Sign In';
+            document.getElementById('login-subtitle').textContent = isSignUp ? 'Create your portfolio account' : 'Please sign in to continue';
+            document.getElementById('auth-toggle').innerHTML = isSignUp
+                ? 'Already have an account? <a href="#" onclick="toggleAuthMode(event)" class="text-teal-600 font-semibold hover:text-teal-700">Sign In</a>'
+                : 'Don\'t have an account? <a href="#" onclick="toggleAuthMode(event)" class="text-teal-600 font-semibold hover:text-teal-700">Sign Up</a>';
+            document.getElementById('login-error').classList.add('hidden');
+        }
+
+        window.updateProcList = (moduleId) => {
             const module = moduleConfigs.find(m => m.id === moduleId);
             const datalist = document.getElementById('proc-datalist');
             if (datalist && module && module.requiredProcedures) {
@@ -1113,7 +1448,7 @@
             } else if (datalist) {
                 datalist.innerHTML = '';
             }
-        }
+        };
 
         function showQuickLogModal() {
             const modal = document.createElement('div');
@@ -1146,16 +1481,16 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-1">Procedure</label>
                             <input type="text" id="quickProcName" name="procedure" list="proc-datalist" placeholder="Type or select from list..." required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
                             <datalist id="proc-datalist"></datalist>
-                            <p class="text-xs text-slate-500 mt-1">Select a required procedure to track your progress automatically.</p>
+                            <p class="text-xs text-slate-500 mt-1">Select a required procedure, or type any procedure name to log it under "Others".</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">Location/Hospital</label>
-                                <input type="text" name="location" placeholder="e.g. Kundiawa" value="${state.account.location || ''}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
+                                <input type="text" name="location" placeholder="e.g. Kundiawa" value="${esc(state.account.location || '')}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">Supervisor</label>
-                                <input type="text" name="supervisor" placeholder="Dr. Name" value="${lastSup}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
+                                <input type="text" name="supervisor" placeholder="Dr. Name" value="${esc(lastSup)}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500">
                             </div>
                         </div>
                         <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg mt-2 shadow-md transition">Save Log Entry</button>
@@ -1172,13 +1507,18 @@
             setTimeout(() => document.getElementById('quickProcName').focus(), 100);
         }
 
-        function submitQuickLog(form) {
+        window.submitQuickLog = form => {
+            const modId = form.module.value;
+            const procName = form.procedure.value;
+            const modConfig = moduleConfigs.find(m => m.id === modId);
+            const isOther = !modConfig?.requiredProcedures?.some(rp => rp.name === procName);
             state.addProcedure({
-                moduleId: form.module.value,
+                moduleId: modId,
                 date: form.date.value,
-                procedure: form.procedure.value,
+                procedure: procName,
                 location: form.location.value,
-                supervisor: form.supervisor.value
+                supervisor: form.supervisor.value,
+                isOther: isOther
             });
             document.getElementById('quickLogModal').remove();
 
@@ -1189,7 +1529,7 @@
             document.body.appendChild(toast);
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 2500);
             renderApp();
-        }
+        };
 
         // --- 6. SAFE RENDERER (With Auth Gate) ---
         function renderApp() {
@@ -1239,4 +1579,3 @@
 </body>
 
 </html>
-
