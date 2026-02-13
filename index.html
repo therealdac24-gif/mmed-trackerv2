@@ -1077,16 +1077,26 @@
 
         function renderMilestones() {
             return `
-                <div class="mb-8">
-                    <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Milestones & Short Courses</h1>
-                    <p class="text-slate-500 mt-1">Track major program requirements, exams, and professional development.</p>
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Milestones & Short Courses</h1>
+                        <p class="text-slate-500 mt-1">Track major program requirements, exams, and professional development.</p>
+                    </div>
+                    <button onclick="toggleAllSections(this)" class="text-xs font-bold text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm hover:shadow transition-all flex items-center gap-2 no-print">
+                        <i class="fas fa-compress-alt"></i>
+                        <span>Collapse All</span>
+                    </button>
                 </div>
                 <div class="space-y-6">
                     ${Object.keys(milestoneConfigs).map(cat => `
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
-                                <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">${cat.replace('_', ' ')}</h3>
-                            </div>
+                            <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors text-left">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
+                                    <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">${cat.replace('_', ' ')}</h3>
+                                </div>
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-200 text-slate-600">${milestoneConfigs[cat].length} items</span>
+                            </button>
                             <div class="divide-y divide-slate-100">
                                 ${milestoneConfigs[cat].map(m => {
                 const mData = state.milestones[cat] && state.milestones[cat][m.id] ? state.milestones[cat][m.id] : {};
@@ -1215,6 +1225,13 @@
                         <span><i class="far fa-clock mr-1"></i> ${config.duration}</span>
                         ${config.requiredProcedures ? `<span><i class="fas fa-notes-medical mr-1"></i> ${config.requiredProcedures.reduce((a, r) => a + r.target, 0)} Required Procedures</span>` : ''}
                     </div>
+                </div>
+
+                <div class="flex justify-end mb-4 no-print">
+                    <button onclick="toggleAllSections(this)" class="text-xs font-bold text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm hover:shadow transition-all flex items-center gap-2">
+                        <i class="fas fa-compress-alt"></i>
+                        <span>Collapse All</span>
+                    </button>
                 </div>
 
                 ${(() => {
