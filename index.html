@@ -75,6 +75,10 @@
                 display: none !important;
             }
 
+            .print-hide-zero {
+                display: none !important;
+            }
+
             body {
                 background: white;
                 font-size: 11pt;
@@ -583,8 +587,10 @@
                 this.activeTab = 'dashboard';
                 this.listeners = [];
                 this._loginHandled = false;
+                this.driveToken = null;
+                this.driveFolders = {};
 
-                moduleConfigs.forEach(m => { this.modules[m.id] = { assignments: {}, weeks: {}, caseReports: {} }; });
+                moduleConfigs.forEach(m => { this.modules[m.id] = { assignments: {}, weeks: {}, caseReports: {}, rotations: [] }; });
 
                 this.initFirebase();
                 this.loadData();
@@ -608,7 +614,10 @@
                     // Guarded Redirect Check
                     if (!window.auth.currentUser) {
                         window.auth.getRedirectResult().then(result => {
-                            if (result.user) this.handleCloudLogin(result.user);
+                            if (result.user) {
+                                if (result.credential) this.driveToken = result.credential.accessToken;
+                                this.handleCloudLogin(result.user);
+                            }
                         }).catch(e => console.error("Redirect Error:", e));
                     }
 
@@ -652,6 +661,9 @@
                     if (cloudData.procedureLog) this.procedureLog = cloudData.procedureLog;
                     if (cloudData.milestones) this.milestones = cloudData.milestones;
 
+                    // Load cached Drive folder IDs
+                    if (cloudData.driveFolders) this.driveFolders = cloudData.driveFolders;
+
                     this.saveData(true); // Save local copy
                 } catch (e) {
                     console.error("Sync Error", e);
@@ -664,6 +676,107 @@
                     if (document.getElementById('login-container')) document.getElementById('login-container').classList.add('hidden');
                     if (document.getElementById('main-layout')) document.getElementById('main-layout').classList.remove('hidden');
                 }
+            }
+
+            // --- Google Drive API Helpers ---
+            async driveApiFetch(url, options = {}) {
+                if (!this.driveToken) { console.warn('No Drive token available'); return null; }
+                const resp = await fetch(url, {
+                    ...options,
+                    headers: { 'Authorization': `Bearer ${this.driveToken}`, ...(options.headers || {}) }
+                });
+                if (!resp.ok) {
+                    const err = await resp.text();
+                    console.error('Drive API error:', resp.status, err);
+                    if (resp.status === 401) { this.driveToken = null; }
+                    return null;
+                }
+                return resp;
+            }
+
+            async ensureDriveFolder(name, parentId = null) {
+                // Check if folder exists
+                let q = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+                if (parentId) q += ` and '${parentId}' in parents`;
+                const searchResp = await this.driveApiFetch(
+                    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&spaces=drive`
+                );
+                if (searchResp) {
+                    const data = await searchResp.json();
+                    if (data.files && data.files.length > 0) return data.files[0].id;
+                }
+                // Create folder
+                const meta = { name, mimeType: 'application/vnd.google-apps.folder' };
+                if (parentId) meta.parents = [parentId];
+                const createResp = await this.driveApiFetch('https://www.googleapis.com/drive/v3/files', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(meta)
+                });
+                if (createResp) {
+                    const folder = await createResp.json();
+                    return folder.id;
+                }
+                return null;
+            }
+
+            async initDriveFolders(moduleId) {
+                if (!this.driveToken) return null;
+                // Ensure root folder
+                if (!this.driveFolders.root) {
+                    this.driveFolders.root = await this.ensureDriveFolder('MMed Portfolio');
+                    if (!this.driveFolders.root) return null;
+                }
+                // Ensure module sub-folder
+                if (!this.driveFolders[moduleId]) {
+                    const config = moduleConfigs.find(m => m.id === moduleId);
+                    const folderName = config ? config.name.split(' (')[0] : moduleId;
+                    this.driveFolders[moduleId] = await this.ensureDriveFolder(folderName, this.driveFolders.root);
+                }
+                // Save folder IDs to cloud
+                this.saveDriveFolders();
+                return this.driveFolders[moduleId];
+            }
+
+            saveDriveFolders() {
+                if (this.account?.id && window.db) {
+                    window.db.collection('users').doc(this.account.id).set({ driveFolders: this.driveFolders }, { merge: true }).catch(e => console.error('Save folders error:', e));
+                }
+            }
+
+            async uploadToDrive(file, moduleId) {
+                const folderId = await this.initDriveFolders(moduleId);
+                if (!folderId) return null;
+                const metadata = { name: file.name, parents: [folderId] };
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', file);
+                const resp = await this.driveApiFetch(
+                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,size,mimeType,webViewLink,createdTime',
+                    { method: 'POST', body: form }
+                );
+                if (resp) return await resp.json();
+                return null;
+            }
+
+            async listDriveFiles(moduleId) {
+                const folderId = this.driveFolders[moduleId];
+                if (!folderId || !this.driveToken) return [];
+                const q = `'${folderId}' in parents and trashed=false`;
+                const resp = await this.driveApiFetch(
+                    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,size,mimeType,webViewLink,thumbnailLink,createdTime)&orderBy=createdTime desc&spaces=drive`
+                );
+                if (resp) {
+                    const data = await resp.json();
+                    return data.files || [];
+                }
+                return [];
+            }
+
+            async deleteDriveFile(fileId) {
+                if (!this.driveToken) return false;
+                const resp = await this.driveApiFetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: 'DELETE' });
+                return resp !== null;
             }
 
             loadData() {
@@ -697,8 +810,12 @@
             // Auth Actions
             signInGoogle() {
                 const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('https://www.googleapis.com/auth/drive.file');
                 window.auth.signInWithPopup(provider)
-                    .then(r => this.handleCloudLogin(r.user))
+                    .then(r => {
+                        if (r.credential) this.driveToken = r.credential.accessToken;
+                        this.handleCloudLogin(r.user);
+                    })
                     .catch(e => {
                         console.warn("Popup blocked, trying redirect");
                         window.auth.signInWithRedirect(provider);
@@ -816,6 +933,26 @@
                     this.modules[moduleId].caseReports[id] = value;
                 }
                 this.saveData();
+            }
+
+            addRotation(moduleId) {
+                if (!this.modules[moduleId].rotations) this.modules[moduleId].rotations = [];
+                this.modules[moduleId].rotations.push({ location: '', startDate: '', endDate: '' });
+                this.saveData();
+            }
+
+            updateRotation(moduleId, index, field, value) {
+                if (!this.modules[moduleId].rotations) return;
+                this.modules[moduleId].rotations[index][field] = value;
+                this.saveData();
+            }
+
+            deleteRotation(moduleId, index) {
+                if (!this.modules[moduleId].rotations) return;
+                if (confirm('Delete this rotation entry?')) {
+                    this.modules[moduleId].rotations.splice(index, 1);
+                    this.saveData();
+                }
             }
 
             addProcedure(data) {
@@ -981,9 +1118,15 @@
                         <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Master Logbook Checklist</h1>
                         <p class="text-slate-500 mt-1">Automatically tracks your progress against graduation requirements based on your logs.</p>
                     </div>
-                    <button onclick="window.print()" class="hidden md:flex items-center gap-2 bg-white border border-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition shadow-sm font-medium">
-                        <i class="fas fa-print"></i> Print Summary
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleAllSections(this)" class="text-xs font-bold text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm hover:shadow transition-all flex items-center gap-2">
+                            <i class="fas fa-compress-alt"></i>
+                            <span>Collapse All</span>
+                        </button>
+                        <button onclick="window.print()" class="hidden md:flex items-center gap-2 bg-white border border-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition shadow-sm font-medium">
+                            <i class="fas fa-print"></i> Print Summary
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="hidden print:block p-6 text-center border-b border-slate-200 bg-white mb-6">
@@ -997,31 +1140,45 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     ${moduleConfigs.filter(m => m.requiredProcedures && m.requiredProcedures.length > 0).map(m => {
                 const otherLogs = state.procedureLog.filter(p => p.moduleId === m.id && p.isOther);
-                // Group other procedures by name and count
                 const otherGroups = {};
                 otherLogs.forEach(p => {
                     if (!otherGroups[p.procedure]) otherGroups[p.procedure] = 0;
                     otherGroups[p.procedure]++;
                 });
+                const metCount = m.requiredProcedures.filter(req => state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length >= req.target).length;
+                const totalReq = m.requiredProcedures.length;
+                const pctMet = Math.round((metCount / totalReq) * 100);
                 return `
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 break-inside-avoid">
-                            <h3 class="font-bold ${m.text} mb-4 pb-2 border-b border-slate-100">${m.name}</h3>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 break-inside-avoid overflow-hidden">
+                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
+                                <h3 class="font-bold ${m.text}">${m.name}</h3>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 bg-slate-200 rounded-full h-1.5">
+                                    <div class="h-1.5 rounded-full ${metCount === totalReq ? 'bg-green-500' : 'bg-teal-500'}" style="width: ${pctMet}%"></div>
+                                </div>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded-full ${metCount === totalReq ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}">${metCount}/${totalReq}</span>
+                            </div>
+                        </button>
+                        <div class="p-6">
                             <div class="space-y-3">
                                 ${m.requiredProcedures.map(req => {
                     const count = state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length;
                     const isDone = count >= req.target;
                     const pct = Math.min(100, Math.round((count / req.target) * 100));
                     return `
-                                        <div class="text-sm">
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="font-medium ${isDone ? 'text-green-700' : 'text-slate-700'}">${req.name}</span>
-                                                <span class="font-bold ${isDone ? 'text-green-600' : 'text-slate-500'} w-12 text-right">${count} / ${req.target}</span>
-                                            </div>
-                                            <div class="w-full bg-slate-100 rounded-full h-1.5 no-print">
-                                                <div class="h-1.5 rounded-full ${isDone ? 'bg-green-500' : 'bg-teal-500'}" style="width: ${pct}%"></div>
-                                            </div>
+                                    <div class="text-sm ${count === 0 ? 'print-hide-zero' : ''}">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="font-medium ${isDone ? 'text-green-700' : 'text-slate-700'}">${isDone ? '<i class="fas fa-check-circle text-green-500 mr-1.5 text-xs"></i>' : ''}${req.name}</span>
+                                            <span class="font-bold ${isDone ? 'text-green-600' : 'text-slate-500'} w-12 text-right">${count} / ${req.target}</span>
                                         </div>
-                                    `;
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5 no-print">
+                                            <div class="h-1.5 rounded-full ${isDone ? 'bg-green-500' : 'bg-teal-500'}" style="width: ${pct}%"></div>
+                                        </div>
+                                    </div>
+                                `;
                 }).join('')}
                                 ${Object.keys(otherGroups).length > 0 ? `
                                     <div class="mt-4 pt-3 border-t border-amber-200">
@@ -1039,7 +1196,8 @@
                                 ` : ''}
                             </div>
                         </div>
-                    `;
+                    </div>
+                `;
             }).join('')}
                 </div>
             `;
@@ -1057,6 +1215,130 @@
                         <span><i class="far fa-clock mr-1"></i> ${config.duration}</span>
                         ${config.requiredProcedures ? `<span><i class="fas fa-notes-medical mr-1"></i> ${config.requiredProcedures.reduce((a, r) => a + r.target, 0)} Required Procedures</span>` : ''}
                     </div>
+                </div>
+
+                ${(() => {
+                    const rotations = (data.rotations || []).map((r, i) => ({ ...r, _idx: i }));
+                    const today = new Date().toISOString().split('T')[0];
+                    const activeRotations = rotations.filter(r => !r.endDate || r.endDate >= today);
+                    const completedRotations = rotations.filter(r => r.endDate && r.endDate < today)
+                        .sort((a, b) => (b.endDate || '').localeCompare(a.endDate || ''));
+
+                    const calcDuration = (start, end) => {
+                        if (!start || !end) return '';
+                        const s = new Date(start);
+                        const e = new Date(end);
+                        const diffMs = e - s;
+                        if (diffMs <= 0) return '';
+                        const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                        if (days < 7) return days + ' day' + (days !== 1 ? 's' : '');
+                        const weeks = Math.round(days / 7);
+                        if (weeks < 5) return weeks + ' week' + (weeks !== 1 ? 's' : '');
+                        const months = Math.round(days / 30.44);
+                        return months + ' month' + (months !== 1 ? 's' : '');
+                    };
+
+                    const renderRotationCard = (r, isCompleted) => {
+                        const duration = calcDuration(r.startDate, r.endDate);
+                        return `
+                        <div class="p-4 rounded-lg border ${isCompleted ? 'border-green-200 bg-green-50/50' : 'border-slate-200 bg-slate-50'} relative group">
+                            <button onclick="state.deleteRotation('${moduleId}', ${r._idx})" class="absolute top-2 right-2 text-rose-400 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity text-xs" title="Delete rotation">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            ${isCompleted ? '<div class="flex items-center gap-2 mb-2"><i class="fas fa-check-circle text-green-500 text-sm"></i><span class="text-xs font-bold text-green-700 uppercase">Completed</span></div>' : ''}
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                <div class="md:col-span-1">
+                                    <label class="block text-[10px] font-bold ${isCompleted ? 'text-green-500' : 'text-slate-400'} uppercase tracking-wider mb-1"><i class="fas fa-hospital mr-1"></i>Hospital / Location</label>
+                                    <input type="text" value="${esc(r.location || '')}" onchange="state.updateRotation('${moduleId}', ${r._idx}, 'location', this.value)" placeholder="e.g. Port Moresby General" class="w-full text-sm border ${isCompleted ? 'border-green-300' : 'border-slate-300'} rounded-lg px-3 py-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-100">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold ${isCompleted ? 'text-green-500' : 'text-slate-400'} uppercase tracking-wider mb-1"><i class="fas fa-calendar-alt mr-1"></i>Start Date</label>
+                                    <input type="date" value="${r.startDate || ''}" onchange="state.updateRotation('${moduleId}', ${r._idx}, 'startDate', this.value)" class="w-full text-sm border ${isCompleted ? 'border-green-300' : 'border-slate-300'} rounded-lg px-3 py-2 outline-none focus:border-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold ${isCompleted ? 'text-green-500' : 'text-slate-400'} uppercase tracking-wider mb-1"><i class="fas fa-calendar-check mr-1"></i>End Date</label>
+                                    <input type="date" value="${r.endDate || ''}" onchange="state.updateRotation('${moduleId}', ${r._idx}, 'endDate', this.value)" class="w-full text-sm border ${isCompleted ? 'border-green-300' : 'border-slate-300'} rounded-lg px-3 py-2 outline-none focus:border-teal-500">
+                                </div>
+                                <div class="flex items-end">
+                                    ${duration ? `<span class="text-sm font-bold ${isCompleted ? 'text-green-700' : 'text-teal-700'} bg-${isCompleted ? 'green' : 'teal'}-50 border border-${isCompleted ? 'green' : 'teal'}-200 rounded-lg px-3 py-2 w-full text-center"><i class="fas fa-clock mr-1"></i>${duration}</span>` : '<span class="text-xs text-slate-400 italic py-2">Enter dates for duration</span>'}
+                                </div>
+                            </div>
+                        </div>`;
+                    };
+
+                    return `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 no-print overflow-hidden">
+                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
+                                <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-map-marker-alt text-teal-600 mr-2"></i>Rotation / Placement</h3>
+                            </div>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-200 text-slate-600">${rotations.length} rotation${rotations.length !== 1 ? 's' : ''}</span>
+                        </button>
+                        <div class="p-6">
+                            ${activeRotations.length > 0 ? `
+                                <div class="space-y-3 mb-4">
+                                    ${activeRotations.map(r => renderRotationCard(r, false)).join('')}
+                                </div>
+                            ` : rotations.length === 0 ? '<p class="text-sm text-slate-400 text-center py-2 mb-3">No rotations added yet. Click below to add your first rotation.</p>' : ''}
+
+                            ${completedRotations.length > 0 ? `
+                                <div class="border-t-2 border-green-200 pt-3 mb-4">
+                                    <button onclick="toggleSection(this)" class="w-full flex items-center gap-2 py-2 cursor-pointer hover:opacity-80 transition-opacity section-collapsed">
+                                        <i class="fas fa-chevron-down text-green-400 text-xs section-chevron transition-transform duration-200"></i>
+                                        <span class="text-sm font-bold text-green-700"><i class="fas fa-check-circle mr-1"></i> Completed Rotations</span>
+                                        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-200 text-green-800">${completedRotations.length}</span>
+                                    </button>
+                                    <div style="display:none" class="space-y-3 mt-2">
+                                        ${completedRotations.map(r => renderRotationCard(r, true)).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <button onclick="state.addRotation('${moduleId}')" class="w-full py-2.5 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-teal-400 hover:text-teal-600 hover:bg-teal-50 transition-all text-sm font-bold">
+                                <i class="fas fa-plus mr-2"></i>Add Rotation
+                            </button>
+                        </div>
+                    </div>
+                `;
+                })()}
+
+                <!-- Documents Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 no-print overflow-hidden">
+                    <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
+                            <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-folder-open text-amber-500 mr-2"></i>Documents</h3>
+                        </div>
+                        <span id="doc-count-${moduleId}" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-200 text-slate-600">loading...</span>
+                    </button>
+                    <div class="p-6">
+                        <!-- Upload Zone -->
+                        <div id="drop-zone-${moduleId}" class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center mb-4 hover:border-teal-400 hover:bg-teal-50/30 transition-all cursor-pointer"
+                            ondragover="event.preventDefault(); this.classList.add('border-teal-400','bg-teal-50');"
+                            ondragleave="this.classList.remove('border-teal-400','bg-teal-50');"
+                            ondrop="event.preventDefault(); this.classList.remove('border-teal-400','bg-teal-50'); handleDocUpload(event.dataTransfer.files, '${moduleId}');"
+                            onclick="document.getElementById('file-input-${moduleId}').click()">
+                            <input type="file" id="file-input-${moduleId}" class="hidden" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleDocUpload(this.files, '${moduleId}'); this.value=''">
+                            <div id="upload-status-${moduleId}">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-slate-300 mb-2"></i>
+                                <p class="text-sm font-semibold text-slate-500">Drop files here or <span class="text-teal-600 underline">browse</span></p>
+                                <p class="text-xs text-slate-400 mt-1">PDF, JPG, PNG, DOC — Max 10MB per file</p>
+                            </div>
+                        </div>
+                        ${!state.driveToken ? '<div class="text-center text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4"><i class="fas fa-exclamation-triangle mr-2"></i>Sign in with Google to enable document uploads to your Google Drive.</div>' : ''}
+                        <!-- File List -->
+                        <div id="doc-list-${moduleId}" class="space-y-2">
+                            <div class="text-center text-sm text-slate-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading documents...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mb-4 no-print">
+                    <button id="collapse-all-btn" onclick="toggleAllSections(this)" class="text-xs font-bold text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm hover:shadow transition-all flex items-center gap-2">
+                        <i class="fas fa-compress-alt"></i>
+                        <span>Collapse All</span>
+                    </button>
                 </div>
 
                 ${config.weeks ? (() => {
@@ -1338,13 +1620,30 @@
                             <h3 class="font-bold text-slate-800">Module Procedure Log</h3>
                             <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">${logs.length} Logged</span>
                         </div>
-                        <span class="text-sm bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium no-print flex items-center gap-2" onclick="event.stopPropagation(); window.print()">
-                            <i class="fas fa-print"></i> Print Log
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg font-medium no-print flex items-center gap-2 cursor-pointer hover:bg-amber-200 transition-colors" onclick="event.stopPropagation(); openCsvImportModal('${moduleId}')">
+                                <i class="fas fa-file-csv"></i> Import CSV
+                            </span>
+                            <span class="text-sm bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium no-print flex items-center gap-2 cursor-pointer hover:bg-slate-300 transition-colors" onclick="event.stopPropagation(); window.print()">
+                                <i class="fas fa-print"></i> Print Log
+                            </span>
+                        </div>
                     </button>
                     <div>
                     
                     <!-- Print-Only Official Header -->
+                    ${(() => {
+                    const rotations = data.rotations || [];
+                    const today = new Date().toISOString().split('T')[0];
+                    // Find current active rotation, or most recent one
+                    const currentRotation = rotations.find(r => r.startDate && r.endDate && r.startDate <= today && r.endDate >= today)
+                        || rotations.filter(r => r.location).sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))[0];
+                    const rotLocation = currentRotation?.location || '';
+                    const rotDates = currentRotation?.startDate && currentRotation?.endDate
+                        ? `${currentRotation.startDate} to ${currentRotation.endDate}` : '';
+                    const calcDur = (s, e) => { if (!s || !e) return ''; const d = Math.ceil((new Date(e) - new Date(s)) / 86400000); return d < 7 ? d + ' days' : d < 35 ? Math.round(d / 7) + ' weeks' : Math.round(d / 30.44) + ' months'; };
+                    const rotDuration = calcDur(currentRotation?.startDate, currentRotation?.endDate);
+                    return `
                     <div class="hidden print:block p-6 text-center border-b border-slate-200 bg-white">
                         <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-widest">${config.name}</h2>
                         <h3 class="text-lg font-semibold text-slate-600 mt-1">Clinical Procedure Logbook</h3>
@@ -1354,10 +1653,13 @@
                                 <p><strong>Year of Training:</strong> Year ${state.account.year} (${state.account.year <= 3 ? 'Part 1' : 'Part 2'})</p>
                             </div>
                             <div class="text-right">
-                                <p><strong>Current Hospital/Location:</strong> ${esc(state.account.location) || '_________________________'}</p>
+                                <p><strong>Hospital/Location:</strong> ${esc(rotLocation) || esc(state.account.location) || '_________________________'}</p>
+                                ${rotDuration ? `<p><strong>Duration:</strong> ${rotDuration}</p>` : ''}
+                                ${rotDates ? `<p><strong>Period:</strong> ${rotDates}</p>` : ''}
                             </div>
                         </div>
-                    </div>
+                    </div>`;
+                })()}
 
                     <table class="w-full text-left text-sm">
                         <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs">
@@ -1379,8 +1681,11 @@
                                     <td class="px-6 py-3 align-middle print:align-bottom">
                                         <!-- Physical signature line visible only on print -->
                                         <div class="hidden print:block border-b-2 border-slate-400 w-full mb-6"></div>
-                                        <!-- Delete button visible only on screen -->
-                                        <button onclick="deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 no-print flex justify-end w-full"><i class="fas fa-trash"></i></button>
+                                        <!-- Edit and Delete buttons visible only on screen -->
+                                        <div class="flex items-center justify-end gap-3 no-print">
+                                            <button onclick="editProcedure(${p.timestamp})" class="text-slate-400 hover:text-teal-600 transition-colors" title="Edit entry"><i class="fas fa-pen text-xs"></i></button>
+                                            <button onclick="deleteProcedure(${p.timestamp})" class="text-slate-400 hover:text-rose-600 transition-colors" title="Delete entry"><i class="fas fa-trash text-xs"></i></button>
+                                        </div>
                                     </td>
                                 </tr>
                             `).join('') || `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No procedures logged for this module.</td></tr>`}
@@ -1389,6 +1694,214 @@
                     </div>
                 </div>
             `;
+        }
+
+        // --- 4B. DOCUMENT & CSV FUNCTIONS ---
+
+        function getFileIcon(mimeType) {
+            if (mimeType?.includes('pdf')) return '<i class="fas fa-file-pdf text-red-500"></i>';
+            if (mimeType?.includes('image')) return '<i class="fas fa-file-image text-blue-500"></i>';
+            if (mimeType?.includes('word') || mimeType?.includes('document')) return '<i class="fas fa-file-word text-blue-600"></i>';
+            return '<i class="fas fa-file text-slate-400"></i>';
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '';
+            bytes = parseInt(bytes);
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        async function handleDocUpload(files, moduleId) {
+            if (!state.driveToken) { alert('Please sign in with Google to upload documents.'); return; }
+            const statusEl = document.getElementById(`upload-status-${moduleId}`);
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+            for (const file of files) {
+                if (file.size > maxSize) { alert(`${file.name} is too large (${formatFileSize(file.size)}). Max 10MB.`); continue; }
+                if (!allowed.some(t => file.type.startsWith(t.split('/')[0]) || file.type === t)) {
+                    // Fallback: check extension
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    if (!['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'].includes(ext)) { alert(`${file.name} is not a supported file type.`); continue; }
+                }
+                // Show uploading state
+                if (statusEl) statusEl.innerHTML = `<i class="fas fa-spinner fa-spin text-3xl text-teal-400 mb-2"></i><p class="text-sm font-semibold text-teal-600">Uploading ${esc(file.name)}...</p>`;
+
+                const result = await state.uploadToDrive(file, moduleId);
+                if (result) {
+                    console.log('Uploaded:', result);
+                } else {
+                    alert(`Failed to upload ${file.name}. Please try again.`);
+                }
+            }
+            // Reset upload zone
+            if (statusEl) statusEl.innerHTML = `<i class="fas fa-cloud-upload-alt text-3xl text-slate-300 mb-2"></i><p class="text-sm font-semibold text-slate-500">Drop files here or <span class="text-teal-600 underline">browse</span></p><p class="text-xs text-slate-400 mt-1">PDF, JPG, PNG, DOC — Max 10MB per file</p>`;
+            // Refresh file list
+            loadDocList(moduleId);
+        }
+
+        async function loadDocList(moduleId) {
+            const listEl = document.getElementById(`doc-list-${moduleId}`);
+            const countEl = document.getElementById(`doc-count-${moduleId}`);
+            if (!listEl) return;
+
+            if (!state.driveToken) {
+                listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-2">Sign in with Google to view documents.</p>';
+                if (countEl) countEl.textContent = '—';
+                return;
+            }
+
+            const files = await state.listDriveFiles(moduleId);
+            if (countEl) countEl.textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+
+            if (files.length === 0) {
+                listEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-2">No documents uploaded yet.</p>';
+                return;
+            }
+
+            listEl.innerHTML = files.map(f => `
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors group">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="text-lg flex-shrink-0">${getFileIcon(f.mimeType)}</span>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-700 truncate">${esc(f.name)}</p>
+                            <p class="text-xs text-slate-400">${formatFileSize(f.size)} ${f.createdTime ? '• ' + new Date(f.createdTime).toLocaleDateString() : ''}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        ${f.webViewLink ? `<a href="${f.webViewLink}" target="_blank" class="text-teal-500 hover:text-teal-700 text-sm px-2 py-1 rounded hover:bg-teal-50" title="Preview"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                        <button onclick="event.stopPropagation(); deleteDocFile('${f.id}', '${moduleId}')" class="text-rose-400 hover:text-rose-600 text-sm px-2 py-1 rounded hover:bg-rose-50" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function deleteDocFile(fileId, moduleId) {
+            if (!confirm('Delete this document from your Google Drive?')) return;
+            await state.deleteDriveFile(fileId);
+            loadDocList(moduleId);
+        }
+
+        // Auto-load document list when module tab renders
+        const _origRenderApp = typeof renderApp === 'function' ? null : null; // Will hook after renderApp is defined
+
+        function openCsvImportModal(moduleId) {
+            const config = moduleConfigs.find(m => m.id === moduleId);
+            const modal = document.createElement('div');
+            modal.id = 'csvImportModal';
+            modal.className = 'fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center p-4 fade-in backdrop-blur-sm';
+
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-6 py-4 bg-amber-50 border-b border-amber-100 flex justify-between items-center flex-shrink-0">
+                        <h2 class="text-xl font-bold text-amber-800"><i class="fas fa-file-csv text-amber-500 mr-2"></i>Import Procedures from CSV</h2>
+                        <button onclick="document.getElementById('csvImportModal').remove()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                    </div>
+                    <div class="p-6 space-y-4 overflow-y-auto">
+                        <div class="flex items-center gap-3">
+                            <button onclick="downloadCsvTemplate('${moduleId}')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center gap-2 text-sm">
+                                <i class="fas fa-download"></i> Download Template
+                            </button>
+                            <span class="text-xs text-slate-400">Fill in the template, then upload it below</span>
+                        </div>
+                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50/30 transition-all"
+                            onclick="document.getElementById('csv-file-input').click()">
+                            <input type="file" id="csv-file-input" class="hidden" accept=".csv" onchange="previewCsvImport(this.files[0], '${moduleId}')">
+                            <i class="fas fa-file-upload text-2xl text-slate-300 mb-2"></i>
+                            <p class="text-sm text-slate-500 font-medium">Click to upload your CSV file</p>
+                        </div>
+                        <div id="csv-preview" class="hidden">
+                            <h3 class="font-bold text-slate-700 mb-2"><i class="fas fa-table text-teal-600 mr-2"></i>Preview</h3>
+                            <div id="csv-preview-table" class="max-h-60 overflow-y-auto border border-slate-200 rounded-lg"></div>
+                            <div class="mt-3 flex justify-between items-center">
+                                <span id="csv-row-count" class="text-sm font-bold text-slate-600"></span>
+                                <button id="csv-import-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2.5 rounded-lg shadow-md transition flex items-center gap-2">
+                                    <i class="fas fa-file-import"></i> Import
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+        }
+
+        function downloadCsvTemplate(moduleId) {
+            const config = moduleConfigs.find(m => m.id === moduleId);
+            let csv = 'Date,Procedure,Location,Supervisor\n';
+            // Add a couple example rows
+            csv += `2025-01-15,${config?.requiredProcedures?.[0]?.name || 'Example Procedure'},General Hospital,Dr. Smith\n`;
+            csv += `2025-02-20,${config?.requiredProcedures?.[1]?.name || 'Another Procedure'},District Hospital,Dr. Jones\n`;
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mmed_${moduleId}_template.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        let _csvParsedRows = [];
+
+        function previewCsvImport(file, moduleId) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
+                if (lines.length < 2) { alert('CSV file is empty or has no data rows.'); return; }
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                const dateIdx = headers.findIndex(h => h === 'date');
+                const procIdx = headers.findIndex(h => h.includes('procedure') || h.includes('proc'));
+                const locIdx = headers.findIndex(h => h.includes('location') || h.includes('hospital'));
+                const supIdx = headers.findIndex(h => h.includes('supervisor') || h.includes('sup'));
+
+                if (dateIdx === -1 || procIdx === -1) { alert('CSV must have at least "Date" and "Procedure" columns.'); return; }
+
+                const config = moduleConfigs.find(m => m.id === moduleId);
+                _csvParsedRows = [];
+                let tableHtml = '<table class="w-full text-xs"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2 text-left">Date</th><th class="px-3 py-2 text-left">Procedure</th><th class="px-3 py-2 text-left">Location</th><th class="px-3 py-2 text-left">Supervisor</th><th class="px-3 py-2">Match</th></tr></thead><tbody>';
+
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',').map(c => c.trim());
+                    const row = {
+                        date: cols[dateIdx] || '',
+                        procedure: cols[procIdx] || '',
+                        location: locIdx !== -1 ? (cols[locIdx] || '') : '',
+                        supervisor: supIdx !== -1 ? (cols[supIdx] || '') : '',
+                        moduleId: moduleId
+                    };
+                    if (!row.date || !row.procedure) continue;
+                    const isKnown = config?.requiredProcedures?.some(r => r.name === row.procedure);
+                    row.isOther = !isKnown;
+                    _csvParsedRows.push(row);
+                    tableHtml += `<tr class="border-t border-slate-100"><td class="px-3 py-2">${esc(row.date)}</td><td class="px-3 py-2 font-medium">${esc(row.procedure)}</td><td class="px-3 py-2">${esc(row.location)}</td><td class="px-3 py-2">${esc(row.supervisor)}</td><td class="px-3 py-2 text-center">${isKnown ? '<i class="fas fa-check-circle text-green-500"></i>' : '<span class="text-xs text-amber-600 font-bold">Other</span>'}</td></tr>`;
+                }
+                tableHtml += '</tbody></table>';
+
+                document.getElementById('csv-preview').classList.remove('hidden');
+                document.getElementById('csv-preview-table').innerHTML = tableHtml;
+                document.getElementById('csv-row-count').textContent = `${_csvParsedRows.length} entries ready to import`;
+                document.getElementById('csv-import-btn').onclick = () => executeCsvImport(moduleId);
+            };
+            reader.readAsText(file);
+        }
+
+        function executeCsvImport(moduleId) {
+            if (_csvParsedRows.length === 0) return;
+            _csvParsedRows.forEach(row => {
+                state.procedureLog.push({
+                    ...row,
+                    timestamp: Date.now() + Math.random() * 1000 // Unique timestamps
+                });
+            });
+            state.saveData();
+            document.getElementById('csvImportModal').remove();
+            renderApp();
+            alert(`Successfully imported ${_csvParsedRows.length} procedure entries!`);
+            _csvParsedRows = [];
         }
 
         // --- 5. CORE INTERACTION FUNCTIONS ---
@@ -1405,12 +1918,106 @@
             content.style.display = isCollapsed ? 'none' : '';
         }
 
+        function toggleAllSections(masterBtn) {
+            const container = document.getElementById('app-container');
+            if (!container) return;
+            // Find all top-level section toggle buttons (direct section headers, not sub-section completed toggles)
+            const sectionBtns = container.querySelectorAll('[onclick="toggleSection(this)"]');
+            const icon = masterBtn.querySelector('i');
+            const label = masterBtn.querySelector('span');
+            const isCurrentlyExpanded = label.textContent.trim() === 'Collapse All';
+
+            sectionBtns.forEach(btn => {
+                const content = btn.nextElementSibling;
+                if (!content) return;
+                if (isCurrentlyExpanded) {
+                    // Collapse all
+                    btn.classList.add('section-collapsed');
+                    content.style.display = 'none';
+                } else {
+                    // Expand all
+                    btn.classList.remove('section-collapsed');
+                    content.style.display = '';
+                }
+            });
+
+            if (isCurrentlyExpanded) {
+                icon.className = 'fas fa-expand-alt';
+                label.textContent = 'Expand All';
+            } else {
+                icon.className = 'fas fa-compress-alt';
+                label.textContent = 'Collapse All';
+            }
+        }
+
         function deleteProcedure(timestamp) {
             if (confirm("Delete this log entry?")) {
                 state.procedureLog = state.procedureLog.filter(p => p.timestamp !== timestamp);
                 state.saveData();
                 renderApp();
             }
+        }
+
+        function editProcedure(timestamp) {
+            const entry = state.procedureLog.find(p => p.timestamp === timestamp);
+            if (!entry) return;
+
+            const modal = document.createElement('div');
+            modal.id = 'editProcModal';
+            modal.className = 'fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center p-4 fade-in backdrop-blur-sm';
+
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                    <div class="px-6 py-4 bg-amber-50 border-b border-amber-100 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-amber-800"><i class="fas fa-pen text-amber-500 mr-2"></i>Edit Log Entry</h2>
+                        <button onclick="document.getElementById('editProcModal').remove()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                    </div>
+                    <form onsubmit="event.preventDefault(); saveEditedProcedure(${timestamp}, this);" class="p-6 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Date</label>
+                                <input type="date" name="date" value="${entry.date || ''}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Module</label>
+                                <input type="text" value="${esc(moduleConfigs.find(m => m.id === entry.moduleId)?.name || entry.moduleId)}" disabled class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-slate-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Procedure</label>
+                            <input type="text" name="procedure" value="${esc(entry.procedure || '')}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Location/Hospital</label>
+                                <input type="text" name="location" value="${esc(entry.location || '')}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Supervisor</label>
+                                <input type="text" name="supervisor" value="${esc(entry.supervisor || '')}" required class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg mt-2 shadow-md transition">Save Changes</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+        }
+
+        function saveEditedProcedure(timestamp, form) {
+            const entry = state.procedureLog.find(p => p.timestamp === timestamp);
+            if (!entry) return;
+            entry.date = form.date.value;
+            entry.procedure = form.procedure.value;
+            entry.location = form.location.value;
+            entry.supervisor = form.supervisor.value;
+            // Update isOther flag
+            const config = moduleConfigs.find(m => m.id === entry.moduleId);
+            entry.isOther = config?.requiredProcedures ? !config.requiredProcedures.some(r => r.name === entry.procedure) : true;
+            state.saveData();
+            document.getElementById('editProcModal').remove();
+            renderApp();
         }
 
         function togglePassword(inputId, btn) {
@@ -1557,6 +2164,11 @@
                 else if (state.activeTab === 'milestones') container.innerHTML = renderMilestones();
                 else if (state.activeTab === 'master_logbook') container.innerHTML = renderMasterLogbook();
                 else container.innerHTML = renderModuleDetail(state.activeTab);
+
+                // Auto-load documents for the active module tab
+                if (state.activeTab !== 'dashboard' && state.activeTab !== 'milestones' && state.activeTab !== 'master_logbook') {
+                    setTimeout(() => loadDocList(state.activeTab), 100);
+                }
 
                 window.scrollTo(0, 0);
             } catch (error) {
