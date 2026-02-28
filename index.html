@@ -129,6 +129,64 @@
         <span class="font-medium tracking-wide">Syncing Data...</span>
     </div>
 
+    <!-- Backup Modal -->
+    <div id="backupModal"
+        class="fixed inset-0 bg-slate-900 bg-opacity-90 z-50 hidden flex items-center justify-center p-4 fade-in backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-cloud-upload-alt text-teal-500 mr-2"></i>
+                    Backup Your Data</h2>
+                <button onclick="document.getElementById('backupModal').classList.add('hidden')"
+                    class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <p class="text-slate-600 text-sm leading-relaxed">
+                    Choose how you want to save your portfolio data. Frequent backups prevent data loss!
+                </p>
+
+                <button onclick="state.backupToDrive()"
+                    class="w-full group relative flex items-center p-4 border-2 border-slate-200 rounded-xl hover:border-teal-500 hover:bg-teal-50 transition-all duration-200 text-left">
+                    <div
+                        class="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fab fa-google-drive text-2xl text-teal-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-slate-800 group-hover:text-teal-700">Google Drive Backup</h3>
+                        <p class="text-xs text-slate-500 mt-1">Save directly to your "MMed Portfolio" folder in the
+                            cloud.</p>
+                    </div>
+                    <div class="absolute right-4 text-slate-300 group-hover:text-teal-500">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </button>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-semibold uppercase">OR</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <button onclick="state.exportData()"
+                    class="w-full group relative flex items-center p-4 border-2 border-slate-200 rounded-xl hover:border-amber-500 hover:bg-amber-50 transition-all duration-200 text-left">
+                    <div
+                        class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-file-download text-2xl text-amber-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-slate-800 group-hover:text-amber-700">Download File</h3>
+                        <p class="text-xs text-slate-500 mt-1">Save a .json file to this device.</p>
+                    </div>
+                </button>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 text-center">
+                <button onclick="document.getElementById('backupModal').classList.add('hidden')"
+                    class="text-slate-500 hover:text-slate-700 text-sm font-medium">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Login Container -->
     <div id="login-container" class="fixed inset-0 bg-slate-900 z-40 flex items-center justify-center p-4 hidden">
         <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden fade-in">
@@ -218,15 +276,15 @@
 
         <nav class="flex-1 px-4 py-6 space-y-1">
             <button onclick="state.setTab('dashboard')" id="tab-dashboard"
-                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
+                class="nav-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
                 <i class="fas fa-chart-pie w-5 text-center"></i> Dashboard
             </button>
             <button onclick="state.setTab('master_logbook')" id="tab-master_logbook"
-                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
+                class="nav-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
                 <i class="fas fa-clipboard-check w-5 text-center"></i> Master Logbook
             </button>
             <button onclick="state.setTab('milestones')" id="tab-milestones"
-                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
+                class="nav-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium text-left">
                 <i class="fas fa-flag-checkered w-5 text-center"></i> Milestones & Courses
             </button>
 
@@ -244,7 +302,7 @@
                 class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors text-sm font-medium">
                 <i class="fas fa-sign-out-alt"></i> Sign Out
             </button>
-            <button onclick="state.exportData()"
+            <button onclick="showBackupModal()"
                 class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg transition-colors text-sm font-medium">
                 <i class="fas fa-download"></i> Backup Data
             </button>
@@ -264,11 +322,11 @@
         <header
             class="bg-teal-700 text-white shadow-md sticky top-0 z-30 md:hidden flex justify-between items-center p-4 no-print">
             <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="text-white focus:outline-none"><i
+                <button onclick="toggleSidebar()" class="text-white focus:outline-none" aria-label="Open menu"><i
                         class="fas fa-bars text-xl"></i></button>
                 <span class="font-bold">Portfolio</span>
             </div>
-            <button onclick="window.print()"><i class="fas fa-print"></i></button>
+            <button onclick="window.print()" aria-label="Print"><i class="fas fa-print"></i></button>
         </header>
 
         <main id="app-container" class="flex-1 p-4 md:p-8 lg:px-16 w-full max-w-7xl mx-auto fade-in">
@@ -278,26 +336,15 @@
 
     <!-- Quick Log FAB -->
     <button onclick="showQuickLogModal()"
-        class="fixed bottom-6 right-6 w-14 h-14 bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-2xl z-40 no-print hover:scale-105">
+        class="fixed bottom-6 right-6 w-14 h-14 bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-2xl z-40 no-print hover:scale-105"
+        aria-label="Log new procedure">
         <i class="fas fa-plus"></i>
     </button>
 
     <script>
-        // --- 1. BYPASS OLD SERVICE WORKERS (Prevents blank screens on launch) ---
-        try {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                    for (let registration of registrations) {
-                        registration.unregister();
-                        console.log('Old ServiceWorker unregistered to ensure fresh load.');
-                    }
-                }).catch(function (error) {
-                    console.log('Service Worker unregistration skipped due to environment state:', error);
-                });
-            }
-        } catch (e) {
-            console.log('Service Worker API unavailable in this context:', e);
-        }
+        // --- 1. SERVICE WORKER (cache-first, versioned via sw.js) ---
+        // Removed blanket SW unregister loop — it prevented offline caching.
+        // Cache busting is handled by versioning CACHE_NAME in sw.js.
 
         // --- 2. EXHAUSTIVE DATA CONFIGURATIONS ---
         const moduleConfigs = [
@@ -611,15 +658,13 @@
                     window.auth = firebase.auth();
                     window.db = firebase.firestore();
 
-                    // Guarded Redirect Check
-                    if (!window.auth.currentUser) {
-                        window.auth.getRedirectResult().then(result => {
-                            if (result.user) {
-                                if (result.credential) this.driveToken = result.credential.accessToken;
-                                this.handleCloudLogin(result.user);
-                            }
-                        }).catch(e => console.error("Redirect Error:", e));
-                    }
+                    // Check redirect result on every init (no-ops if empty)
+                    window.auth.getRedirectResult().then(result => {
+                        if (result && result.user) {
+                            if (result.credential) this.driveToken = result.credential.accessToken;
+                            this.handleCloudLogin(result.user);
+                        }
+                    }).catch(e => console.error("Redirect Error:", e));
 
                     window.auth.onAuthStateChanged(user => {
                         if (user) this.handleCloudLogin(user);
@@ -656,13 +701,86 @@
                         lastBackup: Date.now()
                     };
 
-                    // Merge Module Data (Cloud wins if exists, else keep local/default)
-                    if (cloudData.modules) this.modules = cloudData.modules;
-                    if (cloudData.procedureLog) this.procedureLog = cloudData.procedureLog;
-                    if (cloudData.milestones) this.milestones = cloudData.milestones;
+                    // --- Merge Strategy (#7): Compare timestamps, prompt on conflict ---
+                    const localLastMod = this.account?.lastModified || 0;
+                    const cloudLastMod = cloudData.lastModified || 0;
+                    const hasLocalData = this.procedureLog.length > 0 || Object.keys(this.modules).length > 0;
+                    const hasCloudData = cloudData.modules || cloudData.procedureLog;
+
+                    let mergeChoice = 'cloud'; // default: cloud wins
+                    if (hasLocalData && hasCloudData && localLastMod > 0 && Math.abs(localLastMod - cloudLastMod) > 5000) {
+                        // Both have data and they differ — prompt user
+                        mergeChoice = await new Promise(resolve => {
+                            const m = document.createElement('div');
+                            m.className = 'fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center p-4 fade-in backdrop-blur-sm';
+                            m.innerHTML = `
+                                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                                    <h2 class="text-xl font-bold text-slate-800 mb-4"><i class="fas fa-exclamation-triangle text-amber-500 mr-2"></i>Data Conflict</h2>
+                                    <p class="text-sm text-slate-600 mb-4">Both your device and the cloud have data. How would you like to proceed?</p>
+                                    <p class="text-xs text-slate-400 mb-4">Local: ${new Date(localLastMod).toLocaleString()} | Cloud: ${new Date(cloudLastMod).toLocaleString()}</p>
+                                    <div class="space-y-2">
+                                        <button onclick="this.closest('.fixed').remove();" data-choice="cloud" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition"><i class="fas fa-cloud mr-2"></i>Keep Cloud Data</button>
+                                        <button onclick="this.closest('.fixed').remove();" data-choice="local" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"><i class="fas fa-laptop mr-2"></i>Keep Local Data</button>
+                                    </div>
+                                </div>
+                            `;
+                            m.querySelectorAll('button[data-choice]').forEach(btn => {
+                                btn.addEventListener('click', () => resolve(btn.dataset.choice));
+                            });
+                            document.body.appendChild(m);
+                        });
+                    }
+
+                    this.account = {
+                        name: cloudData.account?.name || user.displayName || "Dr. User",
+                        email: user.email,
+                        id: user.uid,
+                        year: cloudData.account?.year || 1,
+                        location: cloudData.account?.location || "General Hospital",
+                        lastBackup: Date.now()
+                    };
+
+                    if (mergeChoice === 'cloud') {
+                        // Cloud wins — overwrite local
+                        if (cloudData.modules) this.modules = cloudData.modules;
+                        if (cloudData.procedureLog) this.procedureLog = cloudData.procedureLog;
+                        if (cloudData.milestones) this.milestones = cloudData.milestones;
+                    }
+                    // If 'local', we keep what's already loaded from localStorage
 
                     // Load cached Drive folder IDs
                     if (cloudData.driveFolders) this.driveFolders = cloudData.driveFolders;
+
+                    // --- Subcollection migration (#5): Move embedded procedureLogs ---
+                    if (cloudData.procedureLog && Array.isArray(cloudData.procedureLog) && cloudData.procedureLog.length > 0 && window.db) {
+                        try {
+                            const batch = window.db.batch();
+                            cloudData.procedureLog.forEach(entry => {
+                                const docId = entry.id || crypto.randomUUID();
+                                if (!entry.id) entry.id = docId;
+                                const ref = window.db.collection('users').doc(user.uid).collection('procedureLogs').doc(docId);
+                                batch.set(ref, entry);
+                            });
+                            await batch.commit();
+                            // Remove embedded array from user doc
+                            await window.db.collection('users').doc(user.uid).update(
+                                { procedureLog: firebase.firestore.FieldValue.delete() }
+                            );
+                            console.log('Migrated', cloudData.procedureLog.length, 'logs to subcollection');
+                        } catch (migErr) {
+                            console.warn('Subcollection migration error (will retry):', migErr);
+                        }
+                    }
+
+                    // Load procedure logs from subcollection
+                    try {
+                        const logsSnap = await window.db.collection('users').doc(user.uid).collection('procedureLogs').get();
+                        if (!logsSnap.empty) {
+                            this.procedureLog = logsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        }
+                    } catch (logErr) {
+                        console.warn('Could not load subcollection logs:', logErr);
+                    }
 
                     this.saveData(true); // Save local copy
                 } catch (e) {
@@ -795,13 +913,23 @@
             }
 
             saveData(skipCloud = false) {
-                const data = { account: this.account, modules: this.modules, procedureLog: this.procedureLog, milestones: this.milestones };
-                localStorage.setItem('mmed_tracker_v2_cloud', JSON.stringify(data));
+                const now = Date.now();
+                this.account.lastModified = now;
+                const data = { account: this.account, modules: this.modules, milestones: this.milestones };
+                // Keep procedureLog in localStorage for offline access
+                const localData = { ...data, procedureLog: this.procedureLog };
+                localStorage.setItem('mmed_tracker_v2_cloud', JSON.stringify(localData));
 
                 if (!skipCloud && this.account && window.db && this.account.id) {
                     clearTimeout(this._saveTimeout);
-                    this._saveTimeout = setTimeout(() => {
-                        window.db.collection('users').doc(this.account.id).set(data, { merge: true }).catch(e => console.error("Cloud Save Failing:", e));
+                    this._saveTimeout = setTimeout(async () => {
+                        try {
+                            // Granular write: account, modules, milestones (no procedureLog blob)
+                            await window.db.collection('users').doc(this.account.id).set(
+                                { ...data, lastModified: now },
+                                { merge: true }
+                            );
+                        } catch (e) { console.error("Cloud Save Failing:", e); }
                     }, 1500);
                 }
                 this.notify();
@@ -817,7 +945,12 @@
                         this.handleCloudLogin(r.user);
                     })
                     .catch(e => {
-                        console.warn("Popup blocked, trying redirect");
+                        // Only redirect on real popup failures, not user cancel
+                        if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+                            console.log('User cancelled popup sign-in.');
+                            return;
+                        }
+                        console.warn("Popup blocked, trying redirect", e.code);
                         window.auth.signInWithRedirect(provider);
                     });
             }
@@ -884,6 +1017,61 @@
                 a.click(); URL.revokeObjectURL(url);
             }
 
+            async getGapiToken() {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('https://www.googleapis.com/auth/drive.file');
+                try {
+                    const result = await window.auth.signInWithPopup(provider);
+                    return result.credential.accessToken;
+                } catch (e) {
+                    console.error("Token Error", e);
+                    return null;
+                }
+            }
+
+            async backupToDrive() {
+                try {
+                    document.getElementById('backupModal').classList.add('hidden');
+                    document.getElementById('loading').classList.remove('hidden');
+
+                    if (!this.driveToken) this.driveToken = await this.getGapiToken();
+                    if (!this.driveToken) throw new Error('Could not get Google Drive access.');
+
+                    const folderId = await this.ensureDriveFolder('MMed Portfolio');
+                    if (!folderId) throw new Error('Could not create portfolio folder.');
+
+                    this.saveData(true);
+                    const dataStr = localStorage.getItem('mmed_tracker_v2_cloud');
+                    const fileName = 'mmed_backup_' + new Date().toISOString().split('T')[0] + '.json';
+
+                    // Prepare multipart body
+                    const metadata = {
+                        name: fileName,
+                        parents: [folderId],
+                        mimeType: 'application/json'
+                    };
+
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', new Blob([dataStr], { type: 'application/json' }));
+
+                    const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.driveToken}` },
+                        body: form
+                    });
+
+                    if (!resp.ok) throw new Error(await resp.text());
+
+                    document.getElementById('loading').classList.add('hidden');
+                    alert('✅ Backup saved explicitly to Google Drive/MMed Portfolio!');
+                } catch (err) {
+                    document.getElementById('loading').classList.add('hidden');
+                    console.error('Backup error:', err);
+                    alert('Backup Failed: ' + err.message);
+                }
+            }
+
             importData() {
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -918,6 +1106,7 @@
             setTab(tab) {
                 this.activeTab = tab;
                 if (window.innerWidth <= 768) toggleSidebar();
+                window.scrollTo(0, 0); // Only scroll to top on tab change
                 this.notify();
             }
 
@@ -956,8 +1145,15 @@
             }
 
             addProcedure(data) {
-                this.procedureLog.push({ ...data, timestamp: Date.now() });
+                const entry = { ...data, id: crypto.randomUUID(), timestamp: Date.now() };
+                this.procedureLog.push(entry);
                 this.saveData();
+                // Sync to Firestore subcollection
+                if (this.account?.id && window.db) {
+                    window.db.collection('users').doc(this.account.id)
+                        .collection('procedureLogs').doc(entry.id).set(entry)
+                        .catch(e => console.error('Subcollection add error:', e));
+                }
             }
 
             updateMilestone(category, id, value, date) {
@@ -984,14 +1180,14 @@
         function renderSidebarLinks() {
             const container = document.getElementById('module-nav-links');
             container.innerHTML = moduleConfigs.map(m => `
-                <button onclick="state.setTab('${m.id}')" id="tab-${m.id}" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors text-sm text-left truncate">
+                <button onclick="state.setTab('${m.id}')" id="tab-${m.id}" class="nav-tab-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors text-sm text-left truncate">
                     <div class="w-3 h-3 rounded-full ${m.color}"></div>
                     <span class="truncate">${m.name.split(' (')[0]}</span>
                 </button>
             `).join('');
 
-            // Highlight active tab
-            document.querySelectorAll('aside button').forEach(btn => {
+            // Highlight active tab — only target nav-tab-btn, not Sign Out/Backup buttons
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
                 btn.classList.remove('bg-slate-800', 'text-white', 'border-l-4', 'border-teal-500');
                 if (btn.id === `tab-${state.activeTab}`) {
                     btn.classList.add('bg-slate-800', 'text-white', 'border-l-4', 'border-teal-500', 'pl-2');
@@ -1090,7 +1286,7 @@
                 <div class="space-y-6">
                     ${Object.keys(milestoneConfigs).map(cat => `
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors text-left">
+                            <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors text-left">
                                 <div class="flex items-center gap-3">
                                     <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                                     <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">${cat.replace('_', ' ')}</h3>
@@ -1160,7 +1356,7 @@
                 const pctMet = Math.round((metCount / totalReq) * 100);
                 return `
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 break-inside-avoid overflow-hidden">
-                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
+                        <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
                             <div class="flex items-center gap-3">
                                 <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                                 <h3 class="font-bold ${m.text}">${m.name}</h3>
@@ -1277,7 +1473,7 @@
                                     <input type="date" value="${r.endDate || ''}" onchange="state.updateRotation('${moduleId}', ${r._idx}, 'endDate', this.value)" class="w-full text-sm border ${isCompleted ? 'border-green-300' : 'border-slate-300'} rounded-lg px-3 py-2 outline-none focus:border-teal-500">
                                 </div>
                                 <div class="flex items-end">
-                                    ${duration ? `<span class="text-sm font-bold ${isCompleted ? 'text-green-700' : 'text-teal-700'} bg-${isCompleted ? 'green' : 'teal'}-50 border border-${isCompleted ? 'green' : 'teal'}-200 rounded-lg px-3 py-2 w-full text-center"><i class="fas fa-clock mr-1"></i>${duration}</span>` : '<span class="text-xs text-slate-400 italic py-2">Enter dates for duration</span>'}
+                                    ${duration ? `<span class="text-sm font-bold ${isCompleted ? 'text-green-700 bg-green-50 border border-green-200' : 'text-teal-700 bg-teal-50 border border-teal-200'} rounded-lg px-3 py-2 w-full text-center"><i class="fas fa-clock mr-1"></i>${duration}</span>` : '<span class="text-xs text-slate-400 italic py-2">Enter dates for duration</span>'}
                                 </div>
                             </div>
                         </div>`;
@@ -1285,7 +1481,7 @@
 
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 no-print overflow-hidden">
-                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
+                        <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
                             <div class="flex items-center gap-3">
                                 <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                                 <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-map-marker-alt text-teal-600 mr-2"></i>Rotation / Placement</h3>
@@ -1301,7 +1497,7 @@
 
                             ${completedRotations.length > 0 ? `
                                 <div class="border-t-2 border-green-200 pt-3 mb-4">
-                                    <button onclick="toggleSection(this)" class="w-full flex items-center gap-2 py-2 cursor-pointer hover:opacity-80 transition-opacity section-collapsed">
+                                    <button onclick="toggleSection(this)" data-section-toggle class="w-full flex items-center gap-2 py-2 cursor-pointer hover:opacity-80 transition-opacity section-collapsed">
                                         <i class="fas fa-chevron-down text-green-400 text-xs section-chevron transition-transform duration-200"></i>
                                         <span class="text-sm font-bold text-green-700"><i class="fas fa-check-circle mr-1"></i> Completed Rotations</span>
                                         <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-200 text-green-800">${completedRotations.length}</span>
@@ -1322,7 +1518,7 @@
 
                 <!-- Documents Section -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 no-print overflow-hidden">
-                    <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
+                    <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
                         <div class="flex items-center gap-3">
                             <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                             <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-folder-open text-amber-500 mr-2"></i>Documents</h3>
@@ -1415,7 +1611,7 @@
 
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-8 no-print overflow-hidden">
-                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
+                        <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
                             <div class="flex items-center gap-3">
                                 <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                                 <h3 class="text-lg font-bold text-slate-800">Weekly Clinical Schedule</h3>
@@ -1438,7 +1634,7 @@
 
                             ${doneWeeks.length > 0 ? `
                                 <div class="border-t-2 border-green-200">
-                                    <button onclick="toggleSection(this)" class="w-full px-6 py-3 bg-green-50 flex justify-between items-center cursor-pointer hover:bg-green-100 transition-colors section-collapsed">
+                                    <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-3 bg-green-50 flex justify-between items-center cursor-pointer hover:bg-green-100 transition-colors section-collapsed">
                                         <div class="flex items-center gap-2">
                                             <i class="fas fa-chevron-down text-green-400 text-xs section-chevron transition-transform duration-200"></i>
                                             <span class="text-sm font-bold text-green-700"><i class="fas fa-check-circle mr-1"></i> Completed Weeks</span>
@@ -1459,7 +1655,7 @@
                 <div class="grid grid-cols-1 ${config.caseReports && config.assignmentList ? 'lg:grid-cols-2' : ''} gap-8 mb-8 no-print">
                     ${config.caseReports ? `
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden self-start">
-                            <button onclick="toggleSection(this)" class="w-full px-6 py-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
+                            <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
                                 <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                                 <h3 class="text-lg font-bold text-slate-800">Case Reports</h3>
                             </button>
@@ -1517,7 +1713,7 @@
 
                         return `
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <button onclick="toggleSection(this)" class="w-full px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
+                            <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
                                 <div class="flex items-center gap-3">
                                     <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                                     <h3 class="text-lg font-bold text-slate-800">Assignments</h3>
@@ -1538,7 +1734,7 @@
 
                                 ${doneAssignments.length > 0 ? `
                                     <div class="mt-4 border-t-2 border-green-200 pt-3">
-                                        <button onclick="toggleSection(this)" class="w-full flex items-center gap-2 py-2 cursor-pointer hover:opacity-80 transition-opacity section-collapsed">
+                                        <button onclick="toggleSection(this)" data-section-toggle class="w-full flex items-center gap-2 py-2 cursor-pointer hover:opacity-80 transition-opacity section-collapsed">
                                             <i class="fas fa-chevron-down text-green-400 text-xs section-chevron transition-transform duration-200"></i>
                                             <span class="text-sm font-bold text-green-700"><i class="fas fa-check-circle mr-1"></i> Submitted</span>
                                             <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-200 text-green-800">${doneAssignments.length}</span>
@@ -1557,7 +1753,7 @@
 
                 ${config.requiredProcedures ? `
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-8 no-print overflow-hidden">
-                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
+                        <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 text-left">
                             <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                             <h3 class="text-lg font-bold text-slate-800">Required Procedures Checklist</h3>
                         </button>
@@ -1589,7 +1785,7 @@
                     if (otherLogs.length === 0) return '';
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-amber-400 overflow-hidden mb-8">
-                        <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-amber-50 flex justify-between items-center cursor-pointer hover:bg-amber-100 transition-colors">
+                        <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 border-b border-slate-100 bg-amber-50 flex justify-between items-center cursor-pointer hover:bg-amber-100 transition-colors">
                             <div class="flex items-center gap-3">
                                 <i class="fas fa-chevron-down text-amber-400 text-xs section-chevron transition-transform duration-200"></i>
                                 <h3 class="font-bold text-amber-800"><i class="fas fa-clipboard-list text-amber-500 mr-2"></i>Other Procedures (Daily Log)</h3>
@@ -1619,7 +1815,7 @@
                                         <td class="px-6 py-3 text-slate-600 align-middle print:align-bottom print:pb-6">${esc(p.supervisor)}</td>
                                         <td class="px-6 py-3 align-middle print:align-bottom">
                                             <div class="hidden print:block border-b-2 border-slate-400 w-full mb-6"></div>
-                                            <button onclick="deleteProcedure(${p.timestamp})" class="text-rose-400 hover:text-rose-600 no-print flex justify-end w-full"><i class="fas fa-trash"></i></button>
+                                            <button onclick="deleteProcedure('${p.id || p.timestamp}')" class="text-rose-400 hover:text-rose-600 no-print flex justify-end w-full" aria-label="Delete procedure"><i class="fas fa-trash"></i></button>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -1631,7 +1827,7 @@
                 })()}
 
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-12">
-                    <button onclick="toggleSection(this)" class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center no-print cursor-pointer hover:bg-slate-100 transition-colors">
+                    <button onclick="toggleSection(this)" data-section-toggle class="w-full px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center no-print cursor-pointer hover:bg-slate-100 transition-colors">
                         <div class="flex items-center gap-3">
                             <i class="fas fa-chevron-down text-slate-400 text-xs section-chevron transition-transform duration-200"></i>
                             <h3 class="font-bold text-slate-800">Module Procedure Log</h3>
@@ -1700,8 +1896,8 @@
                                         <div class="hidden print:block border-b-2 border-slate-400 w-full mb-6"></div>
                                         <!-- Edit and Delete buttons visible only on screen -->
                                         <div class="flex items-center justify-end gap-3 no-print">
-                                            <button onclick="editProcedure(${p.timestamp})" class="text-slate-400 hover:text-teal-600 transition-colors" title="Edit entry"><i class="fas fa-pen text-xs"></i></button>
-                                            <button onclick="deleteProcedure(${p.timestamp})" class="text-slate-400 hover:text-rose-600 transition-colors" title="Delete entry"><i class="fas fa-trash text-xs"></i></button>
+                                            <button onclick="editProcedure('${p.id || p.timestamp}')" class="text-slate-400 hover:text-teal-600 transition-colors" title="Edit entry" aria-label="Edit procedure"><i class="fas fa-pen text-xs"></i></button>
+                                            <button onclick="deleteProcedure('${p.id || p.timestamp}')" class="text-slate-400 hover:text-rose-600 transition-colors" title="Delete entry" aria-label="Delete procedure"><i class="fas fa-trash text-xs"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -1738,8 +1934,9 @@
 
             for (const file of files) {
                 if (file.size > maxSize) { alert(`${file.name} is too large (${formatFileSize(file.size)}). Max 10MB.`); continue; }
-                if (!allowed.some(t => file.type.startsWith(t.split('/')[0]) || file.type === t)) {
-                    // Fallback: check extension
+                // Exact MIME match, or image/* prefix. Fallback to extension check.
+                const mimeOk = allowed.includes(file.type) || file.type.startsWith('image/');
+                if (!mimeOk) {
                     const ext = file.name.split('.').pop().toLowerCase();
                     if (!['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'].includes(ext)) { alert(`${file.name} is not a supported file type.`); continue; }
                 }
@@ -1788,7 +1985,7 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        ${f.webViewLink ? `<a href="${f.webViewLink}" target="_blank" class="text-teal-500 hover:text-teal-700 text-sm px-2 py-1 rounded hover:bg-teal-50" title="Preview"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                        ${f.webViewLink && f.webViewLink.startsWith('https://') ? `<a href="${esc(f.webViewLink)}" target="_blank" rel="noopener noreferrer" class="text-teal-500 hover:text-teal-700 text-sm px-2 py-1 rounded hover:bg-teal-50" title="Preview" aria-label="Preview document"><i class="fas fa-external-link-alt"></i></a>` : ''}
                         <button onclick="event.stopPropagation(); deleteDocFile('${f.id}', '${moduleId}')" class="text-rose-400 hover:text-rose-600 text-sm px-2 py-1 rounded hover:bg-rose-50" title="Delete"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
@@ -1844,6 +2041,9 @@
             `;
             document.body.appendChild(modal);
             modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+            // Escape to close
+            const escHandler = e => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
+            document.addEventListener('keydown', escHandler);
         }
 
         function downloadCsvTemplate(moduleId) {
@@ -1861,6 +2061,43 @@
             URL.revokeObjectURL(url);
         }
 
+        // --- RFC 4180 quote-aware CSV line parser ---
+        function parseCsvLine(line) {
+            const fields = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (inQuotes) {
+                    if (ch === '"') {
+                        if (i + 1 < line.length && line[i + 1] === '"') {
+                            current += '"';
+                            i++; // skip escaped quote
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        current += ch;
+                    }
+                } else {
+                    if (ch === '"') {
+                        inQuotes = true;
+                    } else if (ch === ',') {
+                        fields.push(current.trim());
+                        current = '';
+                    } else {
+                        current += ch;
+                    }
+                }
+            }
+            fields.push(current.trim());
+            return fields;
+        }
+
+        function isValidIsoDate(str) {
+            return /^\d{4}-\d{2}-\d{2}$/.test(str) && !isNaN(new Date(str).getTime());
+        }
+
         let _csvParsedRows = [];
 
         function previewCsvImport(file, moduleId) {
@@ -1869,7 +2106,7 @@
             reader.onload = function (e) {
                 const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
                 if (lines.length < 2) { alert('CSV file is empty or has no data rows.'); return; }
-                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase());
                 const dateIdx = headers.findIndex(h => h === 'date');
                 const procIdx = headers.findIndex(h => h.includes('procedure') || h.includes('proc'));
                 const locIdx = headers.findIndex(h => h.includes('location') || h.includes('hospital'));
@@ -1879,10 +2116,11 @@
 
                 const config = moduleConfigs.find(m => m.id === moduleId);
                 _csvParsedRows = [];
+                let skipped = 0;
                 let tableHtml = '<table class="w-full text-xs"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2 text-left">Date</th><th class="px-3 py-2 text-left">Procedure</th><th class="px-3 py-2 text-left">Location</th><th class="px-3 py-2 text-left">Supervisor</th><th class="px-3 py-2">Match</th></tr></thead><tbody>';
 
                 for (let i = 1; i < lines.length; i++) {
-                    const cols = lines[i].split(',').map(c => c.trim());
+                    const cols = parseCsvLine(lines[i]);
                     const row = {
                         date: cols[dateIdx] || '',
                         procedure: cols[procIdx] || '',
@@ -1891,6 +2129,8 @@
                         moduleId: moduleId
                     };
                     if (!row.date || !row.procedure) continue;
+                    // Validate ISO date format
+                    if (!isValidIsoDate(row.date)) { skipped++; continue; }
                     const isKnown = config?.requiredProcedures?.some(r => r.name === row.procedure);
                     row.isOther = !isKnown;
                     _csvParsedRows.push(row);
@@ -1900,7 +2140,7 @@
 
                 document.getElementById('csv-preview').classList.remove('hidden');
                 document.getElementById('csv-preview-table').innerHTML = tableHtml;
-                document.getElementById('csv-row-count').textContent = `${_csvParsedRows.length} entries ready to import`;
+                document.getElementById('csv-row-count').textContent = `${_csvParsedRows.length} entries ready to import` + (skipped ? ` (${skipped} skipped — invalid date)` : '');
                 document.getElementById('csv-import-btn').onclick = () => executeCsvImport(moduleId);
             };
             reader.readAsText(file);
@@ -1911,10 +2151,22 @@
             _csvParsedRows.forEach(row => {
                 state.procedureLog.push({
                     ...row,
-                    timestamp: Date.now() + Math.random() * 1000 // Unique timestamps
+                    id: crypto.randomUUID(),
+                    timestamp: Date.now()
                 });
             });
             state.saveData();
+            // Sync batch to Firestore subcollection
+            if (state.account?.id && window.db) {
+                const batch = window.db.batch();
+                state.procedureLog.slice(-_csvParsedRows.length).forEach(entry => {
+                    if (entry.id) {
+                        const ref = window.db.collection('users').doc(state.account.id).collection('procedureLogs').doc(entry.id);
+                        batch.set(ref, entry);
+                    }
+                });
+                batch.commit().catch(e => console.error('CSV import subcollection error:', e));
+            }
             document.getElementById('csvImportModal').remove();
             renderApp();
             alert(`Successfully imported ${_csvParsedRows.length} procedure entries!`);
@@ -1939,7 +2191,7 @@
             const container = document.getElementById('app-container');
             if (!container) return;
             // Find all top-level section toggle buttons (direct section headers, not sub-section completed toggles)
-            const sectionBtns = container.querySelectorAll('[onclick="toggleSection(this)"]');
+            const sectionBtns = container.querySelectorAll('[data-section-toggle]');
             const icon = masterBtn.querySelector('i');
             const label = masterBtn.querySelector('span');
             const isCurrentlyExpanded = label.textContent.trim() === 'Collapse All';
@@ -1967,17 +2219,31 @@
             }
         }
 
-        function deleteProcedure(timestamp) {
+        function deleteProcedure(idOrTimestamp) {
             if (confirm("Delete this log entry?")) {
-                state.procedureLog = state.procedureLog.filter(p => p.timestamp !== timestamp);
+                const removed = state.procedureLog.find(p =>
+                    (p.id || String(p.timestamp)) === String(idOrTimestamp)
+                );
+                state.procedureLog = state.procedureLog.filter(p =>
+                    (p.id || String(p.timestamp)) !== String(idOrTimestamp)
+                );
                 state.saveData();
+                // Sync delete to Firestore subcollection
+                if (removed?.id && state.account?.id && window.db) {
+                    window.db.collection('users').doc(state.account.id)
+                        .collection('procedureLogs').doc(removed.id).delete()
+                        .catch(e => console.error('Subcollection delete error:', e));
+                }
                 renderApp();
             }
         }
 
-        function editProcedure(timestamp) {
-            const entry = state.procedureLog.find(p => p.timestamp === timestamp);
+        function editProcedure(idOrTimestamp) {
+            const entry = state.procedureLog.find(p =>
+                (p.id || String(p.timestamp)) === String(idOrTimestamp)
+            );
             if (!entry) return;
+            const entryKey = entry.id || entry.timestamp;
 
             const modal = document.createElement('div');
             modal.id = 'editProcModal';
@@ -1987,9 +2253,9 @@
                 <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                     <div class="px-6 py-4 bg-amber-50 border-b border-amber-100 flex justify-between items-center">
                         <h2 class="text-xl font-bold text-amber-800"><i class="fas fa-pen text-amber-500 mr-2"></i>Edit Log Entry</h2>
-                        <button onclick="document.getElementById('editProcModal').remove()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                        <button onclick="document.getElementById('editProcModal').remove()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none" aria-label="Close">&times;</button>
                     </div>
-                    <form onsubmit="event.preventDefault(); saveEditedProcedure(${timestamp}, this);" class="p-6 space-y-4">
+                    <form onsubmit="event.preventDefault(); saveEditedProcedure('${entryKey}', this);" class="p-6 space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">Date</label>
@@ -2020,10 +2286,15 @@
             `;
             document.body.appendChild(modal);
             modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+            // Escape to close
+            const escHandler = e => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
+            document.addEventListener('keydown', escHandler);
         }
 
-        function saveEditedProcedure(timestamp, form) {
-            const entry = state.procedureLog.find(p => p.timestamp === timestamp);
+        function saveEditedProcedure(idOrTimestamp, form) {
+            const entry = state.procedureLog.find(p =>
+                (p.id || String(p.timestamp)) === String(idOrTimestamp)
+            );
             if (!entry) return;
             entry.date = form.date.value;
             entry.procedure = form.procedure.value;
@@ -2033,6 +2304,12 @@
             const config = moduleConfigs.find(m => m.id === entry.moduleId);
             entry.isOther = config?.requiredProcedures ? !config.requiredProcedures.some(r => r.name === entry.procedure) : true;
             state.saveData();
+            // Sync update to Firestore subcollection
+            if (entry.id && state.account?.id && window.db) {
+                window.db.collection('users').doc(state.account.id)
+                    .collection('procedureLogs').doc(entry.id).set(entry)
+                    .catch(e => console.error('Subcollection update error:', e));
+            }
             document.getElementById('editProcModal').remove();
             renderApp();
         }
@@ -2074,6 +2351,15 @@
             }
         };
 
+        function showBackupModal() {
+            const modal = document.getElementById('backupModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            } else {
+                alert('Backup modal not found. Please reload.');
+            }
+        }
+
         function showQuickLogModal() {
             const modal = document.createElement('div');
             modal.id = 'quickLogModal';
@@ -2085,7 +2371,7 @@
                 <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                     <div class="px-6 py-4 bg-teal-50 border-b border-teal-100 flex justify-between items-center">
                         <h2 class="text-xl font-bold text-teal-800"><i class="fas fa-bolt text-amber-500 mr-2"></i> Quick Log Procedure</h2>
-                        <button onclick="document.getElementById('quickLogModal').remove()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                        <button onclick="document.getElementById('quickLogModal').remove()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none" aria-label="Close">&times;</button>
                     </div>
                     <form onsubmit="event.preventDefault();submitQuickLog(this);" class="p-6 space-y-4">
                         <div class="grid grid-cols-2 gap-4">
@@ -2123,6 +2409,9 @@
             `;
             document.body.appendChild(modal);
             modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+            // Escape to close
+            const escHandler = e => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
+            document.addEventListener('keydown', escHandler);
 
             // Auto populate list if a tab is already selected
             if (state.activeTab && moduleConfigs.find(m => m.id === state.activeTab)) {
@@ -2187,7 +2476,7 @@
                     setTimeout(() => loadDocList(state.activeTab), 100);
                 }
 
-                window.scrollTo(0, 0);
+                // scrollTo moved to setTab() — no longer fires on every render
             } catch (error) {
                 console.error("Render error:", error);
                 document.getElementById('app-container').innerHTML = `
