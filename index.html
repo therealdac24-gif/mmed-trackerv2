@@ -70,6 +70,67 @@
             transform: rotate(-90deg);
         }
 
+        /* Chatbot styles */
+        #chat-panel {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #chat-panel.chat-open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .chat-msg-bot {
+            animation: chatSlideIn 0.3s ease-out;
+        }
+
+        .chat-msg-user {
+            animation: chatSlideIn 0.2s ease-out;
+        }
+
+        @keyframes chatSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-btn-pulse::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 0.7;
+            }
+        }
+
         @media print {
             .no-print {
                 display: none !important;
@@ -354,6 +415,50 @@
         aria-label="Log new procedure">
         <i class="fas fa-plus"></i>
     </button>
+
+    <!-- Chatbot Button -->
+    <button id="chat-fab" onclick="toggleChatPanel()"
+        class="fixed bottom-6 left-6 w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-xl z-40 no-print hover:scale-105 chat-btn-pulse hidden"
+        aria-label="Open assistant">
+        <i class="fas fa-comment-dots"></i>
+    </button>
+
+    <!-- Chat Panel -->
+    <div id="chat-panel"
+        class="fixed bottom-24 left-6 w-[360px] max-w-[calc(100vw-3rem)] bg-white rounded-[1.5rem] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.15)] border border-black/5 z-50 no-print flex flex-col overflow-hidden"
+        style="max-height: min(520px, calc(100vh - 140px));">
+        <!-- Header -->
+        <div class="px-5 py-3.5 bg-slate-800 text-white flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-sm">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm tracking-tight">Portfolio Assistant</h3>
+                    <p class="text-[10px] text-slate-400 font-medium">Offline • Rule-based</p>
+                </div>
+            </div>
+            <button onclick="toggleChatPanel()"
+                class="text-slate-400 hover:text-white transition-colors w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+        </div>
+        <!-- Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3" style="min-height: 200px;"></div>
+        <!-- Quick Actions -->
+        <div id="chat-chips" class="px-4 pb-2 flex flex-wrap gap-2"></div>
+        <!-- Input -->
+        <div class="px-4 pb-4 pt-2 border-t border-black/5 flex-shrink-0">
+            <form onsubmit="event.preventDefault(); handleChatInput();" class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Ask me anything..."
+                    class="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-slate-800/20 focus:border-slate-300 bg-slate-50 font-medium placeholder:text-slate-400 transition-all">
+                <button type="submit"
+                    class="w-10 h-10 bg-slate-800 hover:bg-slate-700 text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <script>
         // --- 1. SERVICE WORKER (cache-first, versioned via sw.js) ---
@@ -2682,6 +2787,265 @@
             renderApp();
         };
 
+        // --- 5B. CHATBOT ASSISTANT ---
+        let chatHistory = [];
+        let chatInitialized = false;
+
+        function toggleChatPanel() {
+            const panel = document.getElementById('chat-panel');
+            const fab = document.getElementById('chat-fab');
+            const isOpen = panel.classList.contains('chat-open');
+            panel.classList.toggle('chat-open');
+            // Change FAB icon
+            if (fab) fab.innerHTML = isOpen ? '<i class="fas fa-comment-dots"></i>' : '<i class="fas fa-times"></i>';
+            // Remove pulse on first open
+            if (!isOpen) fab.classList.remove('chat-btn-pulse');
+
+            if (!chatInitialized) {
+                chatInitialized = true;
+                addBotMessage(`Hey${state.account?.name ? ' ' + state.account.name.split(' ')[0] : ''}! \ud83d\udc4b I'm your portfolio assistant. I can help with progress updates, navigation, and tips.`);
+                renderChatChips(['My progress', "What's next?", 'Help']);
+            }
+            if (!isOpen) setTimeout(() => document.getElementById('chat-input').focus(), 300);
+        }
+
+        function addBotMessage(text) {
+            chatHistory.push({ role: 'bot', text });
+            renderChatMessages();
+        }
+
+        function addUserMessage(text) {
+            chatHistory.push({ role: 'user', text });
+            renderChatMessages();
+        }
+
+        function renderChatMessages() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = chatHistory.map(m => {
+                if (m.role === 'user') {
+                    return `<div class="chat-msg-user flex justify-end"><div class="bg-slate-800 text-white px-4 py-2.5 rounded-2xl rounded-br-md max-w-[85%] text-sm font-medium leading-relaxed">${esc(m.text)}</div></div>`;
+                } else {
+                    return `<div class="chat-msg-bot flex justify-start"><div class="bg-slate-100 text-slate-800 px-4 py-2.5 rounded-2xl rounded-bl-md max-w-[85%] text-sm leading-relaxed">${m.text}</div></div>`;
+                }
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function renderChatChips(chips) {
+            const container = document.getElementById('chat-chips');
+            container.innerHTML = chips.map(c => `<button onclick="handleChatChip('${esc(c)}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-xs font-bold transition-colors border border-black/5">${c}</button>`).join('');
+        }
+
+        function handleChatChip(text) {
+            document.getElementById('chat-input').value = text;
+            handleChatInput();
+        }
+
+        function handleChatInput() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            addUserMessage(text);
+            const response = processChatCommand(text);
+            setTimeout(() => {
+                addBotMessage(response.message);
+                if (response.chips) renderChatChips(response.chips);
+                if (response.action) response.action();
+            }, 300);
+        }
+
+        function processChatCommand(input) {
+            const q = input.toLowerCase().trim();
+
+            // --- Greetings ---
+            if (/^(hi|hello|hey|g'day|good\s*(morning|afternoon|evening))/.test(q)) {
+                return { message: `Hello! \ud83d\udc4b How can I help you today?`, chips: ['My progress', "What's next?", 'Help'] };
+            }
+
+            // --- Help ---
+            if (/^(help|commands|what can you do|menu)/.test(q)) {
+                return {
+                    message: `Here's what I can do:<br><br>` +
+                        `<b>\ud83d\udcca "My progress"</b> — Overall completion stats<br>` +
+                        `<b>\ud83d\udcdd "Surgery progress"</b> — Module-specific status<br>` +
+                        `<b>\ud83d\udc49 "What's next?"</b> — Smart recommendations<br>` +
+                        `<b>\ud83d\udce6 "Go to [module]"</b> — Navigate to a module<br>` +
+                        `<b>\ud83d\udcc5 "Daily log stats"</b> — Your daily log summary<br>` +
+                        `<b>\ud83c\udfc6 "Milestones"</b> — Check milestones status`,
+                    chips: ['My progress', "What's next?", 'Go to dashboard']
+                };
+            }
+
+            // --- Overall Progress ---
+            if (/^(my progress|progress|status|how am i doing|overview|stats|summary)/.test(q)) {
+                let totalReq = 0, totalMet = 0, totalAssign = 0, doneAssign = 0;
+                moduleConfigs.forEach(m => {
+                    if (m.requiredProcedures && m.requiredProcedures.length > 0) {
+                        m.requiredProcedures.forEach(req => {
+                            totalReq++;
+                            const cnt = state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length;
+                            if (cnt >= req.target) totalMet++;
+                        });
+                    }
+                    if (m.assignmentList) {
+                        m.assignmentList.forEach((a, i) => {
+                            totalAssign++;
+                            const mod = state.modules[m.id];
+                            if (mod?.assignments?.[i]?.status === 'Done') doneAssign++;
+                        });
+                    }
+                });
+                const dailyLogs = state.procedureLog.filter(p => p.logType === 'daily' || p.isOther).length;
+                const procPct = totalReq > 0 ? Math.round((totalMet / totalReq) * 100) : 0;
+                const assignPct = totalAssign > 0 ? Math.round((doneAssign / totalAssign) * 100) : 0;
+                return {
+                    message: `\ud83d\udcca <b>Your Progress</b><br><br>` +
+                        `\ud83e\ude7a Procedures: <b>${totalMet}/${totalReq}</b> met (${procPct}%)<br>` +
+                        `\ud83d\udcdd Assignments: <b>${doneAssign}/${totalAssign}</b> done (${assignPct}%)<br>` +
+                        `\ud83d\udcc5 Daily Logs: <b>${dailyLogs}</b> entries<br><br>` +
+                        `${procPct >= 80 ? '\ud83c\udf1f Great progress! Keep it up!' : procPct >= 40 ? '\ud83d\udcaa Good start, keep logging!' : '\ud83d\ude80 Time to start logging more procedures!'}`,
+                    chips: ["What's next?", 'Surgery progress', 'Module 4 progress']
+                };
+            }
+
+            // --- Module-specific progress ---
+            const moduleMatch = q.match(/(?:progress|status|how(?:'s|\s+is))\s+(?:for\s+)?(?:module\s+)?(\w[\w\s&]*)/i)
+                || q.match(/(\w[\w\s&]*)\s+(?:progress|status)/i)
+                || q.match(/^module\s+(\d+)$/i);
+            if (moduleMatch) {
+                const search = moduleMatch[1].trim().toLowerCase();
+                const mod = moduleConfigs.find(m =>
+                    m.id.toLowerCase() === search ||
+                    m.name.toLowerCase().includes(search) ||
+                    m.name.match(/Module\s+(\d+)/)?.[1] === search
+                );
+                if (mod) {
+                    let msg = `\ud83d\udcca <b>${mod.name}</b><br><br>`;
+                    if (mod.requiredProcedures && mod.requiredProcedures.length > 0) {
+                        let met = 0;
+                        mod.requiredProcedures.forEach(req => {
+                            const cnt = state.procedureLog.filter(p => p.moduleId === mod.id && p.procedure === req.name).length;
+                            if (cnt >= req.target) met++;
+                        });
+                        msg += `\ud83e\ude7a Procedures: <b>${met}/${mod.requiredProcedures.length}</b> met<br>`;
+                    }
+                    if (mod.assignmentList) {
+                        const modData = state.modules[mod.id];
+                        const done = mod.assignmentList.filter((a, i) => modData?.assignments?.[i]?.status === 'Done').length;
+                        msg += `\ud83d\udcdd Assignments: <b>${done}/${mod.assignmentList.length}</b> done<br>`;
+                    }
+                    if (mod.caseReports) {
+                        const modData = state.modules[mod.id];
+                        const done = mod.caseReports.filter((c, i) => modData?.caseReports?.[i]?.status === 'Done').length;
+                        msg += `\ud83d\udccb Case Reports: <b>${done}/${mod.caseReports.length}</b> done<br>`;
+                    }
+                    return { message: msg, chips: [`Go to ${mod.name.split(' (')[0]}`, 'My progress', "What's next?"] };
+                }
+            }
+
+            // --- What's next ---
+            if (/what('s|\s+is)\s+next|recommend|suggest|what should i do/i.test(q)) {
+                // Find module with most incomplete procedures
+                let bestMod = null, bestRemaining = 0;
+                moduleConfigs.forEach(m => {
+                    if (!m.requiredProcedures || m.requiredProcedures.length === 0) return;
+                    let remaining = 0;
+                    m.requiredProcedures.forEach(req => {
+                        const cnt = state.procedureLog.filter(p => p.moduleId === m.id && p.procedure === req.name).length;
+                        if (cnt < req.target) remaining += (req.target - cnt);
+                    });
+                    if (remaining > bestRemaining) { bestRemaining = remaining; bestMod = m; }
+                });
+                // Find next incomplete assignment
+                let nextAssign = null;
+                for (const m of moduleConfigs) {
+                    if (!m.assignmentList) continue;
+                    const modData = state.modules[m.id];
+                    for (let i = 0; i < m.assignmentList.length; i++) {
+                        if (!modData?.assignments?.[i] || modData.assignments[i].status !== 'Done') {
+                            nextAssign = { module: m.name.split(' (')[0], title: m.assignmentList[i].title };
+                            break;
+                        }
+                    }
+                    if (nextAssign) break;
+                }
+                let msg = `\ud83d\udc49 <b>Recommendations</b><br><br>`;
+                if (bestMod) msg += `\ud83e\ude7a <b>Focus on ${bestMod.name.split(' (')[0]}</b> — ${bestRemaining} procedures still needed<br>`;
+                if (nextAssign) msg += `\ud83d\udcdd <b>Next assignment:</b> ${nextAssign.title} (${nextAssign.module})<br>`;
+                if (!bestMod && !nextAssign) msg += `\ud83c\udf89 Amazing! You're all caught up!`;
+                return { message: msg, chips: bestMod ? [`Go to ${bestMod.name.split(' (')[0]}`, 'My progress'] : ['My progress', 'Help'] };
+            }
+
+            // --- Navigation ---
+            const navMatch = q.match(/(?:go to|open|show|navigate to|switch to)\s+(.+)/i);
+            if (navMatch) {
+                const target = navMatch[1].trim().toLowerCase();
+                if (target.includes('dashboard') || target.includes('home')) {
+                    return { message: `\ud83c\udfe0 Navigating to <b>Dashboard</b>...`, action: () => state.setTab('dashboard'), chips: ['My progress', 'Help'] };
+                }
+                if (target.includes('logbook') || target.includes('master')) {
+                    return { message: `\ud83d\udccb Navigating to <b>Master Logbook</b>...`, action: () => state.setTab('master_logbook'), chips: ['My progress', 'Help'] };
+                }
+                if (target.includes('milestone')) {
+                    return { message: `\ud83c\udfc6 Navigating to <b>Milestones</b>...`, action: () => state.setTab('milestones'), chips: ['My progress', 'Help'] };
+                }
+                const mod = moduleConfigs.find(m =>
+                    m.id.toLowerCase() === target ||
+                    m.name.toLowerCase().includes(target) ||
+                    m.name.split(' (')[0].toLowerCase() === target
+                );
+                if (mod) {
+                    return { message: `\ud83d\udce6 Opening <b>${mod.name}</b>...`, action: () => state.setTab(mod.id), chips: [`${mod.name.split(' (')[0]} progress`, 'My progress'] };
+                }
+                return { message: `I couldn't find a section called "${esc(navMatch[1])}". Try "go to surgery" or "go to dashboard".`, chips: ['Go to dashboard', 'Go to logbook'] };
+            }
+
+            // --- Daily log stats ---
+            if (/daily\s*log|daily\s*stats|daily\s*activit/i.test(q)) {
+                const dailyLogs = state.procedureLog.filter(p => p.logType === 'daily' || p.isOther);
+                if (dailyLogs.length === 0) {
+                    return { message: `\ud83d\udcc5 You haven't logged any daily activities yet. Use the <b>Log Procedure</b> button to get started!`, chips: ['My progress', 'Help'] };
+                }
+                const groups = {};
+                dailyLogs.forEach(p => { groups[p.procedure] = (groups[p.procedure] || 0) + 1; });
+                const top5 = Object.entries(groups).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                let msg = `\ud83d\udcc5 <b>Daily Activity Log</b> — ${dailyLogs.length} total entries<br><br>`;
+                top5.forEach(([name, cnt]) => { msg += `\u2022 ${name}: <b>${cnt}</b><br>`; });
+                if (Object.keys(groups).length > 5) msg += `<br><i>...and ${Object.keys(groups).length - 5} more activities</i>`;
+                return { message: msg, chips: ['My progress', 'Go to logbook'] };
+            }
+
+            // --- Milestones ---
+            if (/milestone/i.test(q)) {
+                let total = 0, done = 0;
+                Object.entries(milestoneConfigs).forEach(([cat, items]) => {
+                    items.forEach(m => {
+                        total++;
+                        const mData = state.milestones[cat]?.[m.id];
+                        if (mData?.status === 'Done' || mData?.status === 'Passed') done++;
+                    });
+                });
+                return {
+                    message: `\ud83c\udfc6 <b>Milestones</b>: <b>${done}/${total}</b> completed (${Math.round((done / total) * 100)}%)<br><br>` +
+                        `${done === total ? '\ud83c\udf89 All milestones complete!' : 'Keep working towards your goals!'}`,
+                    chips: ['Go to milestones', 'My progress'],
+                    action: done < total ? undefined : undefined
+                };
+            }
+
+            // --- Thank you ---
+            if (/thank|thanks|cheers/i.test(q)) {
+                return { message: `You're welcome! \ud83d\ude0a Let me know if you need anything else.`, chips: ['My progress', 'Help'] };
+            }
+
+            // --- Fallback ---
+            return {
+                message: `I'm not sure I understand that. Try asking about your <b>progress</b>, <b>what's next</b>, or say <b>help</b> for a list of commands.`,
+                chips: ['Help', 'My progress', "What's next?"]
+            };
+        }
+
         // --- 6. SAFE RENDERER (With Auth Gate) ---
         function renderApp() {
             try {
@@ -2693,6 +3057,10 @@
                     if (loginContainer) loginContainer.classList.remove('hidden');
                     if (mainLayout) mainLayout.classList.add('hidden');
                     if (fab) fab.classList.add('hidden');
+                    const chatFab = document.getElementById('chat-fab');
+                    if (chatFab) chatFab.classList.add('hidden');
+                    const chatPanel = document.getElementById('chat-panel');
+                    if (chatPanel) chatPanel.classList.remove('chat-open');
                     return;
                 }
 
@@ -2700,6 +3068,8 @@
                 if (loginContainer) loginContainer.classList.add('hidden');
                 if (mainLayout) mainLayout.classList.remove('hidden');
                 if (fab) fab.classList.remove('hidden');
+                const chatFab = document.getElementById('chat-fab');
+                if (chatFab) chatFab.classList.remove('hidden');
 
                 renderSidebarLinks();
                 const container = document.getElementById('app-container');
